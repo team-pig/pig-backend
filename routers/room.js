@@ -36,13 +36,13 @@ router.post('/room', auth, async (req, res) => {
       return
     })
   }
-  if (inviteCode) {
-    find = await Room.findOne({ inviteCode: inviteCode })
-    await find.update({
-      $push: { ratings: { user: res.locals.user._id } },
-    })
-    return
-  }
+//   if (inviteCode) {
+//     find = await Room.findOne({ inviteCode: inviteCode })
+//     await find.update({
+//       $push: { ratings: { user: res.locals.user._id } },
+//     })
+//     return
+//   }
 })
 
 router.put('/room', auth, async (req, res) => {
