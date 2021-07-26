@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+import Room from './room.js'
 
 const connect = () => {
   mongoose
@@ -15,4 +16,6 @@ mongoose.connection.on("error", err => {
   console.error("몽고디비 연결 에러", err);
 });
 
-module.exports = connect;
+connect()
+
+export { Room }
