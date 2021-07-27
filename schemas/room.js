@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const roomSchema = new mongoose.Schema({
   roomName: String,
@@ -18,4 +18,4 @@ const roomSchema = new mongoose.Schema({
     default: Date.now,
   },
 })
-export default mongoose.model('Room', roomSchema)
+module.exports = mongoose.model('Room', roomSchema);

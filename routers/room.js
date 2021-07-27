@@ -1,5 +1,5 @@
-import express from 'express'
-import Room from '../schemas/room.js'
+const express = require("express");
+const Room = require("../schemas/room.js")
 
 const router = express.Router()
 
@@ -63,4 +63,4 @@ router.delete('/room', auth, async (req, res) => {
   }
 })
 
-export default router
+module.exports = router;

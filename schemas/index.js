@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-import Room from './room.js'
+const Room = require("./room.js")
 
 const connect = () => {
   mongoose
@@ -18,4 +18,4 @@ mongoose.connection.on("error", err => {
 
 connect()
 
-export { Room }
+module.exports = connect;
