@@ -7,7 +7,7 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const router = express.Router();
 
 //DOCUMENT 작성
-router.post("/api/room/:roomId/document", async (req, res) => {
+router.post("/room/:roomId/document", async (req, res) => {
   try {
     const { roomId } = req.params;
     const { title, content } = req.body;
@@ -27,7 +27,7 @@ router.post("/api/room/:roomId/document", async (req, res) => {
 });
 
 //DOCUMENT 보여주기
-router.get('/api/room/:roomId/document', async (req, res) => {
+router.get('/room/:roomId/document', async (req, res) => {
   try {
     const { roomId } = req.params;
     const target = await Rooms.findById(roomId).exec();
@@ -63,7 +63,7 @@ router.get('/api/room/:roomId/document', async (req, res) => {
 })
 
 //DOCUMENT 상세 보여주기
-router.get('/api/room/:roomId/document', async (req, res) => {
+router.get('/room/:roomId/document', async (req, res) => {
   try {
     const { roomId } = req.params;
     const { documentId } = req.body;
@@ -105,7 +105,7 @@ router.get('/api/room/:roomId/document', async (req, res) => {
 })
 
 //DOCUMENT 수정
-router.put('/api/room/:roomId/document', async (req, res) => {
+router.put('/room/:roomId/document', async (req, res) => {
   try {
 
   } catch (error) {
