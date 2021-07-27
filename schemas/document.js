@@ -8,6 +8,9 @@ const documentSchema = new Schema({
     content: {
         type: String
     },
+    userId: {
+        type: String
+    },
 });
 
 module.exports = mongoose.model("Documents", documentSchema);

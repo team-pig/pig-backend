@@ -1,26 +1,42 @@
 const express = require("express");
 const Documents = require("../schemas/document");
-// const Rooms = require('../schemas/room');
-// const Users = require('../schemas/users');
-// const authMiddleware = require('../middlewares/auth-middleware');
+const Rooms = require('../schemas/room');
+const Users = require('../schemas/users');
+const authMiddleware = require('../middlewares/auth-middleware');
 
 const router = express.Router();
 
 //DOCUMENT 작성
-router.post("/api/room/:roomId/document", async (req, res) => {
+router.post("/api/room/:roomId/document", authMiddleware, async (req, res) => {
   try {
-    // const { roomId } = req.params;
+    const { user } = res.locals;
+    const userId = user.userId;
+    //userId data type integer? string?
+    console.log('user', user);
+    console.log('userId', userId);
+
+    const { roomId } = req.params;
     const { title, content } = req.body;
-    await Documents.create({ title: title, content: content }).exec();
-    // const target = Rooms.findById({ roomId });
-    // await target.create({ title: title, content: content });
+
+    // await Documents.create({ title: title, content: content, userId: userId });
+
+    const target = Rooms.findById({ roomId });
+    if(!target){
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 방입니다'
+      })
+      return;
+    }
+
+    await target.document.create({ title: title, content: content, userId: userId });
 
     res.status(200).send({
       'ok': true,
       message: 'document 작성 성공'
     });
   } catch (err) {
-    // console.error('document 작성 에러', err);
+    console.error('document 작성 에러', err);
     res.status(400).send({
       'ok': false,
       message: 'document 작성 실패'
