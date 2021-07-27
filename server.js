@@ -20,17 +20,11 @@ app.use(express.static('public'));
 const roomsRouters = require('./routers/rooms.js');
 const userRouters = require("./routers/user.js");
 const documentRouters = require("./routers/document");
-<<<<<<< Updated upstream
 app.use(userRouters, documentRouters, roomsRouters);
 
 
 
 
-=======
-app.use(userRouters, roomsRouter, documentRouters);
-
-
->>>>>>> Stashed changes
 // error handling
 app.use((error, req, res, next) => {
     console.error(error);
