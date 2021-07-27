@@ -19,15 +19,14 @@
   },
   "homepage": "https://github.com/team-pig/pig-backend#readme",
   "dependencies": {
-    "ejs": "^3.1.6",
-    "express": "^4.17.1",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
     "express-async-errors": "^3.1.1",
     "init": "^0.1.2",
     "jsonwebtoken": "^8.5.1",
-
     "mongoose": "^5.13.3"
   },
   "devDependencies": {
