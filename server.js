@@ -16,12 +16,12 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 라우터
-const roomsRouter = require('./routers/rooms');
-const userRouters = require("./routers/user");
+
+const roomsRouters = require('./routers/rooms.js');
+const userRouters = require("./routers/user.js");
 const documentRouters = require("./routers/document");
-app.use(userRouters);
-app.use(roomsRouter);
-app.use(documentRouters);
+app.use(userRouters, documentRouters, roomsRouters);
+
 
 
 

@@ -1,26 +1,24 @@
 const express = require("express");
 const Documents = require("../schemas/document");
-// const Rooms = require('../schemas/room');
-// const Users = require('../schemas/users');
-// const authMiddleware = require('../middlewares/auth-middleware');
+const Rooms = require('../schemas/room');
+const Users = require('../schemas/users');
+const authMiddleware = require('../middlewares/auth-middleware');
 
 const router = express.Router();
 
 //DOCUMENT 작성
 router.post("/api/room/:roomId/document", async (req, res) => {
   try {
-    // const { roomId } = req.params;
+    const { roomId } = req.params;
     const { title, content } = req.body;
-    await Documents.create({ title: title, content: content }).exec();
-    // const target = Rooms.findById({ roomId });
-    // await target.create({ title: title, content: content });
+    await Rooms.findByIdAndUpdate(roomId, { $push: { document: { title: title, content: content }}});
 
     res.status(200).send({
       'ok': true,
       message: 'document 작성 성공'
     });
   } catch (err) {
-    // console.error('document 작성 에러', err);
+    console.error('document 작성 에러', err);
     res.status(400).send({
       'ok': false,
       message: 'document 작성 실패'
