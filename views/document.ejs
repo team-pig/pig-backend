@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.5.1.js"
+        integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+
+    <title>Document</title>
+
+
+    <script>
+        function submitDocument() {
+            let title = $('#title').val();
+            let content = $('#content').val();
+            let roomId = 1
+            console.log(roomId, title, content);
+
+            $.ajax({
+                type: "POST",
+                url: `/api/room/${roomId}/document`,
+                data: {
+                    title: title,
+                    content: content
+                },
+                success: function (response) {
+                    console.log("POST API successful");
+                },
+                error: function(err){
+                    console.log("post api error", err);
+                }
+            })
+            // window.location.href = '/allEntries';
+        }
+
+        function displayAll() {
+            $.ajax({
+                type: "GET",
+                url: `/api/room/${roomId}/document`,
+                data: {},
+                success: function (response) {
+                    console.log("GET API successful");
+                    
+                },
+                error: function(err){
+                    console.log("GET api error", err);
+                }
+            })
+            // window.location.href = '/allEntries';
+        }
+    </script>
+</head>
+
+<body>
+
+    <div>
+        Hellooooo
+    </div>
+    <div>
+        <div>
+            제목: <input id="title" type="text">
+        </div>
+        <div>
+            내용 <textarea id='content'></textarea>
+        </div>
+
+        <div>
+            <button onclick="submitDocument()">글쓰기</button>
+        </div>
+    </div>
+</body>
+
+</html>
