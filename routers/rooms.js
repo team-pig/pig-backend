@@ -21,9 +21,9 @@ router.post('/room', auth, async (req, res) => {
   console.log('in')
   console.log(res.locals)
   const userId = res.locals.user.id
-  const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
+  const { roomName, roomImage, subtitle, tag, inviteCode, roomId } = req.body
 
-  // if (!inviteCode) {
+  if (!inviteCode) {
   let room = new Room()
   room.roomName = roomName
   room.roomImage = roomImage
@@ -40,26 +40,29 @@ router.post('/room', auth, async (req, res) => {
   })
   res.json({ result: '성공' })
 
-  // }
-  //   if (inviteCode) {
-  //     find = await Room.findOne({ inviteCode: inviteCode })
-  //     await find.update({
-  //       $push: { ratings: { user: res.locals.user._id } },
-  //     })
-  //     return
-  //   }
+  }
+    if (inviteCode) {
+      await Room.findByIdAndUpdate(roomId, { members : userId});
+      
+      return
+    }
 })
 
 router.put('/room', auth, async (req, res) => {
   const { roomId, roomName, roomImage, subtitle, tag } = req.body
+  const findRoom = await Room.findById(roomId)
+
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
   try {
-    if (roomId) {
+    if (roomId && findRoom.master == userId) {
       await Room.updateOne(
         { _id: roomId },
         { $set: { roomName, roomImage, subtitle, tag } }
       )
-    return res.send() 
+      return res.json({
+        'ok': true,
+        message: '방 수정 성공'
+        })
   } 
     
   } catch (err) {
@@ -73,8 +76,6 @@ router.delete('/room', auth, async (req, res) => {
   const { roomId } = req.body
   const findRoom = await Room.findById(roomId)
 
-  console.log(findRoom.master)
-  console.log(userId)
   try {
   if (findRoom.master == userId) {
     await Room.findByIdAndRemove(roomId)
