@@ -12,8 +12,8 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 라우터
-const routers = require("./routers");
-app.use("/api", [routers]);
+const documentRouters = require("./routers/document");
+app.use(documentRouters);
 
 app.use((req, res, next) => {
     console.log(req);
@@ -28,6 +28,9 @@ app.set('view engine', 'ejs');
 // 각종 url
 app.get('/', (req, res) => {
     res.render('index.ejs');
+})
+app.get('/document', (req, res) => {
+    res.render('document.ejs');
 })
 
 

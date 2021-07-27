@@ -1,26 +1,13 @@
 const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
-const postsSchema = new Schema({
-    contentId:{
-        type:Number,
-        required:true,
-    },
+const documentSchema = new Schema({
     title: {
         type: String,
-        required: true,
-    },
-    name: {
-        type: String
-    },
-    password: {
-        type: String,
-        required: true
     },
     content: {
-        type: String,
-        required: true
-    }
+        type: String
+    },
 });
 
-module.exports = mongoose.model("posts",postsSchema);
+module.exports = mongoose.model("Documents", documentSchema);
