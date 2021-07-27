@@ -16,21 +16,31 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 라우터
-const roomsRouter = require('./routers/rooms.js');
-const userRouters = require("./routers/user.js");
+const roomsRouter = require('./routers/rooms');
+const userRouters = require("./routers/user");
 const documentRouters = require("./routers/document");
-app.use(userRouters, documentRouters);
+app.use(userRouters);
+app.use(roomsRouter);
+app.use(documentRouters);
 
 
-app.use((req, res, next) => {
-    res.sendStatus(404);
-});
 
 // error handling
 app.use((error, req, res, next) => {
     console.error(error);
     res.sendStatus(500);
 });
+
+app.use((req, res, next) => {
+    console.log(req);
+    next();
+});
+
+
+
+// 템플릿 엔진
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
 
 
 // 각종 url
