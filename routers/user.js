@@ -37,7 +37,8 @@ router.post('/register', async (req, res, next) => {
             });
             return;
         }
-        const hashed = await bcrypt.hash(password, process.env.BCRYPT_SALT_ROUNDS);
+        const salt = await bcrypt.genSalt();
+        const hashed = await bcrypt.hash(password, salt);
 
         const userId = await User.create({
             email,

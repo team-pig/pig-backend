@@ -17,7 +17,7 @@ app.use(express.static('public'));
 
 // 라우터
 const userRouters = require("./routers/user.js");
-app.use("/api", [userRouters]);
+app.use(userRouters);
 
 app.use((req, res, next) => {
     res.sendStatus(404);
