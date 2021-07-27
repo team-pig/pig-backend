@@ -9,12 +9,14 @@ const roomSchema = new mongoose.Schema({
   // master: { type: Schema.Types.ObjectId, ref: 'User' },
   master: String,
   inviteCode: String,
+  // inviteCode: mongoose.Types.ObjectId(),
   subtitle: String,
   tag: [String],
-  members: [{
-    type: Schema.ObjectId,
-    ref: 'User'
-  }],
+  // members: [{
+  //   type: Schema.ObjectId,
+  //   ref: 'User'
+  // }],
+  members: String,
   // timeline: [Timeline.schema],
   document: [Document.schema],
   createdAt: {
