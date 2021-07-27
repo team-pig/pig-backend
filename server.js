@@ -16,8 +16,11 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 라우터
+const roomsRouter = require('./routers/rooms.js');
 const userRouters = require("./routers/user.js");
-app.use(userRouters);
+const documentRouters = require("./routers/document");
+app.use(userRouters, documentRouters);
+
 
 app.use((req, res, next) => {
     res.sendStatus(404);
@@ -30,6 +33,13 @@ app.use((error, req, res, next) => {
 });
 
 
+// 각종 url
+app.get('/', (req, res) => {
+    res.render('index.ejs');
+})
+app.get('/document', (req, res) => {
+    res.render('document.ejs');
+})
 
 app.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
