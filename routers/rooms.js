@@ -22,9 +22,9 @@ router.get('/room/:roomId/timeline', async (req, res) => {})
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag, inviteCode} = req.body
-
+  // 방 만들기
   if (!inviteCode) {
-  let room = new Room()
+  const room = new Room()
   room.roomName = roomName
   room.roomImage = roomImage
   room.master = userId
@@ -39,13 +39,14 @@ router.post('/room', auth, async (req, res) => {
     }
     return
   })
-  res.json({ result: '성공' })
-
+  res.json({ room })
   }
+  // 다른 사람 방 추가하기(초대코드입력)
     if (inviteCode) {
-      await Room.findOneAndUpdate({inviteCode: inviteCode}, { members : userId});
-      return res.send("성공")
-    }
+      const room = await Room.findOneAndUpdate({inviteCode: inviteCode}, { members : userId});
+      return res.json({ room })
+    }  
+
 })
 
 router.put('/room', auth, async (req, res) => {
