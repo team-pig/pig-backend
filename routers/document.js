@@ -7,29 +7,14 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const router = express.Router();
 
 //DOCUMENT 작성
-router.post("/api/room/:roomId/document", authMiddleware, async (req, res) => {
+router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
   try {
-    const { user } = res.locals;
-    const userId = user.userId;
-    //userId data type integer? string?
-    console.log('user', user);
-    console.log('userId', userId);
 
+    //check if this user is a member of the room
+    const userId = res.locals.user._id
     const { roomId } = req.params;
     const { title, content } = req.body;
-
-    // await Documents.create({ title: title, content: content, userId: userId });
-
-    const target = Rooms.findById({ roomId });
-    if(!target){
-      res.status(400).send({
-        'ok': false,
-        message: '존재하지 않는 방입니다'
-      })
-      return;
-    }
-
-    await target.document.create({ title: title, content: content, userId: userId });
+    await Rooms.findByIdAndUpdate(roomId, { $push: { document: { title: title, content: content, userId: userId } } });
 
     res.status(200).send({
       'ok': true,
@@ -44,9 +29,12 @@ router.post("/api/room/:roomId/document", authMiddleware, async (req, res) => {
   }
 });
 
-//DOCUMENT 보여주기
-router.get('/api/room/:roomId/document', async (req, res) => {
+//모든 DOCUMENT 보여주기
+router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
   try {
+    //check if this user is a member of the room
+    const userId = res.locals.user._id
+
     const { roomId } = req.params;
     const target = await Rooms.findById(roomId).exec();
     if (!target) {
@@ -57,7 +45,7 @@ router.get('/api/room/:roomId/document', async (req, res) => {
       return;
     };
 
-    const result = target.documents;
+    const result = target.document;
 
     if (!result) {
       res.status(400).send({
@@ -67,9 +55,18 @@ router.get('/api/room/:roomId/document', async (req, res) => {
       return;
     }
 
+    //도큐먼트의 _id를 documentId로 변경해서 프론트엔드로 보내주기
+    const finalResult = [];
+    for (i = 0; i < result.length; i++) {
+      let documentId = result[i]._id;
+      let title = result[i].title;
+      let content = result[i].content;
+      finalResult.push({documentId: documentId, title: title, content:content});
+    }
+
     res.status(200).send({
       'ok': true,
-      result: result
+      result: finalResult
     })
   } catch (error) {
     console.log('display document ERROR', error);
@@ -81,11 +78,14 @@ router.get('/api/room/:roomId/document', async (req, res) => {
 })
 
 //DOCUMENT 상세 보여주기
-router.get('/api/room/:roomId/document', async (req, res) => {
+router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
   try {
+    //check if this user is a member of the room
+    const userId = res.locals.user._id
+
     const { roomId } = req.params;
     const { documentId } = req.body;
-    const target = await Rooms.findOne({ _id: roomId }).exec();
+    const target = await Rooms.findById(roomId).exec();
 
     if (!target) {
       res.status(400).send({
@@ -95,7 +95,7 @@ router.get('/api/room/:roomId/document', async (req, res) => {
       return;
     };
 
-    const result = await target.document.findOne({ documentId: documentId });
+    const result = await target.document.id(documentId);
 
     if (!result) {
       res.status(400).send({
@@ -123,14 +123,28 @@ router.get('/api/room/:roomId/document', async (req, res) => {
 })
 
 //DOCUMENT 수정
-router.put('/api/room/:roomId/document', async (req, res) => {
+router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
   try {
+    //check if this user is a member of the room
+    const userId = res.locals.user._id
 
   } catch (error) {
 
   }
 })
 
+
+
+//DOCUMENT 삭제
+router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
+  try {
+    //check if this user is a member of the room OR A MASTER OF THE ROOM??
+    const userId = res.locals.user._id
+
+  } catch (error) {
+
+  }
+})
 
 router.get("/posts/:contentId", async (req, res, next) => {
   try {
@@ -178,9 +192,6 @@ router.post("/delete", async (req, res, next) => {
     console.error(err);
     next(err);
   }
-
-
-
 });
 
 

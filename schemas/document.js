@@ -10,7 +10,7 @@ const documentSchema = new Schema({
     },
     userId: {
         type: String
-    },
+    }
 });
 
 module.exports = mongoose.model("Documents", documentSchema);
