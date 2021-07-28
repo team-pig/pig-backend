@@ -16,7 +16,7 @@ const roomSchema = new mongoose.Schema({
   //   type: Schema.ObjectId,
   //   ref: 'User'
   // }],
-  members: String,
+  members: [String],
   // timeline: [Timeline.schema],
   document: [Document.schema],
   createdAt: {
