@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 // const Timeline = require('./timeline')
 const Document = require('./document')
-// const Documents = mongoose.model('Documents', documentSchema);
 const { Schema } = mongoose;
 
 const roomSchema = new mongoose.Schema({
