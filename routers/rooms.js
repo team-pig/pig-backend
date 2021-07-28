@@ -21,32 +21,39 @@ router.get('/room/:roomId/timeline', async (req, res) => {})
 
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
-  const { roomName, roomImage, subtitle, tag, inviteCode} = req.body
+  const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
+  const findRoom = await Room.findOne({ inviteCode })
+  const memberInRoom = findRoom.members.includes(userId)
   // 방 만들기
   if (!inviteCode) {
-  const room = new Room()
-  room.roomName = roomName
-  room.roomImage = roomImage
-  room.master = userId
-  room.subtitle = subtitle
-  room.tag = tag
-  room.inviteCode = v4()
-  room.save(function (err) {
-    if (err) {
-      console.error(err)
-      res.json({ result: '에러 발생' })
+    const room = new Room()
+    room.roomName = roomName
+    room.roomImage = roomImage
+    room.master = userId
+    room.members = userId
+    room.subtitle = subtitle
+    room.tag = tag
+    room.inviteCode = v4()
+    room.save(function (err) {
+      if (err) {
+        console.error(err)
+        res.json({ result: '에러 발생' })
+        return
+      }
       return
-    }
-    return
-  })
-  res.json({ room })
+    })
+    res.json({ room })
   }
   // 다른 사람 방 추가하기(초대코드입력)
-    if (inviteCode) {
-      await Room.findOneAndUpdate({inviteCode}, { members : userId});
-      const room = await Room.findOne({inviteCode})
-      return res.json({ room })
-    }  
+  if (memberInRoom) {
+    res.json({ errorMessage: '이미 추가 된 방입니다.' })
+    return
+  }
+  if (inviteCode && !findRoom.members.includes(userId)) {
+    await Room.updateOne({ inviteCode }, { $push: { members: userId } })
+    const room = await Room.findOne({ inviteCode })
+    return res.json({ room })
+  }
 })
 
 router.put('/exitroom', auth, async (req, res) => {})
@@ -63,11 +70,10 @@ router.put('/room', auth, async (req, res) => {
         { $set: { roomName, roomImage, subtitle, tag } }
       )
       return res.json({
-        'ok': true,
-        message: '방 수정 성공'
-        })
-  }
-    
+        ok: true,
+        message: '방 수정 성공',
+      })
+    }
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
@@ -80,14 +86,14 @@ router.delete('/room', auth, async (req, res) => {
   const findRoom = await Room.findById(roomId)
 
   try {
-  if (findRoom.master == userId) {
-    await Room.findByIdAndRemove(roomId)
-    return res.json({
-      'ok': true,
-      message: '방 삭제 성공'
+    if (findRoom.master == userId) {
+      await Room.findByIdAndRemove(roomId)
+      return res.json({
+        ok: true,
+        message: '방 삭제 성공',
       })
-  }
-  res.json({errorMessage: "방장이 아니거나, 방Id를 찾을 수 없습니다."})
+    }
+    res.json({ errorMessage: '방장이 아니거나, 방Id를 찾을 수 없습니다.' })
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
