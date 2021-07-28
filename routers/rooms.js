@@ -1,11 +1,13 @@
 const express = require('express')
 const Room = require('../schemas/room.js')
 const auth = require('../middlewares/auth-middleware.js')
+const { v4 } = require('uuid')
 
 const router = express.Router()
 
-router.get('/rooms', async (req, res) => {
-  const room = await Room.find().sort({ createdAt: 'desc' })
+router.get('/rooms', auth, async (req, res) => {
+  const member = res.locals.user.id
+  const room = await Room.find({ members: member }).sort({ createdAt: 'desc' })
   res.status(200).json({ room })
 })
 
@@ -18,10 +20,8 @@ router.get('/room/:roomId/board', async (req, res) => {})
 router.get('/room/:roomId/timeline', async (req, res) => {})
 
 router.post('/room', auth, async (req, res) => {
-  console.log('in')
-  console.log(res.locals)
   const userId = res.locals.user.id
-  const { roomName, roomImage, subtitle, tag, inviteCode, roomId } = req.body
+  const { roomName, roomImage, subtitle, tag, inviteCode} = req.body
 
   if (!inviteCode) {
   let room = new Room()
@@ -30,6 +30,7 @@ router.post('/room', auth, async (req, res) => {
   room.master = userId
   room.subtitle = subtitle
   room.tag = tag
+  room.inviteCode = v4()
   room.save(function (err) {
     if (err) {
       console.error(err)
@@ -42,9 +43,8 @@ router.post('/room', auth, async (req, res) => {
 
   }
     if (inviteCode) {
-      await Room.findByIdAndUpdate(roomId, { members : userId});
-      
-      return
+      await Room.findOneAndUpdate({inviteCode: inviteCode}, { members : userId});
+      return res.send("성공")
     }
 })
 
@@ -63,7 +63,7 @@ router.put('/room', auth, async (req, res) => {
         'ok': true,
         message: '방 수정 성공'
         })
-  } 
+  }
     
   } catch (err) {
     console.error(err)
