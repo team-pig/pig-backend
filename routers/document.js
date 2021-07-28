@@ -14,7 +14,16 @@ router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params;
     const { title, content } = req.body;
-    await Rooms.findByIdAndUpdate(roomId, { $push: { document: { title: title, content: content, userId: userId } } });
+
+    // await Documents.findByIdAndUpdate(roomId, { $push: { document: { title: title, content: content, userId: userId } } });
+    await Documents.create({ title: title, content: content, userId: userId, roomId: roomId });
+    const room = await Rooms.findById(roomId);
+
+
+    //과연 array의 마지막 도큐먼트를 가지고오는것이 버그가 없을까...? 더 좋은 방법이 있을텐데...
+    // const document = room.document
+    // const sortedDocument = document.slice(-1).pop();
+    // const documentId = sortedDocument._id;
 
     res.status(200).send({
       'ok': true,
@@ -36,8 +45,8 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
 
     const { roomId } = req.params;
-    const target = await Rooms.findById(roomId).exec();
-    if (!target) {
+    const room = await Rooms.findById(roomId).exec();
+    if (!room) {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸 아이디 입니다.'
@@ -45,7 +54,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       return;
     };
 
-    const result = target.document;
+    const result = room.document;
 
     if (!result) {
       res.status(400).send({
@@ -61,7 +70,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       let documentId = result[i]._id;
       let title = result[i].title;
       let content = result[i].content;
-      finalResult.push({documentId: documentId, title: title, content:content});
+      finalResult.push({ documentId: documentId, title: title, content: content });
     }
 
     res.status(200).send({
@@ -85,9 +94,9 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
 
     const { roomId } = req.params;
     const { documentId } = req.body;
-    const target = await Rooms.findById(roomId).exec();
+    const room = await Rooms.findById(roomId).exec();
 
-    if (!target) {
+    if (!room) {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸 아이디 입니다.'
@@ -95,7 +104,7 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     };
 
-    const result = await target.document.id(documentId);
+    const result = await room.document.id(documentId);
 
     if (!result) {
       res.status(400).send({
@@ -122,14 +131,58 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
   }
 })
 
+
+
+
 //DOCUMENT 수정
 router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
   try {
     //check if this user is a member of the room
-    const userId = res.locals.user._id
+    const userId = res.locals.user._id;
+    const { roomId } = req.params;
+    const { documentId, title, content } = req.body;
+
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸 아이디 입니다.'
+      })
+      return;
+    }
+
+    // await Rooms.findByIdAndUpdate(roomId, { $push: { document: { title: title, content: content, userId: userId } } });
+
+    const targetDocument = await room.document.id(documentId);
+
+    if (!targetDocument) {
+      res.status(400).send({
+        ok: 'false',
+        message: '존재하지 않는 도큐먼트 입니다.'
+      })
+      return;
+    }
+    // room -> document -> find the specific document -> edit title and content
+    // array에서 for문 돌려서 해당 id찾기? 아니면 id값으로 해당 도큐먼트 찾는건 이미 한건가?
+
+    /// --- 어레이에 원래 있던 도큐먼트를 지워버리고 새로 하나 넣는 식으로 할수도...하지만 그러면 documentId가 리셋될텐데..
+
+    await room.update({ documentId: documentId }, { $set: { title: title, content: content } })
+    //await targetDocument.updateOne({title:title, content:content});
+
+    //if userId does not match any of the members, reject and return.
+    // if(userId!==room.members){
+
+    //   return;
+    // }
+
 
   } catch (error) {
-
+    console.log('document수정 서버에러', error);
+    res.status(400).send({
+      'ok': false,
+      message: '서버에러: 도큐먼트 수정 실패'
+    })
   }
 })
 

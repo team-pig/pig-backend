@@ -10,7 +10,11 @@ const documentSchema = new Schema({
     },
     userId: {
         type: String
+    },
+    roomId: {
+        type: String
     }
+    // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 });
 
 module.exports = mongoose.model("Documents", documentSchema);
