@@ -23,6 +23,7 @@ router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
 
+
   // if (!inviteCode) {
   let room = new Room()
   room.roomName = roomName

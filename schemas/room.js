@@ -16,7 +16,8 @@ const roomSchema = new mongoose.Schema({
     ref: 'User'
   }],
   // timeline: [Timeline.schema],
-  document: [Document.schema],
+  document: [{ type: Schema.Types.ObjectId, ref: 'Documents' }],
+  // document: [Document.schema],
   createdAt: {
     type: Date,
     default: Date.now,
