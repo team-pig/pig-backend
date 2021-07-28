@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Room = require("./room.js")
 
 const connect = () => {
   mongoose
