@@ -43,11 +43,13 @@ router.post('/room', auth, async (req, res) => {
   }
   // 다른 사람 방 추가하기(초대코드입력)
     if (inviteCode) {
-      const room = await Room.findOneAndUpdate({inviteCode: inviteCode}, { members : userId});
+      await Room.findOneAndUpdate({inviteCode}, { members : userId});
+      const room = await Room.findOne({inviteCode})
       return res.json({ room })
     }  
-
 })
+
+router.put('/exitroom', auth, async (req, res) => {})
 
 router.put('/room', auth, async (req, res) => {
   const { roomId, roomName, roomImage, subtitle, tag } = req.body
