@@ -2,9 +2,14 @@ const express = require('express');
 require('express-async-errors');
 const app = express();
 const port = 3000;
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
 dotenv.config();
 
+//CORS
+const cors = require('cors');
+app.use(
+    cors({ origin: '*', credentials: true, }
+    ));
 
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
@@ -20,9 +25,8 @@ app.use(express.static('public'));
 const roomsRouters = require('./routers/rooms.js');
 const userRouters = require("./routers/user.js");
 const documentRouters = require("./routers/document");
+
 app.use(userRouters, documentRouters, roomsRouters);
-
-
 
 
 // error handling
