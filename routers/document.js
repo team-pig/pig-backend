@@ -18,6 +18,7 @@ router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
     await Documents.create({ title: title, content: content, userId: userId, roomId: roomId });
     const room = await Rooms.findById(roomId);
 
+
     //과연 array의 마지막 도큐먼트를 가지고오는것이 버그가 없을까...? 더 좋은 방법이 있을텐데...
     const document = room.document
     const sortedDocument = document.slice(-1).pop();
@@ -67,6 +68,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       })
       return;
     }
+
   //도큐먼트의 _id를 documentId로 변경해서 프론트엔드로 보내주기
   const finalResult = [];
   for (i = 0; i < result.length; i++) {
