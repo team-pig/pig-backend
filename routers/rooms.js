@@ -28,42 +28,46 @@ router.get('/room/:roomId/timeline', async (req, res) => {})
 
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
-  const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
-  const findRoom = await Room.findOne({ inviteCode })
-  const memberInRoom = findRoom.members.includes(userId)
+  const { roomName, roomImage, subtitle, tag } = req.body
   try {
-    // 방 만들기
-    if (!inviteCode) {
-      const room = new Room()
-      room.roomName = roomName
-      room.roomImage = roomImage
-      room.master = userId
-      room.members = userId
-      room.subtitle = subtitle
-      room.tag = tag
-      room.inviteCode = v4()
-      room.save(function (err) {
-        if (err) {
-          console.error(err)
-          res
-            .status(400)
-            .send({ ok: false, message: '서버에러: 방 만들기실패' })
-          return
-        }
+    const room = new Room()
+    room.roomName = roomName
+    room.roomImage = roomImage
+    room.master = userId
+    room.members = userId
+    room.subtitle = subtitle
+    room.tag = tag
+    room.inviteCode = v4()
+    room.save(function (err) {
+      if (err) {
+        console.error(err)
+        res.status(400).send({ ok: false, message: '서버에러: 방 만들기 실패' })
         return
-      })
-      res.json({ room })
-    }
+      }
+      return
+    })
+    res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
     res.status(400).send({ ok: false, message: '서버에러: 방 만들기 실패' })
   }
-  // 다른 사람 방 추가하기(초대코드입력)
+})
+
+router.post('/room/room', auth, async (req, res) => {
+  const userId = res.locals.user.id
+  const { inviteCode } = req.body
+  const findRoom = await Room.findOne({ inviteCode })
+  if (!findRoom) {
+    console.log('찾으려는 방이 없습니다.')
+    return res
+      .status(400)
+      .send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
+  }
   try {
+    const memberInRoom = await findRoom.members.includes(userId)
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
       res.json({ errorMessage: '이미 추가 된 방입니다.' })
-
       return
     }
     if (!findInviteCode) {
