@@ -7,6 +7,8 @@ const connect = () => {
       useUnifiedTopology: true,
       useCreateIndex: true,
       ignoreUndefined: true,
+      user:"test",
+      pass:"test"
     })
     .catch(err => console.log('mongoose catch ERROR', err));
 };
