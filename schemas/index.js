@@ -1,4 +1,13 @@
 const mongoose = require("mongoose");
+const Room = require("./room.js")
+
+
+// const mongoClient = require('mongodb').MongoClient;
+
+// mongoClient.connect('mongodb://test:test@localhost:27017/team-pig', (err, database) => {
+//   console.log(err);
+// });
+
 
 const connect = () => {
   mongoose
@@ -7,8 +16,8 @@ const connect = () => {
       useUnifiedTopology: true,
       useCreateIndex: true,
       ignoreUndefined: true,
-      user:"test",
-      pass:"test"
+      "user":"test",
+      "pass":"test"
     })
     .catch(err => console.log('mongoose catch ERROR', err));
 };
