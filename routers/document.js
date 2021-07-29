@@ -16,12 +16,18 @@ router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
     const { title, content } = req.body;
 
     await Documents.create({ title: title, content: content, userId: userId, roomId: roomId });
-    // const room = await Rooms.findById(roomId);
+    const room = await Rooms.findById(roomId);
+
+    //과연 array의 마지막 도큐먼트를 가지고오는것이 버그가 없을까...? 더 좋은 방법이 있을텐데...
+    const document = room.document
+    const sortedDocument = document.slice(-1).pop();
+    const documentId = sortedDocument._id;
 
 
     res.status(200).send({
       'ok': true,
-      message: 'document 작성 성공'
+      message: 'document 작성 성공',
+      documentId: documentId
     });
   } catch (err) {
     console.error('document 작성 에러', err);
@@ -61,18 +67,18 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       })
       return;
     }
-    //도큐먼트의 _id를 documentId로 변경해서 프론트엔드로 보내주기
-    // const finalResult = [];
-    // for (i = 0; i < result.length; i++) {
-    //   let documentId = result[i]._id;
-    //   let title = result[i].title;
-    //   let content = result[i].content;
-    //   finalResult.push({ documentId: documentId, title: title, content: content });
-    // }
+  //도큐먼트의 _id를 documentId로 변경해서 프론트엔드로 보내주기
+  const finalResult = [];
+  for (i = 0; i < result.length; i++) {
+    let documentId = result[i]._id;
+    let title = result[i].title;
+    let content = result[i].content;
+    finalResult.push({ documentId: documentId, title: title, content: content });
+  }
 
     res.status(200).send({
       'ok': true,
-      result: result
+      result: finalResult
     })
   } catch (error) {
     console.log('display document ERROR', error);
@@ -113,7 +119,9 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
     res.status(200).send({
       'ok': true,
       message: '상세 도큐먼트 보여주기 성공',
-      result: result
+      title: result.title,
+      content: result.content,
+      documentId: result._id
     })
   } catch (error) {
     console.log('display document ERROR', error);
