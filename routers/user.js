@@ -10,7 +10,7 @@ const router = express.Router();
 
 
 function createJwtToken(id) {
-    return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_SEC });
+    return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: '2d' });
 }
 
 const registerValidator = Joi.object({
@@ -62,7 +62,7 @@ router.post('/register', async (req, res, next) => {
 
 router.post('/login', async (req, res, next) => {
     try {
-        const { email, password } = await registerValidator.validateAsync(req.body);
+        const { email, password } = req.body;
         const user = await User.findOne({ email })
         if (!user) {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
