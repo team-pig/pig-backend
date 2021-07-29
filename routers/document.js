@@ -7,6 +7,7 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const router = express.Router();
 
 //DOCUMENT 작성
+
 router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
   try {
     //check if this user is a member of the room
@@ -16,6 +17,7 @@ router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
 
     await Documents.create({ title: title, content: content, userId: userId, roomId: roomId });
     // const room = await Rooms.findById(roomId);
+
 
     res.status(200).send({
       'ok': true,
@@ -30,8 +32,10 @@ router.post("/room/:roomId/document", authMiddleware, async (req, res) => {
   }
 });
 
+
 //모든 DOCUMENT 보여주기
 router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
+
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id;
