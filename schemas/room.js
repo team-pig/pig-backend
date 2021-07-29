@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 // const Timeline = require('./timeline')
 const Document = require('./document')
 const { Schema } = mongoose
-
 const roomSchema = new mongoose.Schema(
   {
     roomName: String,
@@ -16,6 +15,7 @@ const roomSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
   },
   {
     versionKey: false,

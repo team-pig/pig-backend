@@ -29,6 +29,7 @@ router.get('/room/:roomId/timeline', async (req, res) => {})
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
+
   const findRoom = await Room.findOne({ inviteCode })
   const memberInRoom = findRoom.members.includes(userId)
   try {
@@ -63,6 +64,7 @@ router.post('/room', auth, async (req, res) => {
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
       res.json({ errorMessage: '이미 추가 된 방입니다.' })
+
       return
     }
     if (!findInviteCode) {

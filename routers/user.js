@@ -5,20 +5,27 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/auth-middleware')
 const dotenv = require('dotenv');
 dotenv.config();
+const Joi = require('joi');
 const router = express.Router();
 
-// const jwtSecretKey = 'teampigfighting';
-// const jwtExpiresInDays = '2d';
-// const bcryptSaltRounds = 12;
 
 function createJwtToken(id) {
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES_SEC });
 }
 
+const registerValidator = Joi.object({
+    email: Joi.string().email().required(),
+    nickname: Joi.string().min(3).max(20).required(),
+    password: Joi.string()
+        .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
+        .required(), 
+    confirmPassword: Joi.ref('password')
+}).with('password','confirmPassword')
+
 
 router.post('/register', async (req, res, next) => {
     try {
-        const { email, nickname, password, confirmPassword } = req.body;
+        const { email, nickname, password, confirmPassword } = await registerValidator.validateAsync(req.body);
         // password가 일치한지 확인해야한다.
         if (password !== confirmPassword) {
             res.status(400).send({
@@ -55,7 +62,7 @@ router.post('/register', async (req, res, next) => {
 
 router.post('/login', async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = await registerValidator.validateAsync(req.body);
         const user = await User.findOne({ email })
         if (!user) {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
