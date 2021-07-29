@@ -53,7 +53,12 @@ router.post('/register', async (req, res, next) => {
             password: hashed,
         });
         const token = createJwtToken(userId)
-        res.status(201).json({ token, email });
+        res.status(201).json({
+            'ok':true, 
+            message: '회원가입 성공',
+            token: token, 
+            email: email,
+        });
 
     } catch (error) {
         next(error);
@@ -73,8 +78,17 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         const token = createJwtToken(user.id);
-        res.status(200).json({ token, email });
+        res.status(200).json({
+            'ok': true, 
+            message:'로그인 성공',
+            token: token, 
+            email: email,
+        });
     } catch (err) {
+        res.status(400).send({
+            'ok': false, 
+            message: '서버 실패: 로그인 실패',
+        })
         next(err);
     }
 });
@@ -83,9 +97,14 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     try {
         res.send({
             'ok': true,
+            message:'토큰 인증 성공',
             user: res.locals.user
         })
     } catch (err) {
+        res.status(400).send({
+            'ok': false, 
+            message: '토큰 인증 실패'
+        })
         next(err)
     }
 });
