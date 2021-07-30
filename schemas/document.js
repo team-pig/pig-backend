@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const documentSchema = new Schema({
+    documentId: { auto: true, type: 'objectId', index: true},
     title: {
         type: String,
     },

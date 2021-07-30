@@ -15,19 +15,16 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
     const { roomId } = req.params
     const { title, content } = req.body
     const newDocument = await Documents.create({
-      documentId: '1',
       title: title,
       content: content,
       userId: userId,
       roomId: roomId,
     });
 
-    const documentId = newDocument._id
-
     res.status(200).send({
       ok: true,
       message: 'document 작성 성공',
-      documentId: documentId
+      documentId: newDocument.documentId
     })
   } catch (err) {
     console.error('document 작성 에러', err)
@@ -66,23 +63,10 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       return
     }
 
-    //도큐먼트의 _id를 documentId로 변경해서 프론트엔드로 보내주기
-    const finalResult = []
-    for (i = 0; i < result.length; i++) {
-      let documentId = result[i]._id
-      let title = result[i].title
-      let content = result[i].content
-      finalResult.push({
-        documentId: documentId,
-        title: title,
-        content: content,
-      })
-    }
-
     res.status(200).send({
       ok: true,
       message: '도큐먼트 작성 성공',
-      result: finalResult,
+      result: result
     })
   } catch (error) {
     console.log('display document ERROR', error)
@@ -125,7 +109,7 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
       message: '상세 도큐먼트 보여주기 성공',
       title: result.title,
       content: result.content,
-      documentId: result._id
+      documentId: result.documentId
     })
   } catch (error) {
     console.log('display document ERROR', error)
