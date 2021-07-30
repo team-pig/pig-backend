@@ -2,6 +2,7 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
+const { updateMany } = require('../schemas/room.js')
 
 const router = express.Router()
 
@@ -26,26 +27,17 @@ router.get('/room/:roomId/board', async (req, res) => {})
 
 router.get('/room/:roomId/timeline', async (req, res) => {})
 
+router.post('/test', async (req, res) => {
+  const findRoom = await Room.findOne({ id: Room.roomId })
+  console.log(findRoom.roomId)
+  res.send(findRoom)
+})
+
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag } = req.body
   try {
-    const room = new Room()
-    room.roomName = roomName
-    room.roomImage = roomImage
-    room.master = userId
-    room.members = userId
-    room.subtitle = subtitle
-    room.tag = tag
-    room.inviteCode = v4()
-    room.save(function (err) {
-      if (err) {
-        console.error(err)
-        res.status(400).send({ ok: false, message: '서버에러: 방 만들기 실패' })
-        return
-      }
-      return
-    })
+    const room = await Room.create({ roomName, roomImage, master:userId, members:userId, subtitle, tag, inviteCode: v4() });
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
@@ -53,7 +45,7 @@ router.post('/room', auth, async (req, res) => {
   }
 })
 
-router.post('/room/room', auth, async (req, res) => {
+router.post('/room/member', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { inviteCode } = req.body
   const findRoom = await Room.findOne({ inviteCode })
@@ -136,30 +128,29 @@ router.delete('/room', auth, async (req, res) => {
     console.error(err)
     res.status(400).json(err)
   }
-
-  //   await Room.findByIdAndRemove(roomId)
-  //   return res.send()
 })
 
 router.delete('/room/member/:roomId', auth, async (req, res) => {
-  const roomId = req.params.roomId
-  const userId = res.locals.user.id
-  const findRoom = await Room.findById(roomId)
-  const members = findRoom.members
-  if (members.length === 1) {
-    return res.json({
-      message:
-        '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
+  try {
+    const roomId = req.params.roomId
+    const userId = res.locals.user.id
+    const findRoom = await Room.findById(roomId)
+    const members = findRoom.members
+    if (members.length === 1) {
+      return res.json({
+        message:
+          '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
+      })
+    }
+    await Room.findByIdAndUpdate(roomId, { $pull: { members: userId } })
+    res.json({
+      ok: true,
+      message: '방 나가기 성공',
     })
+  } catch (err) {
+    console.error(err)
+    res.status(400).json(err)
   }
-
-  await Room.findByIdAndUpdate(roomId, { $pull: { members: userId } })
-
-  res.json({
-    ok: true,
-    message: '방 나가기 성공',
-  })
-  res.send()
 })
 
 module.exports = router
