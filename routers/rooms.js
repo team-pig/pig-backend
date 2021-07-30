@@ -37,7 +37,15 @@ router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag } = req.body
   try {
-    const room = await Room.create({ roomName, roomImage, master:userId, members:userId, subtitle, tag, inviteCode: v4() });
+    const room = await Room.create({
+      roomName,
+      roomImage,
+      master: userId,
+      members: userId,
+      subtitle,
+      tag,
+      inviteCode: v4(),
+    })
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
