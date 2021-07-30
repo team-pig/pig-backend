@@ -4,6 +4,7 @@ const Document = require('./document')
 const { Schema } = mongoose
 const roomSchema = new mongoose.Schema(
   {
+    // roomId: { auto: true, type: 'ObjectId',},
     roomName: String,
     roomImage: String,
     master: String,
@@ -18,7 +19,11 @@ const roomSchema = new mongoose.Schema(
 
   },
   {
+    // _id: false,
     versionKey: false,
   }
 )
+roomSchema.virtual('roomId').get(function(){
+  return this._id;
+});
 module.exports = mongoose.model('Room', roomSchema)
