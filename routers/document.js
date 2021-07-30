@@ -14,8 +14,8 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { title, content } = req.body
-
     const newDocument = await Documents.create({
+      documentId: '1',
       title: title,
       content: content,
       userId: userId,
@@ -81,6 +81,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
 
     res.status(200).send({
       ok: true,
+      message: '도큐먼트 작성 성공',
       result: finalResult,
     })
   } catch (error) {
@@ -168,7 +169,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       return
     }
     res.status(200).send({
-      ok: false,
+      ok: true,
       message: '도큐먼트 수정 성공',
     })
   } catch (error) {
