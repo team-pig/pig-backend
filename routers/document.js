@@ -113,7 +113,9 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
     res.status(200).send({
       'ok': true,
       message: '상세 도큐먼트 보여주기 성공',
-      result: result
+      title: result.title,
+      content: result.content,
+      documentId: result.documentId,
     })
   } catch (error) {
     console.log('display document ERROR', error);
