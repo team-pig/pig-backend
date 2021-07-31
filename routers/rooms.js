@@ -2,7 +2,6 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
-const { updateMany } = require('../schemas/room.js')
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
