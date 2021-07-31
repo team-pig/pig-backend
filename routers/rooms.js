@@ -38,9 +38,9 @@ router.post('/room', auth, async (req, res) => {
   const { roomName, roomImage, subtitle, tag } = req.body
   try {
     const room = await Room.create({
-      roomName,
-      roomImage,
-      master: userId,
+      roomName, 
+      roomImage, 
+      master: userId, 
       members: userId,
       subtitle,
       tag,
@@ -49,7 +49,10 @@ router.post('/room', auth, async (req, res) => {
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
-    res.status(400).send({ ok: false, message: '서버에러: 방 만들기 실패' })
+    res.status(400).send({ 
+      ok: false, 
+      message: '서버에러: 방 만들기 실패'
+    })
   }
 })
 
@@ -68,25 +71,28 @@ router.post('/room/member', auth, async (req, res) => {
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
       res.json({ errorMessage: '이미 추가 된 방입니다.' })
+
       return
     }
     if (!findInviteCode) {
-      res
-        .status(400)
-        .send({ ok: false, message: '서버에러: 존재하지 않는 초대코드입니다.' })
+      res.status(400).send({ 
+        ok: false, 
+        message: '서버에러: 존재하지 않는 초대코드입니다.'
+      })
     }
     if (inviteCode && !findRoom.members.includes(userId)) {
-      await Room.updateOne({ inviteCode }, { $push: { members: userId } })
+      await Room.updateOne({ inviteCode }, { $push: { members: userId }})
       const room = await Room.findOne({ inviteCode })
       return res.json({ room })
+    } 
+    } catch (error) {
+      console.log('방 추가 실패', error)
+      res.status(400).send({ 
+        ok: false,
+        message: '서버에러: 다른 사람 방 추가 실패'
+      })
     }
-  } catch (err) {
-    console.log('방 추가 실패?', err)
-    res
-      .status(400)
-      .send({ ok: false, message: '서버에러: 다른 사람 방 추가 실패' })
-  }
-})
+
 
 
 router.put('/room', auth, async (req, res) => {
@@ -143,6 +149,7 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
     const userId = res.locals.user.id
     const findRoom = await Room.findById(roomId)
     const members = findRoom.members
+
     if (members.length === 1) {
       return res.json({
         message:
