@@ -143,7 +143,6 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       })
       return;
     }
-
     const { documentId, title, content } = req.body
     const findDocument = await Documents.findById(documentId);
     if (!findDocument) {
@@ -153,8 +152,6 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       })
       return;
     }
-
-
     const editDocument = await Documents.findByIdAndUpdate(documentId, {
       title: title,
       content: content,
@@ -186,7 +183,6 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { documentId } = req.body
-
     const room = await Rooms.findById(roomId);
     if (!room) {
       res.status(400).send({
