@@ -2,6 +2,7 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
+const { updateMany } = require('../schemas/room.js')
 
 const router = express.Router()
 
@@ -26,41 +27,47 @@ router.get('/room/:roomId/board', async (req, res) => {})
 
 router.get('/room/:roomId/timeline', async (req, res) => {})
 
+router.post('/test', async (req, res) => {
+  const findRoom = await Room.findOne({ id: Room.roomId })
+  console.log(findRoom.roomId)
+  res.send(findRoom)
+})
+
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
-  const { roomName, roomImage, subtitle, tag, inviteCode } = req.body
-
-  const findRoom = await Room.findOne({ inviteCode })
-  const memberInRoom = findRoom.members.includes(userId)
+  const { roomName, roomImage, subtitle, tag } = req.body
   try {
-    // 방 만들기
-    if (!inviteCode) {
-      const room = new Room()
-      room.roomName = roomName
-      room.roomImage = roomImage
-      room.master = userId
-      room.members = userId
-      room.subtitle = subtitle
-      room.tag = tag
-      room.inviteCode = v4()
-      room.save(function (err) {
-        if (err) {
-          console.error(err)
-          res
-            .status(400)
-            .send({ ok: false, message: '서버에러: 방 만들기실패' })
-          return
-        }
-        return
-      })
-      res.json({ room })
-    }
+    const room = await Room.create({
+      roomName, 
+      roomImage, 
+      master: userId, 
+      members: userId,
+      subtitle,
+      tag,
+      inviteCode: v4(),
+    })
+    res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
-    res.status(400).send({ ok: false, message: '서버에러: 방 만들기 실패' })
+    res.status(400).send({ 
+      ok: false, 
+      message: '서버에러: 방 만들기 실패'
+    })
   }
-  // 다른 사람 방 추가하기(초대코드입력)
+})
+
+router.post('/room/member', auth, async (req, res) => {
+  const userId = res.locals.user.id
+  const { inviteCode } = req.body
+  const findRoom = await Room.findOne({ inviteCode })
+  if (!findRoom) {
+    console.log('찾으려는 방이 없습니다.')
+    return res
+      .status(400)
+      .send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
+  }
   try {
+    const memberInRoom = await findRoom.members.includes(userId)
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
       res.json({ errorMessage: '이미 추가 된 방입니다.' })
@@ -68,24 +75,25 @@ router.post('/room', auth, async (req, res) => {
       return
     }
     if (!findInviteCode) {
-      res
-        .status(400)
-        .send({ ok: false, message: '서버에러: 존재하지 않는 초대코드입니다.' })
+      res.status(400).send({ 
+        ok: false, 
+        message: '서버에러: 존재하지 않는 초대코드입니다.'
+      })
     }
     if (inviteCode && !findRoom.members.includes(userId)) {
-      await Room.updateOne({ inviteCode }, { $push: { members: userId } })
+      await Room.updateOne({ inviteCode }, { $push: { members: userId }})
       const room = await Room.findOne({ inviteCode })
       return res.json({ room })
+    } 
+    } catch (error) {
+      console.log('방 추가 실패', error)
+      res.status(400).send({ 
+        ok: false,
+        message: '서버에러: 다른 사람 방 추가 실패'
+      })
     }
-  } catch (error) {
-    console.log('방 추가하기 실패', error)
-    res
-      .status(400)
-      .send({ ok: false, message: '서버에러: 다른 사람 방 추가 실패' })
-  }
-})
 
-router.put('/exitroom', auth, async (req, res) => {})
+
 
 router.put('/room', auth, async (req, res) => {
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
@@ -133,9 +141,30 @@ router.delete('/room', auth, async (req, res) => {
     console.error(err)
     res.status(400).json(err)
   }
+})
 
-  //   await Room.findByIdAndRemove(roomId)
-  //   return res.send()
+router.delete('/room/member/:roomId', auth, async (req, res) => {
+  try {
+    const roomId = req.params.roomId
+    const userId = res.locals.user.id
+    const findRoom = await Room.findById(roomId)
+    const members = findRoom.members
+
+    if (members.length === 1) {
+      return res.json({
+        message:
+          '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
+      })
+    }
+    await Room.findByIdAndUpdate(roomId, { $pull: { members: userId } })
+    res.json({
+      ok: true,
+      message: '방 나가기 성공',
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(400).json(err)
+  }
 })
 
 module.exports = router
