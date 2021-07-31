@@ -110,3 +110,4 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 });
 
 module.exports = router;
+

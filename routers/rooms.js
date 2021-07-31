@@ -27,6 +27,12 @@ router.get('/room/:roomId/board', async (req, res) => {})
 
 router.get('/room/:roomId/timeline', async (req, res) => {})
 
+router.post('/test', async (req, res) => {
+  const findRoom = await Room.findOne({ id: Room.roomId })
+  console.log(findRoom.roomId)
+  res.send(findRoom)
+})
+
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { roomName, roomImage, subtitle, tag } = req.body
@@ -40,6 +46,7 @@ router.post('/room', auth, async (req, res) => {
       tag,
       inviteCode: v4(),
     })
+    res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
     res.status(400).send({ 
@@ -49,19 +56,22 @@ router.post('/room', auth, async (req, res) => {
   }
 })
 
-router.post('/room/member',auth, async (req, res) => {
+router.post('/room/member', auth, async (req, res) => {
   const userId = res.locals.user.id
   const { inviteCode } = req.body
   const findRoom = await Room.findOne({ inviteCode })
   if (!findRoom) {
     console.log('찾으려는 방이 없습니다.')
-    return res.status(400).send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요'})
+    return res
+      .status(400)
+      .send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
   }
   try {
-    const memberInRoom = findRoom.members.includes(userId)
+    const memberInRoom = await findRoom.members.includes(userId)
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
-      res.json({ errorMessage: '이미 추가 된 방입니다.'})
+      res.json({ errorMessage: '이미 추가 된 방입니다.' })
+
       return
     }
     if (!findInviteCode) {
@@ -82,9 +92,8 @@ router.post('/room/member',auth, async (req, res) => {
         message: '서버에러: 다른 사람 방 추가 실패'
       })
     }
-  })
 
-router.put('/exitroom', auth, async (req, res) => {})
+
 
 router.put('/room', auth, async (req, res) => {
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
@@ -140,19 +149,21 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
     const userId = res.locals.user.id
     const findRoom = await Room.findById(roomId)
     const members = findRoom.members
-    if (members.length === 1 ) {
+
+    if (members.length === 1) {
       return res.json({
-        message: '방에 혼자 있어서 나갈 수 없어요. 정말나가려면 방 삭제버튼을 눌러주세요.'
+        message:
+          '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
       })
     }
-    await Room.findByIdAndUpdate(roomId, { $pull: { members: userId }})
+    await Room.findByIdAndUpdate(roomId, { $pull: { members: userId } })
     res.json({
       ok: true,
       message: '방 나가기 성공',
     })
-  } catch (error) {
-    console.error(error)
-    res.status(400).json(error)
+  } catch (err) {
+    console.error(err)
+    res.status(400).json(err)
   }
 })
 
