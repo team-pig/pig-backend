@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-// test:test@
 
 const connect = () => {
   mongoose

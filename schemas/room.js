@@ -1,10 +1,9 @@
 
 const mongoose = require('mongoose')
 // const Timeline = require('./timeline')
-const Document = require('./document')
-const { Schema } = mongoose
 const roomSchema = new mongoose.Schema(
   {
+    roomId: { auto: true, type: 'objectId', index: true },
     roomName: String,
     roomImage: String,
     master: String,
@@ -16,7 +15,6 @@ const roomSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-
   },
   {
     versionKey: false,

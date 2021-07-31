@@ -54,7 +54,7 @@ router.post('/register', async (req, res, next) => {
         });
         const token = createJwtToken(userId)
         res.status(201).json({
-            'ok':true, 
+            ok:true, 
             message: '회원가입 성공',
             token: token, 
             email: email,
@@ -79,14 +79,14 @@ router.post('/login', async (req, res, next) => {
         }
         const token = createJwtToken(user.id);
         res.status(200).json({
-            'ok': true, 
+            ok: true, 
             message:'로그인 성공',
             token: token, 
             email: email,
         });
     } catch (err) {
         res.status(400).send({
-            'ok': false, 
+            ok: false, 
             message: '서버 실패: 로그인 실패',
         })
         next(err);
@@ -96,13 +96,13 @@ router.post('/login', async (req, res, next) => {
 router.get('/token', authMiddleware, async (req, res, next) => {
     try {
         res.send({
-            'ok': true,
+            ok: true,
             message:'토큰 인증 성공',
             user: res.locals.user
         })
     } catch (err) {
         res.status(400).send({
-            'ok': false, 
+            ok: false, 
             message: '토큰 인증 실패'
         })
         next(err)
