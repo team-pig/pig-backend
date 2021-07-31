@@ -19,13 +19,13 @@ router.get('/rooms', auth, async (req, res) => {
   }
 })
 
-router.get('/room/:roomId/main', async (req, res) => {})
+router.get('/room/:roomId/main', async (req, res) => { })
 
-router.get('/room/:roomId/page', async (req, res) => {})
+router.get('/room/:roomId/page', async (req, res) => { })
 
-router.get('/room/:roomId/board', async (req, res) => {})
+router.get('/room/:roomId/board', async (req, res) => { })
 
-router.get('/room/:roomId/timeline', async (req, res) => {})
+router.get('/room/:roomId/timeline', async (req, res) => { })
 
 router.post('/test', async (req, res) => {
   const findRoom = await Room.findOne({ id: Room.roomId })
@@ -38,9 +38,9 @@ router.post('/room', auth, async (req, res) => {
   const { roomName, roomImage, subtitle, tag } = req.body
   try {
     const room = await Room.create({
-      roomName, 
-      roomImage, 
-      master: userId, 
+      roomName,
+      roomImage,
+      master: userId,
       members: userId,
       subtitle,
       tag,
@@ -49,8 +49,8 @@ router.post('/room', auth, async (req, res) => {
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
-    res.status(400).send({ 
-      ok: false, 
+    res.status(400).send({
+      ok: false,
       message: '서버에러: 방 만들기 실패'
     })
   }
@@ -75,23 +75,24 @@ router.post('/room/member', auth, async (req, res) => {
       return
     }
     if (!findInviteCode) {
-      res.status(400).send({ 
-        ok: false, 
+      res.status(400).send({
+        ok: false,
         message: '서버에러: 존재하지 않는 초대코드입니다.'
       })
     }
     if (inviteCode && !findRoom.members.includes(userId)) {
-      await Room.updateOne({ inviteCode }, { $push: { members: userId }})
+      await Room.updateOne({ inviteCode }, { $push: { members: userId } })
       const room = await Room.findOne({ inviteCode })
       return res.json({ room })
-    } 
-    } catch (error) {
-      console.log('방 추가 실패', error)
-      res.status(400).send({ 
-        ok: false,
-        message: '서버에러: 다른 사람 방 추가 실패'
-      })
     }
+  } catch (error) {
+    console.log('방 추가 실패', error)
+    res.status(400).send({
+      ok: false,
+      message: '서버에러: 다른 사람 방 추가 실패'
+    })
+  }
+})
 
 
 
