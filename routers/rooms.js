@@ -5,6 +5,41 @@ const { v4 } = require('uuid')
 const { updateMany } = require('../schemas/room.js')
 
 const router = express.Router()
+// pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
+router.get('/test', auth, async (req, res) => {
+  const page = parseInt(req.query.page)
+  const size = parseInt(req.query.size)
+  const member = res.locals.user.id
+  const startIndex = (page - 1) * size
+  const endIndex = page * size
+  const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
+  const room = {}
+  room.totalPages = totalPages
+  if (endIndex < (await Room.countDocuments().exec())) {
+    room.next = {
+      page: page + 1,
+      size: size,
+    }
+  }
+
+  if (startIndex > 0) {
+    room.previous = {
+      page: page - 1,
+      size: size,
+    }
+  }
+  try {
+    room.room = await Room.find({ members: member }).sort({
+      createdAt: 'desc',
+    }).limit(size).skip(startIndex).exec()
+
+    res.paginatedroom = room
+  } catch (e) {
+    res.status(500).json({ message: '서버에러: 방 조회 실패' })
+  }
+
+  res.send(res.paginatedroom)
+})
 
 router.get('/rooms', auth, async (req, res) => {
   try {
