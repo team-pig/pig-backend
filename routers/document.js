@@ -21,6 +21,15 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
       roomId: roomId,
     });
 
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
+
     res.status(200).send({
       ok: true,
       message: 'document 작성 성공',
@@ -53,7 +62,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
     //   return;
     // };
 
-    // const result = room.document;
+
 
     if (!result) {
       res.status(400).send({
@@ -126,21 +135,26 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
     //check if this user is a member of the room
     const userId = res.locals.user._id
     const { roomId } = req.params
-    // if (!roomId) {
-    //   res.status(400).send({
-    //     'ok': false,
-    //     message: '존재하지 않는 룸 아이디 입니다.'
-    //   })
-    //   return;
-    // }
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
+
     const { documentId, title, content } = req.body
-    // if (!documentId) {
-    //   res.status(400).send({
-    //     ok: 'false',
-    //     message: '존재하지 않는 도큐먼트 입니다.'
-    //   })
-    //   return;
-    // }
+    const findDocument = await Documents.findById(documentId);
+    if (!findDocument) {
+      res.status(400).send({
+        ok: 'false',
+        message: '존재하지 않는 도큐먼트 입니다.'
+      })
+      return;
+    }
+
+
     const editDocument = await Documents.findByIdAndUpdate(documentId, {
       title: title,
       content: content,
@@ -150,7 +164,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
         ok: false,
         message: '존재하지 않는 도큐먼트 입니다.',
       })
-      return
+      return;
     }
     res.status(200).send({
       ok: true,
@@ -173,6 +187,15 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
     const { roomId } = req.params
     const { documentId } = req.body
 
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
+
     const deleteDocument = await Documents.findByIdAndDelete(documentId)
     if (!deleteDocument) {
       res.status(400).send({
@@ -190,6 +213,19 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
     res.status(400).send({
       ok: false,
       message: '서버에러: 도큐먼트 삭제 실패',
+    })
+  }
+})
+
+//문서 백업기능
+router.post('/room/:roomId/document/backup', authMiddleware, async (req, res) => {
+  try {
+
+  } catch (error) {
+    console.log('문서 백업 에러', error);
+    res.status(400).send({
+      'ok': false,
+      message: '서버에러: 문서백업 실패'
     })
   }
 })
