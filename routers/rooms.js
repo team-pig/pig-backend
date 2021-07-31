@@ -88,7 +88,6 @@ router.post('/room/member', auth, async (req, res) => {
   }
 })
 
-router.put('/exitroom', auth, async (req, res) => {})
 
 router.put('/room', auth, async (req, res) => {
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
