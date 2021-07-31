@@ -15,7 +15,7 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
     const { roomId } = req.params
     const { title, content } = req.body
 
-    const room = await Rooms.findById(roomId);
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
         'ok': false,
@@ -57,9 +57,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
 
     const { roomId } = req.params
-    const result = await Documents.find({ roomId: roomId })
-
-    const room = await Rooms.findById(roomId);
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
         'ok': false,
@@ -67,7 +65,6 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       })
       return;
     }
-
     if (room.members.includes(userId) === false) {
       res.status(400).send({
         'ok': false,
@@ -76,8 +73,8 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       return;
     }
 
-
-    if (!result) {
+    const result = await Documents.find({ roomId: roomId })
+    if (result.length === 0) {
       res.status(400).send({
         ok: false,
         message: '이 방에는 도큐먼트가 없습니다.',
@@ -87,7 +84,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
 
     res.status(200).send({
       ok: true,
-      message: '도큐먼트 작성 성공',
+      message: '도큐먼트 보여주기 성공',
       result: result
     })
   } catch (error) {
@@ -111,10 +108,10 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
         ok: false,
         message: 'roomId가 입력되지 않았습니다.',
       })
-      return
+      return;
     }
 
-    const room = await Rooms.findById(roomId);
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
         'ok': false,
@@ -131,7 +128,7 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
     const { documentId } = req.body
-    const result = await Documents.findById(documentId)
+    const result = await Documents.findOne({ documentId: documentId })
     // const room = await Rooms.findById(roomId).exec();
     // const result = await room.document.id(documentId);
 
@@ -165,7 +162,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
     //check if this user is a member of the room
     const userId = res.locals.user._id
     const { roomId } = req.params
-    const room = await Rooms.findById(roomId);
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
         'ok': false,
@@ -183,7 +180,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
     }
 
     const { documentId, title, content } = req.body
-    const findDocument = await Documents.findById(documentId);
+    const findDocument = await Documents.findOne({ documentId: documentId });
     if (!findDocument) {
       res.status(400).send({
         ok: 'false',
@@ -191,7 +188,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       })
       return;
     }
-    const editDocument = await Documents.findByIdAndUpdate(documentId, {
+    const editDocument = await Documents.findOneAndUpdate({ documentId: documentId }, {
       title: title,
       content: content,
     })
@@ -222,7 +219,7 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { documentId } = req.body
-    const room = await Rooms.findById(roomId);
+    const room = await Rooms.findOne({roomId:roomId});
     if (!room) {
       res.status(400).send({
         'ok': false,
