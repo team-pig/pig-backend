@@ -14,12 +14,6 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { title, content } = req.body
-    const newDocument = await Documents.create({
-      title: title,
-      content: content,
-      userId: userId,
-      roomId: roomId,
-    });
 
     const room = await Rooms.findById(roomId);
     if (!room) {
@@ -30,6 +24,19 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
 
+    if (room.members.includes(userId) === false) {
+      res.status(400).send({
+        'ok': false,
+        message: '본 유저는 방의 멤버가 아닙니다.'
+      })
+      return;
+    }
+    const newDocument = await Documents.create({
+      title: title,
+      content: content,
+      userId: userId,
+      roomId: roomId,
+    });
     res.status(200).send({
       ok: true,
       message: 'document 작성 성공',
@@ -47,21 +54,27 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
 //모든 DOCUMENT 보여주기
 router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
   try {
-    //check if this user is a member of the room
     const userId = res.locals.user._id
 
     const { roomId } = req.params
     const result = await Documents.find({ roomId: roomId })
 
-    // const room = await Rooms.findById(roomId).exec();
-    // if (!room) {
-    //   res.status(400).send({
-    //     'ok': false,
-    //     message: '존재하지 않는 룸 아이디 입니다.'
-    //   })
-    //   return;
-    // };
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
 
+    if (room.members.includes(userId) === false) {
+      res.status(400).send({
+        'ok': false,
+        message: '본 유저는 방의 멤버가 아닙니다.'
+      })
+      return;
+    }
 
 
     if (!result) {
@@ -99,6 +112,23 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
         message: 'roomId가 입력되지 않았습니다.',
       })
       return
+    }
+
+    const room = await Rooms.findById(roomId);
+    if (!room) {
+      res.status(400).send({
+        'ok': false,
+        message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
+
+    if (room.members.includes(userId) === false) {
+      res.status(400).send({
+        'ok': false,
+        message: '본 유저는 방의 멤버가 아닙니다.'
+      })
+      return;
     }
     const { documentId } = req.body
     const result = await Documents.findById(documentId)
@@ -143,6 +173,15 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       })
       return;
     }
+
+    if (room.members.includes(userId) === false) {
+      res.status(400).send({
+        'ok': false,
+        message: '본 유저는 방의 멤버가 아닙니다.'
+      })
+      return;
+    }
+
     const { documentId, title, content } = req.body
     const findDocument = await Documents.findById(documentId);
     if (!findDocument) {
@@ -188,6 +227,14 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸아이디 입니다.'
+      })
+      return;
+    }
+
+    if (room.members.includes(userId) === false) {
+      res.status(400).send({
+        'ok': false,
+        message: '본 유저는 방의 멤버가 아닙니다.'
       })
       return;
     }
