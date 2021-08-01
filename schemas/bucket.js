@@ -1,13 +1,11 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const { Schema } = mongoose;
 const bucketSchema = new Schema({
-    bucketId: { auto: true, type: 'objectId', index: true},
+    bucketId: { type: Number, index: true},
     bucketName: {
         type: String,
-    },
-    bucketOrder: {
-        type: [String]
     },
     roomId: {
         type: String
@@ -15,5 +13,5 @@ const bucketSchema = new Schema({
     // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 }
 );
-
+bucketSchema.plugin(AutoIncrement, {inc_field: 'bucketId'});
 module.exports = mongoose.model("Buckets", bucketSchema);

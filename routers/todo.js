@@ -1,12 +1,12 @@
 const express = require('express');
 const Buckets = require('../schemas/bucket');
+const BucketOrder = require('../schemas/bucketOrder');
 const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 
 const router = express.Router();
-
 
 //버킷 만들기
 router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
@@ -29,6 +29,11 @@ router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
         //create Bucket
         const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
 
+        const bucketExist = await BucketOrder.findOne({roomId:roomId});
+        if(!bucketExist){
+            await BucketOrder.create({roomId:roomId})
+        }
+
         res.status(200).send({
             'ok': true,
             message: '버킷 생성 성공',
@@ -44,13 +49,27 @@ router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
 })
 
 router.patch('/room/:roomId/bucket', authMiddleware, async (req, res) => {
-
+//PUT OR PATCH??????
     try {
         const { bucketId, bucketName, bucketOrder } = req.body;
         const { roomId } = req.params;
 
+        //OPTIONS
+        //1. 각각의 버킷마다 bucketOrder에 저장
+        //2. bucketOrder document을 따로 만들어서 roomId마다 하나씩 있게함. 저장하고 불러옴.
 
 
+        //bucket을 하나씩만 수정할수있나? 그렇다면 updateOne. 여러개 동시에 수정할수있나? 그러면 updateMany
+         await Buckets.updateOne({ bucketId:bucketId }, { bucketName: bucketName });
+
+         await BucketOrder.updateOne({ roomId: roomId }, { bucketOrder: bucketOrder });
+        //  const bucket = Buckets.findOne({roomId:roomId});
+        
+        
+        res.status(200).send({
+            'ok': true,
+            message: '버킷 위치/내용 수정 성공',
+        })
     } catch (error) {
         console.log('버킷 위치/내용 수정 에러', error);
         res.status(400).send({
@@ -59,5 +78,8 @@ router.patch('/room/:roomId/bucket', authMiddleware, async (req, res) => {
         })
     }
 })
+
+
+module.exports = router
 
 
