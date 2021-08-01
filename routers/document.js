@@ -1,10 +1,10 @@
-const express = require('express')
-const Documents = require('../schemas/document')
-const Rooms = require('../schemas/room')
-const Users = require('../schemas/users')
-const authMiddleware = require('../middlewares/auth-middleware')
+const express = require('express');
+const Documents = require('../schemas/document');
+const Rooms = require('../schemas/room');
+const Users = require('../schemas/users');
+const authMiddleware = require('../middlewares/auth-middleware');
 
-const router = express.Router()
+const router = express.Router();
 
 //DOCUMENT 작성
 
@@ -234,7 +234,7 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
 
-    const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false })
+    const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false });
     if (!deleteDocument) {
       res.status(400).send({
         ok: false,
