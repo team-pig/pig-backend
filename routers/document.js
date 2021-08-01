@@ -129,8 +129,6 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
     }
     const { documentId } = req.body
     const result = await Documents.findOne({ documentId: documentId })
-    // const room = await Rooms.findById(roomId).exec();
-    // const result = await room.document.id(documentId);
 
     if (!result) {
       res.status(400).send({
@@ -191,7 +189,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
     const editDocument = await Documents.findOneAndUpdate({ documentId: documentId }, {
       title: title,
       content: content,
-    })
+    }, { useFindAndModify: false })
     if (!editDocument) {
       res.status(400).send({
         ok: false,
@@ -219,7 +217,7 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { documentId } = req.body
-    const room = await Rooms.findOne({roomId:roomId});
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
         'ok': false,
@@ -236,13 +234,13 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
 
-    const deleteDocument = await Documents.findByIdAndDelete(documentId)
+    const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false })
     if (!deleteDocument) {
       res.status(400).send({
         ok: false,
         message: '존재하지 않는 도큐먼트 입니다',
       })
-      return
+      return;
     }
 
     res.status(200).send({
