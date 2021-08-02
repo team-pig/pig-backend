@@ -1,3 +1,4 @@
+// Room._id -> Room.roomId로 findById -> findOne 변경 예정
 const express = require('express')
 const Room = require('../schemas/room.js')
 const auth = require('../middlewares/auth-middleware.js')
@@ -15,17 +16,11 @@ router.get('/test', auth, async (req, res) => {
   const room = {}
   room.totalPages = totalPages
   if (endIndex < (await Room.countDocuments().exec())) {
-    room.next = {
-      page: page + 1,
-      size: size,
-    }
+    room.next = { page: page + 1, size: size }
   }
 
   if (startIndex > 0) {
-    room.previous = {
-      page: page - 1,
-      size: size,
-    }
+    room.previous = { page: page - 1, size: size }
   }
   try {
     room.room = await Room.find({ members: member }).sort({
@@ -77,7 +72,7 @@ router.post('/room', auth, async (req, res) => {
       master: userId,
       members: userId,
       subtitle,
-      tag,
+      tag: tag.split(', '),
       inviteCode: v4(),
     })
     res.json({ room })
@@ -143,7 +138,7 @@ router.put('/room', auth, async (req, res) => {
     if (roomId && findRoom.master == userId) {
       await Room.updateOne(
         { _id: roomId },
-        { $set: { roomName, roomImage, subtitle, tag } }
+        { $set: { roomName, roomImage, subtitle, tag:tag.split(', ') } }
       )
       return res.json({ ok: true, message: '방 수정 성공' })
     }
