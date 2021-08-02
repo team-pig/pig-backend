@@ -5,13 +5,12 @@ const Cards = require('../schemas/card');
 const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
-
 const authMiddleware = require('../middlewares/auth-middleware');
-
+const isMember = require('../middlewares/isMember');
 const router = express.Router();
 
 //버킷 만들기
-router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
+router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     try {
         const userId = res.locals.user._id;    //user.userId? or user._id?
         const { roomId } = req.params;
@@ -26,7 +25,6 @@ router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
             });
             return;
         }
-        //check if user is room member
 
         //create Bucket
         const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
@@ -51,7 +49,7 @@ router.post('/room/:roomId/bucket', authMiddleware, async (req, res) => {
 })
 
 //버킷 내용/위치 수정
-router.patch('/room/:roomId/bucket', authMiddleware, async (req, res) => {
+router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     //PUT OR PATCH??????
     try {
         const { bucketId, bucketName, bucketOrder } = req.body;
@@ -85,12 +83,10 @@ router.patch('/room/:roomId/bucket', authMiddleware, async (req, res) => {
 
 
 //카드 생성
-router.post('/room/:roomId/card', authMiddleware, async (req, res) => {
+router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
         const { bucketId, cardTitle } = req.body;
-
-        //check if user is a room member
 
 
         const newCard = await Cards.create({ bucketId, cardTitle });
@@ -109,8 +105,8 @@ router.post('/room/:roomId/card', authMiddleware, async (req, res) => {
     }
 })
 
-//카드 수정
-router.patch('/room/:roomId/card', authMiddleware, async (req, res) => {
+//카드 내용 수정
+router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
         const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt } = req.body;
@@ -125,17 +121,47 @@ router.patch('/room/:roomId/card', authMiddleware, async (req, res) => {
             });
         res.status(200).send({
             'ok': true,
-            message: '카드 수정 성공',
+            message: '카드 내용 수정 성공',
         })
 
     } catch (error) {
-        console.log('카드생성 에러', error);
+        console.log('카드위치수정 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드생성 실패'
+            message: '서버에러: 카드 내용 수정 실패'
         })
     }
 });
+
+//카드 위치 수정
+router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { sourceBucket, sourceBucketOrder, destinationBucket, destinationBucketOrder } = req.body;
+
+        //check if user is a room member
+
+        await Cards.findOneAndUpdate({ cardId: cardId },
+            {
+                startDate: startDate, cardTitle: cardTitle,
+                endDate: endDate, desc: desc,
+                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt
+            });
+        res.status(200).send({
+            'ok': true,
+            message: '카드 위치 수정 성공',
+        })
+
+    } catch (error) {
+        console.log('카드위치수정 에러', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 카드위치 수정 실패'
+        })
+    }
+});
+
+
 
 
 module.exports = router
