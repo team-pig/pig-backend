@@ -5,7 +5,7 @@ const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
 
-/*
+/*이미지 업로드
 const path = require("path");
 const multer = require("multer");
 const fileStorageEngine = multer.diskStorage({
