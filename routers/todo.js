@@ -2,6 +2,7 @@ const express = require('express');
 const Buckets = require('../schemas/bucket');
 const BucketOrder = require('../schemas/bucketOrder');
 const Cards = require('../schemas/card');
+const Todos = require('../schemas/todo');
 const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
@@ -61,9 +62,9 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
 
 
         //bucket을 하나씩만 수정할수있나? 그렇다면 updateOne. 여러개 동시에 수정할수있나? 그러면 updateMany
-        await Buckets.updateOne({ bucketId: bucketId }, { bucketName: bucketName });
+        await Buckets.updateOne({ bucketId: bucketId }, { bucketName: bucketName }, { omitUndefined: true });
 
-        await BucketOrder.updateOne({ roomId: roomId }, { bucketOrder: bucketOrder });
+        await BucketOrder.updateOne({ roomId: roomId }, { bucketOrder: bucketOrder }, { omitUndefined: true });
         //  const bucket = Buckets.findOne({roomId:roomId});
 
 
@@ -144,14 +145,14 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
         //souceBucket and destinationBucket will be the same, if the card moves within the same bucket only
 
         //change card's bucketId in Cards
-        await Cards.findOneAndUpdate({cardId:cardId},{bucketId:bucketId});
+        await Cards.findOneAndUpdate({ cardId: cardId }, { bucketId: destinationBucket }, { omitUndefined: true });
 
         //change sourceBucket's cardOrder in Buckets
-        await Buckets.findOneAndUpdate({bucketId:sourceBucket}, {cardOrder:sourceBucketOrder});        
+        await Buckets.findOneAndUpdate({ bucketId: sourceBucket }, { cardOrder: sourceBucketOrder }, { omitUndefined: true });
 
         //if sourceBucket and destinationBucket are different, then change destinationBucket's cardOrder in Buckets
-        if(sourceBucket!==destinationBucket){
-            await Buckets.findOneAndUpdate({bucketId:destinationBucket}, {cardOrder:destinationBucketOrder});
+        if (sourceBucket !== destinationBucket) {
+            await Buckets.findOneAndUpdate({ bucketId: destinationBucket }, { cardOrder: destinationBucketOrder }, { omitUndefined: true });
         };
 
 
@@ -159,7 +160,6 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
             'ok': true,
             message: '카드 위치 수정 성공',
         })
-
     } catch (error) {
         console.log('카드위치수정 에러', error);
         res.status(400).send({
@@ -175,7 +175,60 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
 
 
 //todo 생성
+router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { cardId, todoTitle } = req.body;
 
+
+        //check if cardId exists
+
+        const newTodo = await Todos.create({ cardId: cardId, todoTitle, todoTitle, isChecked: false });
+
+
+        res.status(200).send({
+            'ok': true,
+            message: '투두 생성 성공',
+            todoId: newTodo.todoId
+        })
+    } catch (error) {
+        console.log('todo creating error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 투두 생성 실패'
+        })
+    }
+})
+
+//todo 수정
+router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { todoId, todoTitle, isChecked, addMember, removeMember } = req.body;
+        //check if cardId exists
+
+        await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
+
+
+        // if(addMember){
+
+        // }
+        if (addMember != null && addMember.length !== 0) {
+            await Todos.updateOne({ todoId: todoId }, { $push: { members: addMember } });
+        };
+        if (removeMember != null && removeMember.length !== 0) {
+            await Todos.updateOne({ todoId: todoId }, { $pull: { members: removeMember } });
+        };
+        res.status(200).send({
+            'ok': true,
+            message: '투두 수정 성공',
+        })
+    } catch (error) {
+        console.log('todo creating error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 투두 수정 실패'
+        })
+    }
+})
 
 module.exports = router
 
