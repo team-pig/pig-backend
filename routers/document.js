@@ -142,7 +142,7 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
 })
 
 //DOCUMENT 수정
-router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
+router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id
