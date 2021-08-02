@@ -88,8 +88,11 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         const { roomId } = req.params;
         const { bucketId, cardTitle } = req.body;
 
-
         const newCard = await Cards.create({ bucketId, cardTitle });
+
+        //  해당 버킷 cardORder 마지막 순서에 새로운 카드의 카드아이디 넣기
+        await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: newCard.cardId } });
+
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
@@ -111,7 +114,6 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
         const { roomId } = req.params;
         const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt } = req.body;
 
-        //check if user is a room member
 
         await Cards.findOneAndUpdate({ cardId: cardId },
             {
@@ -137,16 +139,22 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { sourceBucket, sourceBucketOrder, destinationBucket, destinationBucketOrder } = req.body;
+        const { cardId, sourceBucket, sourceBucketOrder, destinationBucket, destinationBucketOrder } = req.body;
 
-        //check if user is a room member
+        //souceBucket and destinationBucket will be the same, if the card moves within the same bucket only
 
-        await Cards.findOneAndUpdate({ cardId: cardId },
-            {
-                startDate: startDate, cardTitle: cardTitle,
-                endDate: endDate, desc: desc,
-                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt
-            });
+        //change card's bucketId in Cards
+        await Cards.findOneAndUpdate({cardId:cardId},{bucketId:bucketId});
+
+        //change sourceBucket's cardOrder in Buckets
+        await Buckets.findOneAndUpdate({bucketId:sourceBucket}, {cardOrder:sourceBucketOrder});        
+
+        //if sourceBucket and destinationBucket are different, then change destinationBucket's cardOrder in Buckets
+        if(sourceBucket!==destinationBucket){
+            await Buckets.findOneAndUpdate({bucketId:destinationBucket}, {cardOrder:destinationBucketOrder});
+        };
+
+
         res.status(200).send({
             'ok': true,
             message: '카드 위치 수정 성공',
@@ -162,6 +170,11 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
 });
 
 
+//카드 상세보기
+
+
+
+//todo 생성
 
 
 module.exports = router

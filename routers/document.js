@@ -3,12 +3,13 @@ const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
+const isMember = require('../middlewares/isMember');
 
 const router = express.Router();
 
 //DOCUMENT 작성
 
-router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
+router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id
@@ -24,13 +25,13 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
 
-    if (room.members.includes(userId) === false) {
-      res.status(400).send({
-        'ok': false,
-        message: '본 유저는 방의 멤버가 아닙니다.'
-      })
-      return;
-    }
+    // if (room.members.includes(userId) === false) {
+    //   res.status(400).send({
+    //     'ok': false,
+    //     message: '본 유저는 방의 멤버가 아닙니다.'
+    //   })
+    //   return;
+    // }
     const newDocument = await Documents.create({
       title: title,
       content: content,
@@ -52,7 +53,7 @@ router.post('/room/:roomId/document', authMiddleware, async (req, res) => {
 })
 
 //모든 DOCUMENT 보여주기
-router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
+router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res) => {
   try {
     const userId = res.locals.user._id
 
@@ -62,13 +63,6 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-    if (room.members.includes(userId) === false) {
-      res.status(400).send({
-        'ok': false,
-        message: '본 유저는 방의 멤버가 아닙니다.'
       })
       return;
     }
@@ -97,7 +91,7 @@ router.get('/room/:roomId/documents', authMiddleware, async (req, res) => {
 })
 
 //DOCUMENT 상세 보여주기
-router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
+router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id
@@ -120,13 +114,6 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
       return;
     }
 
-    if (room.members.includes(userId) === false) {
-      res.status(400).send({
-        'ok': false,
-        message: '본 유저는 방의 멤버가 아닙니다.'
-      })
-      return;
-    }
     const { documentId } = req.body
     const result = await Documents.findOne({ documentId: documentId })
 
@@ -155,7 +142,7 @@ router.get('/room/:roomId/document', authMiddleware, async (req, res) => {
 })
 
 //DOCUMENT 수정
-router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
+router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id
@@ -165,14 +152,6 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-
-    if (room.members.includes(userId) === false) {
-      res.status(400).send({
-        'ok': false,
-        message: '본 유저는 방의 멤버가 아닙니다.'
       })
       return;
     }
@@ -211,7 +190,7 @@ router.put('/room/:roomId/document', authMiddleware, async (req, res) => {
 })
 
 //DOCUMENT 삭제
-router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
+router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room OR A MASTER OF THE ROOM??
     const userId = res.locals.user._id
@@ -222,14 +201,6 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
       res.status(400).send({
         'ok': false,
         message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-
-    if (room.members.includes(userId) === false) {
-      res.status(400).send({
-        'ok': false,
-        message: '본 유저는 방의 멤버가 아닙니다.'
       })
       return;
     }
@@ -256,7 +227,7 @@ router.delete('/room/:roomId/document', authMiddleware, async (req, res) => {
 })
 
 //문서 백업기능
-router.post('/room/:roomId/document/backup', authMiddleware, async (req, res) => {
+router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
   try {
 
   } catch (error) {

@@ -10,6 +10,9 @@ const bucketSchema = new Schema({
     roomId: {
         type: String
     },
+    cardOrder:{
+        type:[String]
+    }
     // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 }
 );
