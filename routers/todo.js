@@ -9,6 +9,8 @@ const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const router = express.Router();
+const mongoose = require('mongoose');
+mongoose.set('useFindAndModify', false);
 
 //버킷 만들기
 router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
@@ -113,15 +115,15 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt } = req.body;
+        const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt, color } = req.body;
 
 
         await Cards.findOneAndUpdate({ cardId: cardId },
             {
-                startDate: startDate, cardTitle: cardTitle,
+                roomId: roomId, startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
-                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt
-            });
+                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
+            }, { omitUndefined: true });
         res.status(200).send({
             'ok': true,
             message: '카드 내용 수정 성공',
@@ -169,10 +171,94 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
     }
 });
 
+//전체보여주기
+router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
+        const buckets = await Buckets.find({ roomId: roomId });
+
+        for (let i = 0; i < buckets.length; i++) {
+            for (let k = 0; k < buckets[i].cardOrder.length; k++) {
+                var cardId = buckets[i].cardOrder[k];
+                console.log(`k passed (${k})`);
+            }
+            console.log(`i passed (${i})`);
+            let cardList = await Cards.findOne({ cardId: cardId });
+            console.log(`cardlist ${i}`, cardList);
+            buckets[i].cardOrder.push(cardList);
+        }
+
+
+
+        res.status(200).send({
+            'ok': true,
+            message: '전체 보여주기 성공',
+            bucketOrder: bucketOrder,
+            buckets: buckets,
+        });
+
+    } catch (error) {
+        console.log('전체보여주기 error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 전체 보여주기 실패'
+        })
+    }
+});
+
 
 //카드 상세보기
+router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId, cardId } = req.params;
+
+        const card = await Cards.findOne({ cardId: cardId });
+
+        // 이 룸의 모든 멤버 리스트
+
+        const room = await Rooms.findOne({ roomId: roomId });
+
+        res.status(200).send({
+            'ok': true,
+            message: '카드 상세보기 성공',
+            allMembers: room.members,
+            result: card
+        });
+
+    } catch (error) {
+        console.log('카드상세보기 error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 카드 상세보기 실패'
+        })
+    }
+})
 
 
+
+//todo보여주기
+router.get('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { cardId } = req.body;
+
+
+        const allTodos = await Todos.find({ cardId: cardId });
+        res.status(200).send({
+            'ok': true,
+            message: '투두 보여주기 성공',
+            todos: allTodos
+        });
+
+    } catch (error) {
+        console.log('투두 보여주기 error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 투두 보여주기 실패'
+        })
+    }
+})
 
 //todo 생성
 router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
@@ -227,6 +313,26 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
             'ok': false,
             message: '서버에러: 투두 수정 실패'
         })
+    }
+})
+
+
+//todo 삭제
+router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { todoId } = req.body;
+        await Todos.findOneAndDelete({ todoId: todoId });
+        res.status(200).send({
+            'ok': true,
+            message: '투두 삭제 성공'
+        })
+    } catch (error) {
+        console.log('todo deleting error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 투두 삭제 실패'
+        })
+
     }
 })
 

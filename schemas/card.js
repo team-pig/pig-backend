@@ -1,14 +1,16 @@
 const mongoose = require("mongoose");
-const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const { Schema } = mongoose;
 const cardSchema = new Schema({
-    cardId: { type: Number, index: true},
+    cardId: { auto: true, type: 'objectId', index: true},
     bucketId: {
-        type: Number
+        type: String
     },
     cardTitle: {
         type: String,
+    },
+    color:{
+        type: String
     },
     startDate: {
         type: String,
@@ -33,5 +35,4 @@ const cardSchema = new Schema({
     },
 }
 );
-cardSchema.plugin(AutoIncrement, {inc_field: 'cardId'});
 module.exports = mongoose.model("Cards", cardSchema);

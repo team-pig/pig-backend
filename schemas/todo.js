@@ -1,25 +1,23 @@
 const mongoose = require("mongoose");
-const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const { Schema } = mongoose;
 const todoSchema = new Schema({
-    todoId: { type: Number, index: true},
+    todoId: { auto: true, type: 'objectId', index: true},
     todoTitle: {
         type: String,
     },
     bucketId: {
-        type: Number
+        type: String
     },
     cardId: {
-        type: Number,
+        type: String,
     },
     members: {
-        type: [String],
+        type: [Object],
     },
     isChecked: {
         type: Boolean,
     },
 }
 );
-todoSchema.plugin(AutoIncrement, {inc_field: 'todoId'});
 module.exports = mongoose.model("Todos", todoSchema);
