@@ -14,6 +14,11 @@ const roomSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // likedAt:{
+    //   type: Date,
+    //   default: ''
+    // }
+    bookmarkUser: [String]
   },
   {
     versionKey: false,
