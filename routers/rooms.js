@@ -14,6 +14,9 @@ router.get('/test', auth, async (req, res) => {
   const endIndex = page * size
   const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
   const room = {}
+
+  
+
   room.totalPages = totalPages
   if (endIndex < (await Room.countDocuments().exec())) {
     room.next = { page: page + 1, size: size }
@@ -23,9 +26,38 @@ router.get('/test', auth, async (req, res) => {
     room.previous = { page: page - 1, size: size }
   }
   try {
-    room.room = await Room.find({ members: member }).sort({
-      createdAt: 'desc',
-    }).limit(size).skip(startIndex).exec()
+    if (page === 1 ) {
+      room.bookmark = await Room.find({ bookmarkUser : member }).sort({
+        createdAt: 'desc',
+      }).exec()
+      console.log(room.bookmark)
+      room.room = await Room.find({ members: member })
+        .sort({
+          createdAt: 'desc',
+        })
+        .limit(size)
+        .skip(startIndex)
+        .exec()
+        console.log(room.room)
+        
+       console.log('hi',room.room[0].bookmarkUser.includes(member))
+    }
+    if (page !== 1) {
+      room.room = await Room.find({ members: member })
+        .sort({
+          createdAt: 'desc',
+        })
+        .limit(size)
+        .skip(startIndex)
+        .exec()
+    }
+    room.room = await Room.find({ members: member })
+        .sort({
+          createdAt: 'desc',
+        })
+        .limit(size)
+        .skip(startIndex)
+        .exec()
 
     res.paginatedroom = room
   } catch (e) {
@@ -55,6 +87,37 @@ router.get('/room/:roomId/page', async (req, res) => { })
 router.get('/room/:roomId/board', async (req, res) => { })
 
 router.get('/room/:roomId/timeline', async (req, res) => { })
+
+// router.post('/room/:roomId/like', auth, async (req, res) => {
+//   const roomId = req.params.roomId
+//   const findRoom = await Room.findById(roomId)
+//   const roomLikedAt = findRoom.likedAt
+//   console.log(roomLikedAt)
+//   if (roomLikedAt) {
+//     await Room.updateOne({ _id: roomId }, { $set: { likedAt: '' } })
+//     return res.send('즐겨찾기 취소')
+//   }
+//   if (!roomLikedAt) {
+//     await Room.findByIdAndUpdate(roomId, { $set: { likedAt: Date.now() } })
+//     return res.send('즐겨찾기 등록')
+//   }
+// })
+
+router.post('/room/:roomId/like', auth, async (req, res) => {
+  const { userId } = res.locals.user
+  const roomId = req.params.roomId
+  const findRoom = await Room.findById(roomId)
+  const roomLikedAt = findRoom.bookmarkUser.includes(userId)
+  console.log(roomLikedAt)
+  if (roomLikedAt) {
+    await Room.updateOne({ _id: roomId }, { $pull: { bookmarkUser: userId } })
+    return res.send('즐겨찾기 취소')
+  }
+  if (!roomLikedAt) {
+    await Room.findByIdAndUpdate(roomId, { $push: { bookmarkUser: userId } })
+    return res.send('즐겨찾기 등록')
+  }
+})
 
 router.post('/test', async (req, res) => {
   const findRoom = await Room.findOne({ id: Room.roomId })
