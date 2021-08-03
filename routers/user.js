@@ -7,10 +7,10 @@ const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
 const router = express.Router();
-
+let refreshTokens = []
 
 function createJwtToken(id) {
-    return jwt.sign({ id }, process.env.JWT_SECRET_KEY, { expiresIn: '2d' });
+    return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
 }
 
 const registerValidator = Joi.object({
@@ -52,11 +52,11 @@ router.post('/register', async (req, res, next) => {
             nickname,
             password: hashed,
         });
-        const token = createJwtToken(userId)
+        const accessToken = createJwtToken(userId)
         res.status(201).json({
             ok:true, 
             message: '회원가입 성공',
-            token: token, 
+            accessToken: accessToken, 
             email: email,
         });
 
@@ -77,11 +77,13 @@ router.post('/login', async (req, res, next) => {
         if (!isValidPassword) {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
-        const token = createJwtToken(user.id);
+        const accessToken = createJwtToken(user.id);
+        const refreshToken = jwt.sign(user.id, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
+        refreshTokens.push(refreshToken);
         res.status(200).json({
             ok: true, 
             message:'로그인 성공',
-            token: token, 
+            accessToken: accessToken, refreshToken: refreshToken, 
             email: email,
         });
     } catch (err) {
@@ -107,6 +109,22 @@ router.get('/token', authMiddleware, async (req, res, next) => {
         })
         next(err)
     }
+});
+
+router.post('/renewAccessToken', (req, res) => {
+    const refreshToken = req.body.token;
+    if (refreshToken == null) return res.sendStatus(401)
+    if (refreshTokens.includes(refreshToken)) return res.sendStatus(403)
+
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        if(!err) {
+            const accessToken = createJwtToken(user.id);
+            return res.status(201).json({ accessToken: accessToken });
+        } else {
+            return res.status(403).json({ message: 'User not authenticated'})
+        }
+
+    })
 });
 
 module.exports = router;
