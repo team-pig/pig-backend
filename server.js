@@ -25,8 +25,9 @@ app.use(express.static('public'));
 const roomsRouters = require('./routers/rooms.js');
 const userRouters = require("./routers/user.js");
 const documentRouters = require("./routers/document");
+const todoRouters = require('./routers/todo');
 
-app.use(userRouters, documentRouters, roomsRouters);
+app.use(userRouters, documentRouters, roomsRouters, todoRouters);
 
 
 // error handling
