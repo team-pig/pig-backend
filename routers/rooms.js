@@ -4,20 +4,31 @@ const Room = require('../schemas/room.js')
 const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
-const bookmark = require('../schemas/bookmark.js')
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
 router.get('/test', auth, async (req, res) => {
+  const userId = res.locals.user._id
   const page = parseInt(req.query.page)
   const size = parseInt(req.query.size)
   const member = res.locals.user._id
   const startIndex = (page - 1) * size
   const endIndex = page * size
   const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
+  const c = await Room.find({ members: member })
+  const d = await Room.find({ bookmarkedMembers : userId})
+  console.log(d)
+  const b = []
+  // const idx = await c.findIndex(function(item) {return item.roomId == d[0].roomId})
+  // for (let i = 0; i < (c.length+1); i++) {
+  //   if (idx > -1) c.splice(idx, 1) 
+  // }
+  console.log(c,'c')
+
+
   const room = {}
 
-  // const findBookmark = await bookmark.find({ member: member})
+  // const findBookmark = await Bookmark.find({ member: member})
   // console.log(findBookmark)
 
   room.totalPages = totalPages
@@ -30,21 +41,21 @@ router.get('/test', auth, async (req, res) => {
   }
   try {
     // if (page === 1 ) {
-    //   bookmarkId = {}
-    //   room.bookmark = await Room.find({ bookmarkedMembers : member }).sort({
+    //   BookmarkId = {}
+    //   room.Bookmark = await Room.find({ BookmarkedMembers : member }).sort({
     //     createdAt: 'desc',
     //   }).exec()
-    //   console.log(room.bookmark)
-    //   for (var i = 0; i < room.bookmark.length; i++) {
-    //     console.log(room.bookmark[i].id)
+    //   console.log(room.Bookmark)
+    //   for (var i = 0; i < room.Bookmark.length; i++) {
+    //     console.log(room.Bookmark[i].id)
     //   }
       
     //   room.room = await Room.find({ members: member })
     //     .sort({
     //       createdAt: 'desc',
     //     })
-    //     .limit((size)-(room.bookmark.length))
-    //     .skip((startIndex)+(room.bookmark.length))
+    //     .limit((size)-(room.Bookmark.length))
+    //     .skip((startIndex)+(room.Bookmark.length))
     //     .exec()
         
     //    console.log('hi',room.room[0].bookmarkedMembers.includes(member))
@@ -95,22 +106,6 @@ router.get('/room/:roomId/page', async (req, res) => { })
 router.get('/room/:roomId/board', async (req, res) => { })
 
 router.get('/room/:roomId/timeline', async (req, res) => { })
-
-// 여기도 _id 바꿔야함
-// router.post('/room/:roomId/like', auth, async (req, res) => {
-//   const roomId = req.params.roomId
-//   const findRoom = await Room.findById(roomId)
-//   const roomLikedAt = findRoom.likedAt
-//   console.log(roomLikedAt)
-//   if (roomLikedAt) {
-//     await Room.updateOne({ _id: roomId }, { $set: { likedAt: '' } })
-//     return res.send('즐겨찾기 취소')
-//   }
-//   if (!roomLikedAt) {
-//     await Room.findByIdAndUpdate(roomId, { $set: { likedAt: Date.now() } })
-//     return res.send('즐겨찾기 등록')
-//   }
-// })
 
 router.post('/room/:roomId/like', auth, async (req, res) => {
   const { userId } = res.locals.user
