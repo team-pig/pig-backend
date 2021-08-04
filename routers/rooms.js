@@ -11,7 +11,7 @@ const router = express.Router()
 router.get('/test', auth, async (req, res) => {
   const page = parseInt(req.query.page)
   const size = parseInt(req.query.size)
-  const member = res.locals.user.id
+  const member = res.locals.user._id
   const startIndex = (page - 1) * size
   const endIndex = page * size
   const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
@@ -77,7 +77,7 @@ router.get('/test', auth, async (req, res) => {
 
 router.get('/rooms', auth, async (req, res) => {
   try {
-    const member = res.locals.user.id
+    const member = res.locals.user._id
     const room = await Room.find({ members: member }).sort({
       createdAt: 'desc',
     })
@@ -131,7 +131,7 @@ router.post('/room/:roomId/like', auth, async (req, res) => {
 })
 
 router.post('/room', auth, async (req, res) => {
-  const userId = res.locals.user.id
+  const userId = res.locals.user._id
   const { roomName, roomImage, subtitle, tag } = req.body
   try {
     const room = await Room.create({
@@ -154,7 +154,7 @@ router.post('/room', auth, async (req, res) => {
 })
 
 router.post('/room/member', auth, async (req, res) => {
-  const userId = res.locals.user.id
+  const userId = res.locals.user._id
   const { inviteCode } = req.body
   const findRoom = await Room.findOne({ inviteCode })
   if (!findRoom) {
@@ -244,7 +244,7 @@ router.delete('/room', auth, async (req, res) => {
 router.delete('/room/member/:roomId', auth, async (req, res) => {
   try {
     const roomId = req.params.roomId
-    const userId = res.locals.user.id
+    const userId = res.locals.user._id
     const findRoom = await Room.findOne({roomId:roomId})
     const members = findRoom.members
 
