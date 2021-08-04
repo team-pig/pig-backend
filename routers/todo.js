@@ -10,6 +10,7 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const router = express.Router();
 const mongoose = require('mongoose');
+const { leftShift } = require('mathjs');
 mongoose.set('useFindAndModify', false);
 
 //버킷 만들기
@@ -31,16 +32,22 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
 
         //create Bucket
         const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
+        const bucketId = newBucket.bucketId
 
+        //버킷오더 테이블에 버켓이 없다면 오더 만들어주기
         const bucketExist = await BucketOrder.findOne({ roomId: roomId });
         if (!bucketExist) {
             await BucketOrder.create({ roomId: roomId })
+        }
+        //버킷오더 이미 있다면 array마지막 순번으로 추가하기
+        if (bucketExist) {
+            await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
         }
 
         res.status(200).send({
             'ok': true,
             message: '버킷 생성 성공',
-            bucketId: newBucket.bucketId
+            bucketId: bucketId
         });
     } catch (error) {
         console.log('버킷 만들기 캐치 에러', error);
@@ -83,6 +90,27 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
     }
 });
 
+//버킷 삭제
+router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { bucketId, roomId } = req.body;
+        await Buckets.findOneAndDelete({ bucketId: bucketId });
+
+        //버킷오더에서도 해당 버킷 삭제하기
+        await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } });
+        res.status(200).send({
+            'ok': true,
+            message: '버킷 삭제 성공'
+        })
+    } catch (error) {
+        console.log('bucket deleting error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 버킷 삭제 실패'
+        })
+
+    }
+})
 
 
 //카드 생성
@@ -93,9 +121,9 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 
         const newCard = await Cards.create({ bucketId, cardTitle });
 
-        //  해당 버킷 cardORder 마지막 순서에 새로운 카드의 카드아이디 넣기
+        //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
+        // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
         await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: newCard.cardId } });
-
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
@@ -118,17 +146,44 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
         const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt, color } = req.body;
 
 
-        await Cards.findOneAndUpdate({ cardId: cardId },
+        const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
                 roomId: roomId, startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
                 taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
             }, { omitUndefined: true });
+
+
+        const bucketId = card.bucketId;
+
+        // await Buckets.findOneAndUpdate({cardId:cardId},{startDate:startDate,endDate:endDate});
+        // await Buckets.updateOne({ bucketId: bucketId, cardOrder: { $elemMatch: { cardId: cardId } } },
+        //     { $set: { "cardOrder.$.startDate": startDate } });
+
+        // await Buckets.updateOne({ cardOrder: { cardId: cardId } }, { startDate: startDate, endDate: endDate });
+        // Person.update({_id: 5,grades: { $elemMatch: { grade: { $lte: 90 }, mean: { $gt: 80 } } }},
+        //    { $set: { "grades.$.std" : 6 } }
+        // )
+
+        // var MongoClient = require('mongodb').MongoClient;
+        // var url = "mongodb://127.0.0.1:27017/";
+
+        // MongoClient.connect(url, function (err, db) {
+        //     if (err) throw err;
+        //     var dbo = db.db("admin");
+        //     var myquery = { bucketId: bucketId, cardOrder.cardId:cardId};
+        //     var newvalues = { $set: { name: "Mickey", address: "Canyon 123" } };
+        //     dbo.collection("buckets").updateOne(myquery, newvalues, function (err, res) {
+        //         if (err) throw err;
+        //         console.log("1 document updated");
+        //         db.close();
+        //     });
+        // });
+
         res.status(200).send({
             'ok': true,
             message: '카드 내용 수정 성공',
         })
-
     } catch (error) {
         console.log('카드위치수정 에러', error);
         res.status(400).send({
@@ -157,7 +212,6 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
             await Buckets.findOneAndUpdate({ bucketId: destinationBucket }, { cardOrder: destinationBucketOrder }, { omitUndefined: true });
         };
 
-
         res.status(200).send({
             'ok': true,
             message: '카드 위치 수정 성공',
@@ -171,6 +225,31 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
     }
 });
 
+//카드 삭제
+router.delete('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { cardId } = req.body;
+        const card = await Cards.findOne({ cardId: cardId })
+        const bucketId = card.bucketId;
+        await Cards.findOneAndDelete({ cardId: cardId });
+
+        //버킷안에있는 cardOrder에서 해당 카드 삭제하기
+        await Buckets.updateOne({ bucketId: bucketId }, { $pull: { cardOrder: cardId } });
+        res.status(200).send({
+            'ok': true,
+            message: '카드 삭제 성공'
+        })
+    } catch (error) {
+        console.log('todo deleting error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 카드 삭제 실패'
+        })
+    }
+})
+
+
+
 //전체보여주기
 router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     try {
@@ -178,24 +257,24 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
         const buckets = await Buckets.find({ roomId: roomId });
 
-        for (let i = 0; i < buckets.length; i++) {
-            for (let k = 0; k < buckets[i].cardOrder.length; k++) {
-                var cardId = buckets[i].cardOrder[k];
-                console.log(`k passed (${k})`);
-            }
-            console.log(`i passed (${i})`);
-            let cardList = await Cards.findOne({ cardId: cardId });
-            console.log(`cardlist ${i}`, cardList);
-            buckets[i].cardOrder.push(cardList);
-        }
+        //can frontend send an API inside of an API?
 
-
+        // for (let i = 0; i < buckets.length; i++) {
+        //     for (let k = 0; k < buckets[i].cardOrder.length; k++) {
+        //         let cardId = buckets[i].cardOrder[k];
+        //         console.log(`k passed (${k})`);
+        //     }
+        //     console.log(`i passed (${i})`);
+        //     let cardList = await Cards.findOne({ cardId: cardId });
+        //     console.log(`cardlist ${i}`, cardList);
+        //     buckets[i].cardOrder.push(cardList);
+        // }
 
         res.status(200).send({
             'ok': true,
             message: '전체 보여주기 성공',
             bucketOrder: bucketOrder,
-            buckets: buckets,
+            buckets: buckets
         });
 
     } catch (error) {
@@ -207,6 +286,27 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
     }
 });
 
+
+//해당 룸의 모든 카드 보여주기
+router.get('/room/:roomId', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+
+        const allCards = await Cards.find({ roomId: roomId });
+        res.status(200).send({
+            'ok': true,
+            message: '해당 룸 모든 카드보기 성공',
+            cards: allCards
+        });
+
+    } catch (error) {
+        console.log('모든 카드보기 error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 모든 카드보기 실패'
+        })
+    }
+})
 
 //카드 상세보기
 router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, res) => {
