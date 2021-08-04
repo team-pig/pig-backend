@@ -165,35 +165,35 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
 
 //전체 보여주기
 router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
-    try {
-        const { roomId } = req.params;
-        const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
-        const buckets = await Buckets.find({ roomId: roomId });
+//     try {
+//         const { roomId } = req.params;
+//         const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
+//         const buckets = await Buckets.find({ roomId: roomId });
 
-        for (let i = 0; i < buckets.length; i++) {
-            for (let k = 0; k < buckets[i].cardOrder.length; k++) {
-                var cardId = buckets[i].cardOrder[k];
-                console.log(`k passed (${k})`);
-            }
-            console.log(`i passed (${i})`, cardList);
-            let cardList = await Cards.findOne({ cardId: cardId });
-            console.log(`cardlist ${i}`, cardList);
-            buckets[i].cardOrder.push(cardList);
-        }
+//         for (let i = 0; i < buckets.length; i++) {
+//             for (let k = 0; k < buckets[i].cardOrder.length; k++) {
+//                 var cardId = buckets[i].cardOrder[k];
+//                 console.log(`k passed (${k})`);
+//             }
+//             console.log(`i passed (${i})`, cardList);
+//             let cardList = await Cards.findOne({ cardId: cardId });
+//             console.log(`cardlist ${i}`, cardList);
+//             buckets[i].cardOrder.push(cardList);
+//         }
 
-        res.status(200).send({
-            ok: true,
-            message: '전체 보여주기 성공',
-            bucketOrder: bucketOrder,
-            buckets: buckets,
-        });
-    } catch (error) {
-        console.log('전체보여주기 error', error);
-        res.status(400).send({
-            ok: false,
-            message: '서버에러: 전체 보여주기 실패'
-        })
-    }
+//         res.status(200).send({
+//             ok: true,
+//             message: '전체 보여주기 성공',
+//             bucketOrder: bucketOrder,
+//             buckets: buckets,
+//         });
+//     } catch (error) {
+//         console.log('전체보여주기 error', error);
+//         res.status(400).send({
+//             ok: false,
+//             message: '서버에러: 전체 보여주기 실패'
+//         })
+//     }
 });
 
 //카드 상세보기

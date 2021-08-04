@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
 const router = express.Router();
-let refreshTokens = []
+// let refreshTokens = []
 
 function createJwtToken(id) {
     return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
@@ -78,8 +78,8 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         const accessToken = createJwtToken(user.id);
-        const refreshToken = jwt.sign(user.id, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
-        refreshTokens.push(refreshToken);
+        const refreshToken = jwt.sign({id: user.id }, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
+        // refreshTokens.push(refreshToken)
         res.status(200).json({
             ok: true, 
             message:'로그인 성공',
@@ -111,21 +111,22 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     }
 });
 
-router.post('/renewAccessToken', (req, res) => {
+router.post('/token', (req, res) => {
     const refreshToken = req.body.token;
-    if (refreshToken == null) return res.sendStatus(401)
-    if (refreshTokens.includes(refreshToken)) return res.sendStatus(403)
-
+    if (!refreshToken) {
+        return res.status(403).json({ message: "User not authenticated" });
+    }
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if(!err) {
             const accessToken = createJwtToken(user.id);
-            return res.status(201).json({ accessToken: accessToken });
+            res.status(201).json({ accessToken: accessToken });
         } else {
-            return res.status(403).json({ message: 'User not authenticated'})
-        }
-
-    })
+            return res.status(403).json({ message: "User not authenticated" });
+        }          
+        
+    });
 });
+
 
 module.exports = router;
 
