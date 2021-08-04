@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
-const roomSchema = new mongoose.Schema(
+const bookmarkSchema = new mongoose.Schema(
   {
     roomId : String,
-    likedMember : String,
-    likedAt:{
+    member : String,
+    bookmarkedAt:{
       type: Date,
       default: ''
     },
@@ -13,4 +13,4 @@ const roomSchema = new mongoose.Schema(
   }
 )
 
-module.exports = mongoose.model('Room', roomSchema)
+module.exports = mongoose.model('Bookmark', bookmarkSchema)

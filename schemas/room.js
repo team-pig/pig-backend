@@ -18,7 +18,7 @@ const roomSchema = new mongoose.Schema(
     //   type: Date,
     //   default: ''
     // }
-    bookmarkUser: [String]
+    bookmarkedMembers: [String]
   },
   {
     versionKey: false,

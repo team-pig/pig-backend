@@ -1,8 +1,10 @@
 // Room._id -> Room.roomId로 findById -> findOne 변경 예정
 const express = require('express')
 const Room = require('../schemas/room.js')
+const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
+const bookmark = require('../schemas/bookmark.js')
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -15,7 +17,8 @@ router.get('/test', auth, async (req, res) => {
   const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
   const room = {}
 
-  
+  // const findBookmark = await bookmark.find({ member: member})
+  // console.log(findBookmark)
 
   room.totalPages = totalPages
   if (endIndex < (await Room.countDocuments().exec())) {
@@ -26,31 +29,37 @@ router.get('/test', auth, async (req, res) => {
     room.previous = { page: page - 1, size: size }
   }
   try {
-    if (page === 1 ) {
-      room.bookmark = await Room.find({ bookmarkUser : member }).sort({
-        createdAt: 'desc',
-      }).exec()
-      console.log(room.bookmark)
-      room.room = await Room.find({ members: member })
-        .sort({
-          createdAt: 'desc',
-        })
-        .limit(size)
-        .skip(startIndex)
-        .exec()
-        console.log(room.room)
+    // if (page === 1 ) {
+    //   bookmarkId = {}
+    //   room.bookmark = await Room.find({ bookmarkedMembers : member }).sort({
+    //     createdAt: 'desc',
+    //   }).exec()
+    //   console.log(room.bookmark)
+    //   for (var i = 0; i < room.bookmark.length; i++) {
+    //     console.log(room.bookmark[i].id)
+    //   }
+      
+    //   room.room = await Room.find({ members: member })
+    //     .sort({
+    //       createdAt: 'desc',
+    //     })
+    //     .limit((size)-(room.bookmark.length))
+    //     .skip((startIndex)+(room.bookmark.length))
+    //     .exec()
         
-       console.log('hi',room.room[0].bookmarkUser.includes(member))
-    }
-    if (page !== 1) {
-      room.room = await Room.find({ members: member })
-        .sort({
-          createdAt: 'desc',
-        })
-        .limit(size)
-        .skip(startIndex)
-        .exec()
-    }
+    //    console.log('hi',room.room[0].bookmarkedMembers.includes(member))
+    // }
+    // if (page !== 1) {
+    //   room.room = await Room.find({ members: member })
+    //     .sort({
+    //       createdAt: 'desc',
+    //     })
+    //     .limit(size)
+    //     .skip(startIndex)
+    //     .exec()
+    // }
+
+
     room.room = await Room.find({ members: member })
         .sort({
           createdAt: 'desc',
@@ -58,7 +67,6 @@ router.get('/test', auth, async (req, res) => {
         .limit(size)
         .skip(startIndex)
         .exec()
-
     res.paginatedroom = room
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
@@ -107,14 +115,16 @@ router.post('/room/:roomId/like', auth, async (req, res) => {
   const { userId } = res.locals.user
   const roomId = req.params.roomId
   const findRoom = await Room.findById(roomId)
-  const roomLikedAt = findRoom.bookmarkUser.includes(userId)
+  const roomLikedAt = findRoom.bookmarkedMembers.includes(userId)
   console.log(roomLikedAt)
   if (roomLikedAt) {
-    await Room.updateOne({ _id: roomId }, { $pull: { bookmarkUser: userId } })
+    await Room.updateOne({ _id: roomId }, { $pull: { bookmarkedMembers: userId } })
+    await Bookmark.findOneAndRemove({roomId: roomId, member: userId})
     return res.send('즐겨찾기 취소')
   }
   if (!roomLikedAt) {
-    await Room.findByIdAndUpdate(roomId, { $push: { bookmarkUser: userId } })
+    await Room.findByIdAndUpdate(roomId, { $push: { bookmarkedMembers: userId } })
+    await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
     return res.send('즐겨찾기 등록')
   }
 })
