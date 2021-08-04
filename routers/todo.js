@@ -10,7 +10,6 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { leftShift } = require('mathjs');
 mongoose.set('useFindAndModify', false);
 
 //버킷 만들기
