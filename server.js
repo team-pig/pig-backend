@@ -5,6 +5,20 @@ const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
 
+/*이미지 업로드
+const path = require("path");
+const multer = require("multer");
+const fileStorageEngine = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "./images"); 
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + "--" + file.originalname);
+    },
+  });
+  const upload = multer({ storage: fileStorageEngine });
+  app.use('/image', express.static('images'))
+*/
 //CORS
 const cors = require('cors');
 app.use(
@@ -56,6 +70,17 @@ app.get('/document', (req, res) => {
     res.render('document.ejs');
 })
 
+/*이미지 업로드 
+app.post('/single', upload.single('image'), (req, res) => {
+  console.log(req.file)
+  res.send('Single FIle upload success')
+})
+
+app.post('/multiple', upload.array('images', 3), (req, res) => {
+  console.log(req.files)
+  res.send('Multiple Files Upload Success')
+})
+*/
 app.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
 })
