@@ -202,7 +202,7 @@ router.put('/room', auth, async (req, res) => {
     const { roomId, roomName, roomImage, subtitle, tag } = req.body
     const { userId } = res.locals.user
     const findRoom = await Room.findOne({roomId: roomId})
-    console.log(findRoom.master)
+    console.log(tag.split(', '))
     if (findRoom.master != userId) {
       return res.send({ ok: false, message: '방 수정 권한이 없습니다.' })
     }
@@ -213,6 +213,7 @@ router.put('/room', auth, async (req, res) => {
       )
       return res.json({ ok: true, message: '방 수정 성공' })
     }
+    res.send("test")
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
