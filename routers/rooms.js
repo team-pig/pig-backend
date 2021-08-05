@@ -11,99 +11,30 @@ router.get('/test', auth, async (req, res) => {
   const userId = res.locals.user._id
   const page = parseInt(req.query.page)
   const size = parseInt(req.query.size)
-  const member = res.locals.user._id
   const startIndex = (page - 1) * size
   const endIndex = page * size
-  const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
-  const c = await Room.find({ members: member })
-  const d = await Room.find({ bookmarkedMembers : userId})
-
-  const test1 = await Bookmark.find({roomId:String(d[0].roomId), member: userId})
-//  await Room.find({ BookmarkedMembers : member }).sort({ createdAt: 'desc', }).exec()
-  // console.log(d)
-  const b = []
-  // console.log('c',c)
-  // console.log('d',d)
-
-  // for (let i = 0 ; i< d.length ; i++) {
-  //   var idx = c.findIndex(function(item) {return (item.roomId) == String(d[i].roomId)})
-  //   if (idx > -1) c.splice(idx, 1)
-  // }
-
-  // console.log('c2', c)
-
-  // const idx = await c.findIndex(function(item) {return item.roomId == c[0].roomId})
-  // if (idx > -1) c.splice(idx, 1) 
-  // if (idx > -1) c.splice(idx, 1) 
-
-  // for (let i = 0; i < (c.length+1); i++) {
-  //   if (idx > -1) c.splice(idx, 1) 
-  // }
-  // console.log(c,'c')
-
-
+  const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
   const room = {}
-
-
+  // const bookmarkedRoom = await Room.find({ bookmarkedMembers : userId})
   room.totalPages = totalPages
   if (endIndex < (await Room.countDocuments().exec())) {
     room.next = { page: page + 1, size: size }
   }
-
   if (startIndex > 0) {
     room.previous = { page: page - 1, size: size }
   }
   try {
-    // if (page === 1 ) {
-    //   BookmarkId = {}
-    //   room.Bookmark = await Room.find({ BookmarkedMembers : member }).sort({
-    //     createdAt: 'desc',
-    //   }).exec()
-    //   // console.log(room.Bookmark)
-    //   for (var i = 0; i < room.Bookmark.length; i++) {
-    //     // console.log(room.Bookmark[i].id)
-    //   }
-      
-    //   room.room = await Room.find({ members: member })
-    //     .sort({
-    //       createdAt: 'desc',
-    //     })
-    //     .limit((size)-(room.Bookmark.length))
-    //     .skip((startIndex)+(room.Bookmark.length))
-    //     .exec()
-
-
+    room.room = await Room.find({ members: userId }).sort({ createdAt: 'desc' }).limit(size).skip(startIndex).exec()
+    // 중복 제거하기
+    // for (let i = 0 ; i< bookmarkedRoom.length ; i++) {
+    //   var idx = room.room.findIndex(function(item) {return (item.roomId) == String(bookmarkedRoom[i].roomId)})
+    //   if (idx > -1) room.room.splice(idx, 1)
     // }
-    // if (page !== 1) {
-    //   room.room = await Room.find({ members: member })
-    //     .sort({
-    //       createdAt: 'desc',
-    //     })
-    //     .limit(size)
-    //     .skip(startIndex)
-    //     .exec()
-    // }
-
-
-    room.room = await Room.find({ members: member })
-        .sort({
-          createdAt: 'desc',
-        })
-        .limit(size)
-        .skip(startIndex)
-        .exec()
-        // for (let i = 0 ; i< d.length ; i++) {
-        //   var idx = room.room.findIndex(function(item) {return (item.roomId) == String(d[i].roomId)})
-        //   if (idx > -1) room.room.splice(idx, 1)
-        // }
-        console.log(room.room)
     res.paginatedroom = room
-    // room.bookmark = d
+    res.send(res.paginatedroom)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
-
-  res.send(res.paginatedroom)
 })
 
 router.get('/rooms/bookmark', auth, async (req, res) => {
@@ -112,9 +43,8 @@ router.get('/rooms/bookmark', auth, async (req, res) => {
     const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId })
     console.log(bookmarkedRoom)
     res.send({bookmarkedRoom})
-  } catch (err) {
-    console.error(err)
-    res.status(400).json(err)
+  } catch (e) {
+    res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
 
