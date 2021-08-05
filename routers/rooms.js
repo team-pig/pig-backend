@@ -45,59 +45,6 @@ router.get('/rooms', auth, async (req, res) => {
   }
 })
 
-router.get('/rooms/bookmark', auth, async (req, res) => {
-  try {
-    const userId = res.locals.user._id
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId })
-    console.log(bookmarkedRoom)
-    res.send({bookmarkedRoom})
-  } catch (e) {
-    res.status(500).json({ message: '서버에러: 방 조회 실패' })
-  }
-})
-
-router.get('/test', auth, async (req, res) => {
-  const page = parseInt(req.query.page)
-  const size = parseInt(req.query.size)
-  const member = res.locals.user.id
-  const startIndex = (page -1 ) * size
-  const endIndex = page * size
-  const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
-  const room = {}
-  room.totalPages = totalPages
-  if (endIndex < (await Room.countDocuments().exec())) {
-    room.next = { page: page + 1, size: size }
-  }
-
-  if (startIndex > 0) {
-    room.previous = { page: page - 1, size: size }
-  }
-  try {
-    room.room = await Room.find({ members: member })
-    .sort({ createdAt: 'desc'})
-    .limit(size).skip(startIndex).exec()
-
-    res.paginatedroom = room
-  } catch (err) {
-    res.status(500).json({ message: '서버에러: 방 조회 실패' })
-  }
-
-  res.send(res.paginatedroom)
-})
-
-router.get('/rooms', auth, async (req, res) => {
-  try {
-    const member = res.locals.user._id
-    const room = await Room.find({ members: member }).sort({
-      createdAt: 'desc',
-    })
-    res.status(200).json({ room })
-  } catch (error) {
-    console.log('display rooms ERROR', error)
-    res.status(400).send({ ok: false, message: '서버에러: 방 조회 실패' })
-  }
-})
-
 router.get('/room/:roomId/main', async (req, res) => { })
 
 router.get('/room/:roomId/page', async (req, res) => { })
@@ -180,9 +127,7 @@ router.post('/room', auth, async (req, res) => {
       master: userId,
       members: userId,
       subtitle,
-
       tag: tag.split(', '),
-
       inviteCode: v4(),
     })
     res.json({ room })
@@ -210,7 +155,6 @@ router.post('/room/member', auth, async (req, res) => {
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
       res.json({ errorMessage: '이미 추가 된 방입니다.' })
-
       return
     }
     if (!findInviteCode) {
@@ -233,8 +177,6 @@ router.post('/room/member', auth, async (req, res) => {
   }
 })
 
-
-
 router.put('/room', auth, async (req, res) => {
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
   try {
@@ -246,12 +188,7 @@ router.put('/room', auth, async (req, res) => {
       return res.send({ ok: false, message: '방 수정 권한이 없습니다.' })
     }
     if (roomId && findRoom.master == userId) {
-      await Room.updateOne(
-
-        { roomId: roomId },
-        { $set: { roomName, roomImage, subtitle, tag:tag.split(', ') } }
-
-      )
+      await Room.updateOne({ roomId: roomId }, { $set: { roomName, roomImage, subtitle, tag: tag.split(', ') } })
       return res.json({ ok: true, message: '방 수정 성공' })
     }
     res.send("test")
