@@ -51,17 +51,21 @@ router.get('/ttt', auth, async (req, res) => {
       var idx = allRoom.findIndex(function(item) {return (item.roomId) == String(bookmarkedRoom[i].roomId)})
       if (idx > -1) allRoom.splice(idx, 1)
     }
-    console.log(bookmarkedRoom)
-    console.log(allRoom)
+    // console.log(bookmarkedRoom)
+    // console.log(allRoom)
     if (endIndex < (await Room.countDocuments().exec())) {
       room.next = { page: page + 1, size: size }
     }
     if (startIndex > 0) {
       room.previous = { page: page - 1, size: size }
     }
-   const result = await allRoom.find({ members: userId }).sort({ createdAt: 'desc' }).limit(size).skip(startIndex).exec()
+    // room.room = await Room.find({ members: userId })
+    // .sort({ createdAt: 'desc' }).limit(size).skip(startIndex).exec()
+    // room.room = await allRoom.limit(size).skip(startIndex).exec()
+    // console.log(room.room)
+   const result = await allRoom.sort({ createdAt: 'desc' }).limit(size).skip(startIndex).exec()
     console.log(result)
-    res.send(result)
+    // res.send(result)
 })
 
 router.get('/rooms/bookmark', auth, async (req, res) => {
