@@ -15,8 +15,9 @@ router.get('/test', auth, async (req, res) => {
   const endIndex = page * size
   const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
   const room = {}
-  // const bookmarkedRoom = await Room.find({ bookmarkedMembers : userId})
+  const bookmarkedRoom = await Room.find({ bookmarkedMembers : userId})
   room.totalPages = totalPages
+  
   if (endIndex < (await Room.countDocuments().exec())) {
     room.next = { page: page + 1, size: size }
   }
@@ -35,6 +36,32 @@ router.get('/test', auth, async (req, res) => {
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
+})
+
+router.get('/ttt', auth, async (req, res) => {
+  const userId = res.locals.user._id
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId })
+    const allRoom = await Room.find({members: userId})
+    const page = parseInt(req.query.page)
+  const size = parseInt(req.query.size)
+  const startIndex = (page - 1) * size
+  const endIndex = page * size
+  const room = {}
+     for (let i = 0 ; i< bookmarkedRoom.length ; i++) {
+      var idx = allRoom.findIndex(function(item) {return (item.roomId) == String(bookmarkedRoom[i].roomId)})
+      if (idx > -1) allRoom.splice(idx, 1)
+    }
+    console.log(bookmarkedRoom)
+    console.log(allRoom)
+    if (endIndex < (await Room.countDocuments().exec())) {
+      room.next = { page: page + 1, size: size }
+    }
+    if (startIndex > 0) {
+      room.previous = { page: page - 1, size: size }
+    }
+   const result = await allRoom.find({ members: userId }).sort({ createdAt: 'desc' }).limit(size).skip(startIndex).exec()
+    console.log(result)
+    res.send(result)
 })
 
 router.get('/rooms/bookmark', auth, async (req, res) => {
