@@ -93,7 +93,7 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
         await Buckets.findOneAndDelete({ bucketId: bucketId });
 
         //버킷오더에서도 해당 버킷 삭제하기
-        const deleted = await BucketOrder.updateMany({ roomId: roomId }, { $pull: { bucketOrder: bucketId } }).exec();
+        const deleted = await BucketOrder.updateMany({ roomId: roomId }, { $pull: { bucketOrder: bucketId } })
         console.log('deleted',deleted);
         res.status(200).send({
             'ok': true,
@@ -115,7 +115,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         const { roomId } = req.params;
         const { bucketId, cardTitle } = req.body;
 
-        const newCard = await Cards.create({ bucketId, cardTitle });
+        const newCard = await Cards.create({ bucketId:bucketId, cardTitle:cardTitle, roomId:roomId });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
@@ -144,7 +144,7 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 
         const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
-                roomId: roomId, startDate: startDate, cardTitle: cardTitle,
+                startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
                 taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
             }, { omitUndefined: true });
