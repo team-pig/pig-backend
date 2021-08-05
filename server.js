@@ -35,7 +35,6 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // 라우터
-
 const roomsRouters = require('./routers/rooms.js');
 const userRouters = require("./routers/user.js");
 const documentRouters = require("./routers/document");
@@ -55,12 +54,9 @@ app.use((req, res, next) => {
     next();
 });
 
-
-
 // 템플릿 엔진
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
-
 
 // 각종 url
 app.get('/', (req, res) => {

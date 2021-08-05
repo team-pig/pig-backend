@@ -7,10 +7,12 @@ const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
 const router = express.Router();
+
 // let refreshTokens = []
 
 function createJwtToken(id) {
     return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
+
 }
 
 const registerValidator = Joi.object({
@@ -79,8 +81,10 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         const accessToken = createJwtToken(user.id);
+
         const refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
         // refreshTokens.push(refreshToken);
+
         res.status(200).json({
             ok: true, 
             message:'로그인 성공',
@@ -112,11 +116,13 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     }
 });
 
+
 router.post('/token', (req, res) => {
     const refreshToken = req.body.token;
     if (!refreshToken) {
         return res.status(403).json({ message: 'User not authenticated'})
     }
+
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if(!err) {
             const accessToken = createJwtToken(user.id);

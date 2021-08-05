@@ -8,19 +8,24 @@ const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
+
 const router = express.Router();
 const mongoose = require('mongoose');
+
 mongoose.set('useFindAndModify', false);
 
 //버킷 만들기
 router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     try {
-        const userId = res.locals.user._id;    //user.userId? or user._id?
+
+        const userId = res.locals.user._id;  
+
         const { roomId } = req.params;
         const { bucketName } = req.body;
 
         //check if room exists
         const room = await Rooms.findOne({ roomId: roomId });
+
         if (!room) {
             res.status(400).send({
                 'ok': false,
@@ -31,6 +36,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
 
         //create Bucket
         const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
+
         const bucketId = newBucket.bucketId
 
         //버킷오더 테이블에 버켓이 없다면 오더 만들어주기
@@ -44,6 +50,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
             'ok': true,
             message: '버킷 생성 성공',
             bucketId: bucketId
+
         });
     } catch (error) {
         console.log('버킷 만들기 캐치 에러', error);
@@ -54,9 +61,9 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
     }
 })
 
+
 //버킷 내용/위치 수정
 router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
-    //PUT OR PATCH??????
     try {
         const { bucketId, bucketName, bucketOrder } = req.body;
         const { roomId } = req.params;
@@ -67,6 +74,7 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
 
 
         //bucket을 하나씩만 수정할수있나? 그렇다면 updateOne. 여러개 동시에 수정할수있나? 그러면 updateMany
+
         await Buckets.updateOne({ bucketId: bucketId }, { bucketName: bucketName }, { omitUndefined: true });
 
         await BucketOrder.updateOne({ roomId: roomId }, { bucketOrder: bucketOrder }, { omitUndefined: true });
@@ -137,6 +145,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 })
 
 //카드 내용 수정
+
 router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
@@ -225,6 +234,7 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
     }
 });
 
+
 //카드 삭제
 router.delete('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
@@ -257,6 +267,7 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
         const buckets = await Buckets.find({ roomId: roomId });
 
+
         res.status(200).send({
             'ok': true,
             message: '전체 보여주기 성공',
@@ -272,6 +283,7 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         })
     }
 });
+
 
 
 //해당 룸의 모든 카드 보여주기
@@ -295,6 +307,7 @@ router.get('/room/:roomId', authMiddleware, isMember, async (req, res) => {
     }
 })
 
+
 //카드 상세보기
 router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, res) => {
     try {
@@ -302,12 +315,15 @@ router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, r
 
         const card = await Cards.findOne({ cardId: cardId });
 
+
         // 이 룸의 모든 멤버 리스트
 
         const room = await Rooms.findOne({ roomId: roomId });
 
         res.status(200).send({
+
             'ok': true,
+
             message: '카드 상세보기 성공',
             allMembers: room.members,
             result: card

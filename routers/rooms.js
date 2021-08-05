@@ -79,6 +79,35 @@ router.get('/rooms/bookmark', auth, async (req, res) => {
   }
 })
 
+router.get('/test', auth, async (req, res) => {
+  const page = parseInt(req.query.page)
+  const size = parseInt(req.query.size)
+  const member = res.locals.user.id
+  const startIndex = (page -1 ) * size
+  const endIndex = page * size
+  const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
+  const room = {}
+  room.totalPages = totalPages
+  if (endIndex < (await Room.countDocuments().exec())) {
+    room.next = { page: page + 1, size: size }
+  }
+
+  if (startIndex > 0) {
+    room.previous = { page: page - 1, size: size }
+  }
+  try {
+    room.room = await Room.find({ members: member })
+    .sort({ createdAt: 'desc'})
+    .limit(size).skip(startIndex).exec()
+
+    res.paginatedroom = room
+  } catch (err) {
+    res.status(500).json({ message: '서버에러: 방 조회 실패' })
+  }
+
+  res.send(res.paginatedroom)
+})
+
 router.get('/rooms', auth, async (req, res) => {
   try {
     const member = res.locals.user._id
@@ -174,7 +203,9 @@ router.post('/room', auth, async (req, res) => {
       master: userId,
       members: userId,
       subtitle,
+
       tag: tag.split(', '),
+
       inviteCode: v4(),
     })
     res.json({ room })
@@ -239,8 +270,10 @@ router.put('/room', auth, async (req, res) => {
     }
     if (roomId && findRoom.master == userId) {
       await Room.updateOne(
+
         { roomId: roomId },
         { $set: { roomName, roomImage, subtitle, tag:tag.split(', ') } }
+
       )
       return res.json({ ok: true, message: '방 수정 성공' })
     }

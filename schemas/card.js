@@ -1,4 +1,6 @@
+
 const mongoose = require("mongoose");
+
 
 const { Schema } = mongoose;
 const cardSchema = new Schema({
@@ -12,6 +14,7 @@ const cardSchema = new Schema({
     color:{
         type: String
     },
+
     startDate: {
         type: String,
     },
@@ -33,6 +36,8 @@ const cardSchema = new Schema({
     roomId: {
         type: String
     },
+
 }
 );
 module.exports = mongoose.model("Cards", cardSchema);
+
