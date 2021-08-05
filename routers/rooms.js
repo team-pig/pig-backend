@@ -108,9 +108,13 @@ router.get('/test', auth, async (req, res) => {
 
 router.get('/rooms/bookmark', auth, async (req, res) => {
   try {
-   
-  } catch (error) {
-
+    const userId = res.locals.user._id
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId })
+    console.log(bookmarkedRoom)
+    res.send({bookmarkedRoom})
+  } catch (err) {
+    console.error(err)
+    res.status(400).json(err)
   }
 })
 
