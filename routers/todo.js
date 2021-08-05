@@ -89,11 +89,13 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
 //버킷 삭제
 router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     try {
-        const { bucketId, roomId } = req.body;
+        const { roomId } = req.params;
+        const { bucketId } = req.body;
         await Buckets.findOneAndDelete({ bucketId: bucketId });
 
         //버킷오더에서도 해당 버킷 삭제하기
-        await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } });
+        const deleted = await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } })
+        console.log('deleted', deleted);
         res.status(200).send({
             'ok': true,
             message: '버킷 삭제 성공'
@@ -104,7 +106,6 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
             'ok': false,
             message: '서버에러: 버킷 삭제 실패'
         })
-
     }
 })
 
@@ -115,7 +116,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         const { roomId } = req.params;
         const { bucketId, cardTitle } = req.body;
 
-        const newCard = await Cards.create({ bucketId, cardTitle });
+        const newCard = await Cards.create({ bucketId: bucketId, cardTitle: cardTitle, roomId: roomId });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
@@ -144,7 +145,7 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 
         const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
-                roomId: roomId, startDate: startDate, cardTitle: cardTitle,
+                startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
                 taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
             }, { omitUndefined: true });
@@ -255,19 +256,6 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         const { roomId } = req.params;
         const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
         const buckets = await Buckets.find({ roomId: roomId });
-
-        //can frontend send an API inside of an API?
-
-        // for (let i = 0; i < buckets.length; i++) {
-        //     for (let k = 0; k < buckets[i].cardOrder.length; k++) {
-        //         let cardId = buckets[i].cardOrder[k];
-        //         console.log(`k passed (${k})`);
-        //     }
-        //     console.log(`i passed (${i})`);
-        //     let cardList = await Cards.findOne({ cardId: cardId });
-        //     console.log(`cardlist ${i}`, cardList);
-        //     buckets[i].cardOrder.push(cardList);
-        // }
 
         res.status(200).send({
             'ok': true,
@@ -436,25 +424,3 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
 })
 
 module.exports = router
-
-
-// router.get('/room/:roomId', authMiddleware, isMember, async(req,res)=>{
-//     try {
-//         userId = req.params;
-
-//         const likedRoom = await Rooms.likedMembers.includes(userId);
-//         const noLikedRoom = await Rooms.likedMembers.!includes(userId);
-
-//         res.status(200).send({
-//             likedRoom: likedRoom,
-//             noLiked: noLikedRoom
-//         })
-
-
-
-
-
-//     } catch (error) {
-        
-//     }
-// })
