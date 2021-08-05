@@ -106,6 +106,14 @@ router.get('/test', auth, async (req, res) => {
   res.send(res.paginatedroom)
 })
 
+router.get('/rooms/bookmark', auth, async (req, res) => {
+  try {
+   
+  } catch (error) {
+
+  }
+})
+
 router.get('/rooms', auth, async (req, res) => {
   try {
     const member = res.locals.user._id
