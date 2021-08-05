@@ -16,7 +16,7 @@ router.get('/rooms', auth, async (req, res) => {
     const startIndex = (page - 1) * size
     const endIndex = page * size
     const room = {}
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId })
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId },{_id:false})
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
     if (endIndex < (await Room.countDocuments().exec())) {
@@ -25,7 +25,7 @@ router.get('/rooms', auth, async (req, res) => {
     if (startIndex > 0) {
       room.previous = { page: page - 1, size: size }
     }
-    room.room = await Room.find({ members: userId }).sort({ createdAt: 'desc' })
+    room.room = await Room.find({ members: userId },{_id:false}).sort({ createdAt: 'desc' })
     // 찾은 방에서 bookmark된 방 빼기
     for (let i = 0; i < bookmarkedRoom.length; i++) {
       var idx = room.room.findIndex(function (item) {
@@ -42,6 +42,16 @@ router.get('/rooms', auth, async (req, res) => {
     res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
+  }
+})
+
+router.get('/rooms/search', async (req, res) => {
+  try {
+    const { roomName, subtitle, tag } = req.query
+    const a = await Room.find({ $or: [{ roomName }, { subtitle }, { tag }] },{_id:false})
+    res.send(a)
+  } catch (e) {
+    res.status(500).json({ message: '서버에러: 방 검색 실패' })
   }
 })
 
