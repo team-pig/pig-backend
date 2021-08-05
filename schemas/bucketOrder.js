@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const bucketOrderSchema = new Schema({
@@ -9,6 +9,6 @@ const bucketOrderSchema = new Schema({
     bucketOrder: {
         type: [String]
     }
-})
-
+}
+);
 module.exports = mongoose.model("BucketOrder", bucketOrderSchema);

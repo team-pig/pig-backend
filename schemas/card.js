@@ -1,4 +1,6 @@
-const mongoose = require('mongoose');
+
+const mongoose = require("mongoose");
+
 
 const { Schema } = mongoose;
 const cardSchema = new Schema({
@@ -7,11 +9,12 @@ const cardSchema = new Schema({
         type: String
     },
     cardTitle: {
-        type: String
-    },
-    color: {
         type: String,
     },
+    color:{
+        type: String
+    },
+
     startDate: {
         type: String,
     },
@@ -22,7 +25,7 @@ const cardSchema = new Schema({
         type: String,
     },
     taskMembers: {
-        type: String,
+        type: [String],
     },
     createdAt: {
         type: String,
@@ -33,6 +36,8 @@ const cardSchema = new Schema({
     roomId: {
         type: String
     },
-})
 
-module.exports = mongoose.model("Cards", cardSchema)
+}
+);
+module.exports = mongoose.model("Cards", cardSchema);
+

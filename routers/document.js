@@ -1,11 +1,11 @@
-const express = require('express')
-const Documents = require('../schemas/document')
-const Rooms = require('../schemas/room')
-const Users = require('../schemas/users')
-const authMiddleware = require('../middlewares/auth-middleware')
-const isMember = require('../middlewares/isMember')
+const express = require('express');
+const Documents = require('../schemas/document');
+const Rooms = require('../schemas/room');
+const Users = require('../schemas/users');
+const authMiddleware = require('../middlewares/auth-middleware');
+const isMember = require('../middlewares/isMember');
 
-const router = express.Router()
+const router = express.Router();
 
 //DOCUMENT 작성
 
@@ -48,7 +48,6 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
 //모든 DOCUMENT 보여주기
 router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res) => {
   try {
-    //check if this user is a member of the room
     const userId = res.locals.user._id
 
     const { roomId } = req.params
@@ -56,10 +55,11 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
     if (!room) {
       res.status(400).send({
         'ok': false,
-        message: '존재하지 않는 룸 아이디 입니다.'
+
+        message: '존재하지 않는 룸아이디 입니다.'
       })
       return;
-    };
+    }
 
 
     const result = await Documents.find({ roomId: roomId })
@@ -73,7 +73,7 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
 
     res.status(200).send({
       ok: true,
-      message: '도큐먼트 작성 성공',
+      message: '도큐먼트 보여주기 성공',
       result: result
     })
   } catch (error) {
@@ -97,13 +97,14 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
         ok: false,
         message: 'roomId가 입력되지 않았습니다.',
       })
-      return
+      return;
     }
 
-    const room = await Rooms.find({ roomId: roomId });
+
+    const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
       res.status(400).send({
-        ok: false,
+        'ok': false,
         message: '존재하지 않는 룸아이디 입니다.'
       })
       return;
@@ -111,8 +112,7 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
 
     const { documentId } = req.body
     const result = await Documents.findOne({ documentId: documentId })
-    // const room = await Rooms.findById(roomId).exec();
-    // const result = await room.document.id(documentId);
+
 
     if (!result) {
       res.status(400).send({
@@ -202,13 +202,14 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
       return;
     }
 
-    const deleteDocument = await Documents.findOnedAndDelete({ documentId: documentId });
+
+    const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false });
     if (!deleteDocument) {
       res.status(400).send({
         ok: false,
         message: '존재하지 않는 도큐먼트 입니다',
       })
-      return
+      return;
     }
 
     res.status(200).send({
@@ -239,6 +240,8 @@ router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (re
 
 module.exports = router
 
-// const posts = await Posts.find().sort('-contentId');
 
-// await Posts.updateOne({ 'contentId': contentId, 'password': password }, { $set:{ 'title':title, 'name':name, 'content':content} });
+//     const posts = await Posts.find().sort('-contentId');
+
+//     await Posts.updateOne({ 'contentId': contentId, 'password': password }, { $set: { 'title': title, 'name': name, 'content': content } });
+
