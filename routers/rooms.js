@@ -17,19 +17,42 @@ router.get('/test', auth, async (req, res) => {
   const totalPages = Math.ceil((await Room.find({ members: member })).length/size)
   const c = await Room.find({ members: member })
   const d = await Room.find({ bookmarkedMembers : userId})
-  console.log(d)
+  console.log(d[0].roomId)
+
+  const test1 = await Bookmark.find({roomId:String(d[0].roomId), member: userId})
+  console.log('여기맞냐',test1)
+
+
+//  await Room.find({ BookmarkedMembers : member }).sort({ createdAt: 'desc', }).exec()
+  // console.log(d)
   const b = []
-  // const idx = await c.findIndex(function(item) {return item.roomId == d[0].roomId})
+  // console.log('c',c)
+  // console.log('d',d)
+
+  // var idx = await c.findIndex(function(item) {return item.roomId == String(d[0].roomId)})
+  // if (idx > -1) c.splice(idx, 1)
+  // var idx = await c.findIndex(function(item) {return item.roomId == String(d[1].roomId)})
+  // if (idx > -1) c.splice(idx, 1)
+
+  for (let i = 0 ; i< d.length ; i++) {
+    var idx = c.findIndex(function(item) {return item.roomId == String(d[i].roomId)})
+    if (idx > -1) c.splice(idx, 1)
+  }
+
+  // console.log('c2', c)
+
+  // const idx = await c.findIndex(function(item) {return item.roomId == c[0].roomId})
+  // if (idx > -1) c.splice(idx, 1) 
+  // if (idx > -1) c.splice(idx, 1) 
+
   // for (let i = 0; i < (c.length+1); i++) {
   //   if (idx > -1) c.splice(idx, 1) 
   // }
-  console.log(c,'c')
+  // console.log(c,'c')
 
 
   const room = {}
 
-  // const findBookmark = await Bookmark.find({ member: member})
-  // console.log(findBookmark)
 
   room.totalPages = totalPages
   if (endIndex < (await Room.countDocuments().exec())) {
@@ -42,9 +65,9 @@ router.get('/test', auth, async (req, res) => {
   try {
     // if (page === 1 ) {
     //   BookmarkId = {}
-    //   room.Bookmark = await Room.find({ BookmarkedMembers : member }).sort({
-    //     createdAt: 'desc',
-    //   }).exec()
+      // room.Bookmark = await Room.find({ BookmarkedMembers : member }).sort({
+      //   createdAt: 'desc',
+      // }).exec()
     //   console.log(room.Bookmark)
     //   for (var i = 0; i < room.Bookmark.length; i++) {
     //     console.log(room.Bookmark[i].id)
