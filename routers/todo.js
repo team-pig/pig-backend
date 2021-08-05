@@ -94,8 +94,7 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
         await Buckets.findOneAndDelete({ bucketId: bucketId });
 
         //버킷오더에서도 해당 버킷 삭제하기
-        const deleted = await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } })
-        console.log('deleted', deleted);
+        await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } });
         res.status(200).send({
             'ok': true,
             message: '버킷 삭제 성공'
