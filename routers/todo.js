@@ -104,7 +104,6 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
             'ok': false,
             message: '서버에러: 버킷 삭제 실패'
         })
-
     }
 })
 
@@ -255,19 +254,6 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         const { roomId } = req.params;
         const bucketOrder = await BucketOrder.findOne({ roomId: roomId });
         const buckets = await Buckets.find({ roomId: roomId });
-
-        //can frontend send an API inside of an API?
-
-        // for (let i = 0; i < buckets.length; i++) {
-        //     for (let k = 0; k < buckets[i].cardOrder.length; k++) {
-        //         let cardId = buckets[i].cardOrder[k];
-        //         console.log(`k passed (${k})`);
-        //     }
-        //     console.log(`i passed (${i})`);
-        //     let cardList = await Cards.findOne({ cardId: cardId });
-        //     console.log(`cardlist ${i}`, cardList);
-        //     buckets[i].cardOrder.push(cardList);
-        // }
 
         res.status(200).send({
             'ok': true,
@@ -436,25 +422,3 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
 })
 
 module.exports = router
-
-
-// router.get('/room/:roomId', authMiddleware, isMember, async(req,res)=>{
-//     try {
-//         userId = req.params;
-
-//         const likedRoom = await Rooms.likedMembers.includes(userId);
-//         const noLikedRoom = await Rooms.likedMembers.!includes(userId);
-
-//         res.status(200).send({
-//             likedRoom: likedRoom,
-//             noLiked: noLikedRoom
-//         })
-
-
-
-
-
-//     } catch (error) {
-        
-//     }
-// })
