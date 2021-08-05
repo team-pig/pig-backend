@@ -10,7 +10,6 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { leftShift } = require('mathjs');
 mongoose.set('useFindAndModify', false);
 
 //버킷 만들기
@@ -37,12 +36,9 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         //버킷오더 테이블에 버켓이 없다면 오더 만들어주기
         const bucketExist = await BucketOrder.findOne({ roomId: roomId });
         if (!bucketExist) {
-            await BucketOrder.create({ roomId: roomId })
+            await BucketOrder.create({ roomId: roomId });
         }
-        //버킷오더 이미 있다면 array마지막 순번으로 추가하기
-        if (bucketExist) {
-            await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
-        }
+        await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
 
         res.status(200).send({
             'ok': true,
@@ -155,6 +151,9 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 
 
         const bucketId = card.bucketId;
+        // await Movie.updateMany({ _id: movieId, 'comments._id': commentId }, { $set: { 'comments.$.comment': comment, 'comments.$.star': star } })
+
+
 
         // await Buckets.findOneAndUpdate({cardId:cardId},{startDate:startDate,endDate:endDate});
         // await Buckets.updateOne({ bucketId: bucketId, cardOrder: { $elemMatch: { cardId: cardId } } },
@@ -439,3 +438,23 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
 module.exports = router
 
 
+// router.get('/room/:roomId', authMiddleware, isMember, async(req,res)=>{
+//     try {
+//         userId = req.params;
+
+//         const likedRoom = await Rooms.likedMembers.includes(userId);
+//         const noLikedRoom = await Rooms.likedMembers.!includes(userId);
+
+//         res.status(200).send({
+//             likedRoom: likedRoom,
+//             noLiked: noLikedRoom
+//         })
+
+
+
+
+
+//     } catch (error) {
+        
+//     }
+// })
