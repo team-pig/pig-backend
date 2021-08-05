@@ -10,7 +10,7 @@ const router = express.Router();
 // let refreshTokens = []
 
 function createJwtToken(id) {
-    return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2d' });
+    return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
 }
 
 const registerValidator = Joi.object({
