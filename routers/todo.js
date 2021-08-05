@@ -40,10 +40,10 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         const bucketId = newBucket.bucketId
 
         //버킷오더 테이블에 버켓이 없다면 오더 만들어주기
-        const bucketExist = await BucketOrder.findOne({ roomId: roomId });
-        if (!bucketExist) {
-            await BucketOrder.create({ roomId: roomId });
-        }
+        // const bucketExist = await BucketOrder.findOne({ roomId: roomId });
+        // if (!bucketExist) {
+        //     await BucketOrder.create({ roomId: roomId });
+        // }
         await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
 
         res.status(200).send({

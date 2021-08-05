@@ -4,6 +4,7 @@ const Room = require('../schemas/room.js')
 const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
+const BucketOrder = require('../schemas/bucketOrder');
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -208,6 +209,9 @@ router.post('/room', auth, async (req, res) => {
 
       inviteCode: v4(),
     })
+    
+    const roomId = room.roomId;
+    await BucketOrder.create({ roomId: roomId });
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
