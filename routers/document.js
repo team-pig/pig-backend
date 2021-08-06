@@ -25,11 +25,16 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
       return;
     }
 
+    const targetUser = await Users.findById(userId);
+    const nickname = targetUser.nickname;
+    const createdAt = new Date();
     const newDocument = await Documents.create({
       title: title,
       content: content,
       userId: userId,
       roomId: roomId,
+      nickname: nickname,
+      createdAt: createdAt,
     });
     res.status(200).send({
       ok: true,
@@ -125,9 +130,10 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     res.status(200).send({
       ok: true,
       message: '상세 도큐먼트 보여주기 성공',
-      title: result.title,
-      content: result.content,
-      documentId: result.documentId
+      result:result
+      // title: result.title,
+      // content: result.content,
+      // documentId: result.documentId,
     })
   } catch (error) {
     console.log('display document ERROR', error)
@@ -162,10 +168,17 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
       })
       return;
     }
+    const targetUser = await Users.findById(userId);
+    const nickname = targetUser.nickname;
+    const modifiedAt = new Date();
     const editDocument = await Documents.findOneAndUpdate({ documentId: documentId }, {
       title: title,
       content: content,
-    }, { useFindAndModify: false })
+      userId: userId,
+      nickname: nickname,
+      modifiedAt: modifiedAt,
+    }, { useFindAndModify: false });
+
     if (!editDocument) {
       res.status(400).send({
         ok: false,

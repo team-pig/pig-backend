@@ -15,6 +15,15 @@ const documentSchema = new Schema({
     roomId: {
         type: String
     },
+    nickname: {
+        type: String
+    },
+    createdAt: {
+        type: Date
+    },
+    modifiedAt: {
+        type: Date
+    }
     // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 }
 );

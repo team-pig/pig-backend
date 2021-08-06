@@ -39,7 +39,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
 
         const bucketId = newBucket.bucketId
 
-        //버킷오더 테이블에 버켓이 없다면 오더 만들어주기
+        //버킷오더 테이블에 버켓이 없다면 오더 만들어주기    //이 코드 room.js에 보냈음.
         // const bucketExist = await BucketOrder.findOne({ roomId: roomId });
         // if (!bucketExist) {
         //     await BucketOrder.create({ roomId: roomId });
