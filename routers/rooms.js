@@ -140,6 +140,8 @@ router.post('/room', auth, async (req, res) => {
       tag: tag.split(', '),
       inviteCode: v4(),
     })
+    const roomId = room.roomId;
+    await BucketOrder.create({ roomId: roomId });
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
