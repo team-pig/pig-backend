@@ -35,6 +35,7 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
       roomId: roomId,
       nickname: nickname,
       createdAt: createdAt,
+      canEdit: true,
     });
     res.status(200).send({
       ok: true,
@@ -65,8 +66,6 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
       })
       return;
     }
-
-
     const result = await Documents.find({ roomId: roomId })
     if (result.length === 0) {
       res.status(400).send({
@@ -91,12 +90,12 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
 })
 
 //DOCUMENT 상세 보여주기
-router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
+router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
-    const userId = res.locals.user._id
+    const userId = res.locals.user._id;
 
-    const { roomId } = req.params
+    const { roomId, documentId } = req.params
     if (!roomId) {
       res.status(400).send({
         ok: false,
@@ -104,7 +103,6 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
       })
       return;
     }
-
 
     const room = await Rooms.findOne({ roomId: roomId });
     if (!room) {
@@ -115,7 +113,6 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
       return;
     }
 
-    const { documentId } = req.body
     const result = await Documents.findOne({ documentId: documentId })
 
 
@@ -130,7 +127,7 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     res.status(200).send({
       ok: true,
       message: '상세 도큐먼트 보여주기 성공',
-      result:result
+      result: result
       // title: result.title,
       // content: result.content,
       // documentId: result.documentId,
@@ -140,6 +137,42 @@ router.get('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     res.status(400).send({
       ok: false,
       message: '서버에러: 상세 도큐먼트 보여주기 실패',
+    })
+  }
+})
+//DOCUMENT 수정 가능여부 확인
+router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    const userId = res.locals.user._id;
+    const targetUser = await Users.findById(userId);
+    const nickname = targetUser.nickname;
+    
+    const document = await Documents.findOne({ documentId: documentId });
+    if (document.canEdit === false) {
+      res.status(200).send({
+        'ok': true,
+        message: '도큐먼트 수정중',
+        canEdit: false,
+        nickname: '이현수'
+      })
+      return;
+    }
+
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false });
+    res.status(200).send({
+      'ok': true,
+      message: '수정가능',
+      canEdit: false,
+      nickname: nickname
+    })
+    
+
+  } catch (error) {
+    console.log('도큐먼트 수정가능여부 확인 에러', error);
+    res.status(400).send({
+      'ok': false,
+      message: '서버에러: 수정가능여부 api 실패'
     })
   }
 })
@@ -177,6 +210,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
       userId: userId,
       nickname: nickname,
       modifiedAt: modifiedAt,
+      canEdit: true,
     }, { useFindAndModify: false });
 
     if (!editDocument) {

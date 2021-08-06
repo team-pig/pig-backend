@@ -42,7 +42,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         //버킷오더 테이블에 버켓이 없다면 오더 만들어주기    //이 코드 room.js에 보냈음.
         // const bucketExist = await BucketOrder.findOne({ roomId: roomId });
         // if (!bucketExist) {
-        //     await BucketOrder.create({ roomId: roomId });
+            //await BucketOrder.create({ roomId: roomId });
         // }
         await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
 
@@ -340,12 +340,9 @@ router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, r
 
 
 //todo보여주기
-router.get('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, res) => {
     try {
-        const { roomId } = req.params;
-        const { cardId } = req.body;
-
-
+        const { cardId } = req.params;
         const allTodos = await Todos.find({ cardId: cardId });
         res.status(200).send({
             'ok': true,

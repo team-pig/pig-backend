@@ -23,6 +23,9 @@ const documentSchema = new Schema({
     },
     modifiedAt: {
         type: Date
+    },
+    canEdit:{
+        type: Boolean
     }
     // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 }
