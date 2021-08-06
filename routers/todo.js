@@ -99,6 +99,17 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
     try {
         const { roomId } = req.params;
         const { bucketId } = req.body;
+
+        //남은 버킷이 하나일때는 삭제 불가해야한다.
+        const bucket = await BucketOrder.findOne({roomId:roomId});
+        if (bucket.bucketOrder.length === 1){
+            res.status(400).send({
+                'ok': false,
+                message: '마지막 남은 버킷은 삭제 불가합니다'
+            })
+            return;
+        }
+
         await Buckets.findOneAndDelete({ bucketId: bucketId });
 
         //버킷오더에서도 해당 버킷 삭제하기

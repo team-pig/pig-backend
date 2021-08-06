@@ -147,14 +147,14 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
     const userId = res.locals.user._id;
     const targetUser = await Users.findById(userId);
     const nickname = targetUser.nickname;
-    
+
     const document = await Documents.findOne({ documentId: documentId });
     if (document.canEdit === false) {
       res.status(200).send({
         'ok': true,
         message: '도큐먼트 수정중',
         canEdit: false,
-        nickname: '이현수'
+        nickname: nickname
       })
       return;
     }
@@ -163,10 +163,8 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
     res.status(200).send({
       'ok': true,
       message: '수정가능',
-      canEdit: false,
-      nickname: nickname
+      canEdit: true
     })
-    
 
   } catch (error) {
     console.log('도큐먼트 수정가능여부 확인 에러', error);
@@ -176,6 +174,26 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
     })
   }
 })
+
+//수정 하다가 취소 혹은 창 밖으로 나감
+router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: true });
+
+    res.status(200).send({
+      'ok': true,
+      message: 'api성공'
+    })
+  } catch (error) {
+    console.log('도큐먼트 수정 취소 서버에러', error);
+    res.status(400).send({
+      'ok': false,
+      message: 'api실패'
+    })
+  }
+})
+
 
 //DOCUMENT 수정
 router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {

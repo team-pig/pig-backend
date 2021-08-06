@@ -5,6 +5,7 @@ const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const { v4 } = require('uuid')
 const BucketOrder = require('../schemas/bucketOrder');
+const Buckets = require('../schemas/bucket');
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -211,7 +212,14 @@ router.post('/room', auth, async (req, res) => {
     })
     
     const roomId = room.roomId;
+    
+    //create Bucket
+    const newBucket = await Buckets.create({ roomId: roomId });
+    const bucketId = newBucket.bucketId
+
     await BucketOrder.create({ roomId: roomId });
+    await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
+
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
