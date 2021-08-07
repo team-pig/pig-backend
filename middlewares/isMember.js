@@ -16,7 +16,6 @@ module.exports = async (req, res, next) => {
         if (room.members.includes(userId) === false) {
             res.status(400).send({
                 'ok': false,
-
                 message: '본 유저는 방의 멤버가 아닙니다.'
             })
             return;

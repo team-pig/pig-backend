@@ -16,15 +16,6 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
     const { roomId } = req.params
     const { title, content } = req.body
 
-    const room = await Rooms.findOne({ roomId: roomId });
-    if (!room) {
-      res.status(400).send({
-        'ok': false,
-        message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-
     const targetUser = await Users.findById(userId);
     const nickname = targetUser.nickname;
     const createdAt = new Date();
@@ -35,6 +26,7 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
       roomId: roomId,
       nickname: nickname,
       createdAt: createdAt,
+      modifiedAt: createdAt,
       canEdit: true,
     });
     res.status(200).send({
@@ -54,18 +46,8 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
 //모든 DOCUMENT 보여주기
 router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res) => {
   try {
-    const userId = res.locals.user._id
-
     const { roomId } = req.params
-    const room = await Rooms.findOne({ roomId: roomId });
-    if (!room) {
-      res.status(400).send({
-        'ok': false,
 
-        message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
     const result = await Documents.find({ roomId: roomId })
     if (result.length === 0) {
       res.status(400).send({
@@ -92,29 +74,9 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
 //DOCUMENT 상세 보여주기
 router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async (req, res) => {
   try {
-    //check if this user is a member of the room
-    const userId = res.locals.user._id;
-
     const { roomId, documentId } = req.params
-    if (!roomId) {
-      res.status(400).send({
-        ok: false,
-        message: 'roomId가 입력되지 않았습니다.',
-      })
-      return;
-    }
-
-    const room = await Rooms.findOne({ roomId: roomId });
-    if (!room) {
-      res.status(400).send({
-        'ok': false,
-        message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
 
     const result = await Documents.findOne({ documentId: documentId })
-
 
     if (!result) {
       res.status(400).send({
@@ -128,9 +90,6 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
       ok: true,
       message: '상세 도큐먼트 보여주기 성공',
       result: result
-      // title: result.title,
-      // content: result.content,
-      // documentId: result.documentId,
     })
   } catch (error) {
     console.log('display document ERROR', error)
@@ -200,25 +159,8 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
   try {
     //check if this user is a member of the room
     const userId = res.locals.user._id
-    const { roomId } = req.params
-    const room = await Rooms.findOne({ roomId: roomId });
-    if (!room) {
-      res.status(400).send({
-        'ok': false,
-        message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-
     const { documentId, title, content } = req.body
-    const findDocument = await Documents.findOne({ documentId: documentId });
-    if (!findDocument) {
-      res.status(400).send({
-        ok: 'false',
-        message: '존재하지 않는 도큐먼트 입니다.'
-      })
-      return;
-    }
+
     const targetUser = await Users.findById(userId);
     const nickname = targetUser.nickname;
     const modifiedAt = new Date();
@@ -254,19 +196,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
 //DOCUMENT 삭제
 router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
-    //check if this user is a member of the room OR A MASTER OF THE ROOM??
-    const userId = res.locals.user._id
-    const { roomId } = req.params
     const { documentId } = req.body
-    const room = await Rooms.findOne({ roomId: roomId });
-    if (!room) {
-      res.status(400).send({
-        'ok': false,
-        message: '존재하지 않는 룸아이디 입니다.'
-      })
-      return;
-    }
-
 
     const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false });
     if (!deleteDocument) {

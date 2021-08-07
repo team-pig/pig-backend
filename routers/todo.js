@@ -17,22 +17,8 @@ mongoose.set('useFindAndModify', false);
 //버킷 만들기
 router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
     try {
-
-        const userId = res.locals.user._id;  
-
         const { roomId } = req.params;
         const { bucketName } = req.body;
-
-        //check if room exists
-        const room = await Rooms.findOne({ roomId: roomId });
-
-        if (!room) {
-            res.status(400).send({
-                'ok': false,
-                message: '존재하지 않는 룸 입니다'
-            });
-            return;
-        }
 
         //create Bucket
         const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
@@ -42,7 +28,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         //버킷오더 테이블에 버켓이 없다면 오더 만들어주기    //이 코드 room.js에 보냈음.
         // const bucketExist = await BucketOrder.findOne({ roomId: roomId });
         // if (!bucketExist) {
-            //await BucketOrder.create({ roomId: roomId });
+        //await BucketOrder.create({ roomId: roomId });
         // }
         await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
 
@@ -73,8 +59,6 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
         //2. bucketOrder document을 따로 만들어서 roomId마다 하나씩 있게함. 저장하고 불러옴.
 
 
-        //bucket을 하나씩만 수정할수있나? 그렇다면 updateOne. 여러개 동시에 수정할수있나? 그러면 updateMany
-
         await Buckets.updateOne({ bucketId: bucketId }, { bucketName: bucketName }, { omitUndefined: true });
 
         await BucketOrder.updateOne({ roomId: roomId }, { bucketOrder: bucketOrder }, { omitUndefined: true });
@@ -101,8 +85,8 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
         const { bucketId } = req.body;
 
         //남은 버킷이 하나일때는 삭제 불가해야한다.
-        const bucket = await BucketOrder.findOne({roomId:roomId});
-        if (bucket.bucketOrder.length === 1){
+        const bucket = await BucketOrder.findOne({ roomId: roomId });
+        if (bucket.bucketOrder.length === 1) {
             res.status(400).send({
                 'ok': false,
                 message: '마지막 남은 버킷은 삭제 불가합니다'
@@ -155,12 +139,9 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 })
 
 //카드 내용 수정
-
 router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
-        const { roomId } = req.params;
         const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt, color } = req.body;
-
 
         const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
@@ -172,32 +153,6 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 
         const bucketId = card.bucketId;
         // await Movie.updateMany({ _id: movieId, 'comments._id': commentId }, { $set: { 'comments.$.comment': comment, 'comments.$.star': star } })
-
-
-
-        // await Buckets.findOneAndUpdate({cardId:cardId},{startDate:startDate,endDate:endDate});
-        // await Buckets.updateOne({ bucketId: bucketId, cardOrder: { $elemMatch: { cardId: cardId } } },
-        //     { $set: { "cardOrder.$.startDate": startDate } });
-
-        // await Buckets.updateOne({ cardOrder: { cardId: cardId } }, { startDate: startDate, endDate: endDate });
-        // Person.update({_id: 5,grades: { $elemMatch: { grade: { $lte: 90 }, mean: { $gt: 80 } } }},
-        //    { $set: { "grades.$.std" : 6 } }
-        // )
-
-        // var MongoClient = require('mongodb').MongoClient;
-        // var url = "mongodb://127.0.0.1:27017/";
-
-        // MongoClient.connect(url, function (err, db) {
-        //     if (err) throw err;
-        //     var dbo = db.db("admin");
-        //     var myquery = { bucketId: bucketId, cardOrder.cardId:cardId};
-        //     var newvalues = { $set: { name: "Mickey", address: "Canyon 123" } };
-        //     dbo.collection("buckets").updateOne(myquery, newvalues, function (err, res) {
-        //         if (err) throw err;
-        //         console.log("1 document updated");
-        //         db.close();
-        //     });
-        // });
 
         res.status(200).send({
             'ok': true,
@@ -216,20 +171,15 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { cardId, sourceBucket, sourceBucketOrder, destinationBucket, destinationBucketOrder } = req.body;
+        const { cardOrder } = req.body;
+        const bucketIdArray = Object.keys(cardOrder);
+        const cardIdArray = Object.values(cardOrder);
+        // console.log('bucketIdArrayyy', bucketIdArray);
+        // console.log('cardIdArrayyyy', cardIdArray);
 
-        //souceBucket and destinationBucket will be the same, if the card moves within the same bucket only
-
-        //change card's bucketId in Cards
-        await Cards.findOneAndUpdate({ cardId: cardId }, { bucketId: destinationBucket }, { omitUndefined: true });
-
-        //change sourceBucket's cardOrder in Buckets
-        await Buckets.findOneAndUpdate({ bucketId: sourceBucket }, { cardOrder: sourceBucketOrder }, { omitUndefined: true });
-
-        //if sourceBucket and destinationBucket are different, then change destinationBucket's cardOrder in Buckets
-        if (sourceBucket !== destinationBucket) {
-            await Buckets.findOneAndUpdate({ bucketId: destinationBucket }, { cardOrder: destinationBucketOrder }, { omitUndefined: true });
-        };
+        for (i = 0; i < bucketIdArray.length; i++) {
+            await Buckets.findOneAndUpdate({ bucketId: bucketIdArray[i] }, { cardOrder: cardIdArray[i] });
+        }
 
         res.status(200).send({
             'ok': true,
@@ -375,11 +325,7 @@ router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => 
     try {
         const { cardId, todoTitle } = req.body;
 
-
-        //check if cardId exists
-
         const newTodo = await Todos.create({ cardId: cardId, todoTitle, todoTitle, isChecked: false });
-
 
         res.status(200).send({
             'ok': true,
@@ -399,10 +345,8 @@ router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => 
 router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
     try {
         const { todoId, todoTitle, isChecked, addMember, removeMember } = req.body;
-        //check if cardId exists
 
         await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
-
 
         // if(addMember){
 
@@ -447,3 +391,24 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
 })
 
 module.exports = router
+
+
+
+// original sourceBucketCardOrder = [4,1]
+//         original destinationBucketCardOrder = [2,5]
+
+//         incoming sourceOrder = [1]
+//         incoming destinationOrder = [2,5,4]
+// ------------------------------------------------------------
+//         original sourceorder = [1]
+//         original destination = [2,5,4]
+
+//         incoming source = [1,4]
+//         incoming destination = [2,5]
+
+//         바뀐것만 보내주나? 안바뀐 버킷 cardOrder까지 다 보내주면 그냥 덮어버려졌을것. 그럼 일단 카드가 2군데에 가는 경우는 없을것.
+//         만약 그냥 덮어버린다면 새로고침을 해야 바뀐걸 알아차릴수 있을텐데. 매번 새로고침하게할수도 없고...그럼 소켓을 쓰면 다 해결이 되긴함.
+
+
+//         버킷1[1,4]
+//         버킷2[4,5] 라면 첫번쨰버킷을 [1,4]로 변경하고 두번째 버킷에서 4를 빼준다.
