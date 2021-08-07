@@ -3,7 +3,7 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
-const BucketOrder = require('../schemas/bucketOrder.js')
+const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 const BucketOrder = require('../schemas/bucketOrder');
 const Buckets = require('../schemas/bucket');
@@ -97,9 +97,10 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
       return res.status(400).send({ message: '이미 즐겨찾기 등록이 되어있습니다.' })
     }
     if (!roomLikedAt) {
-      await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
+     const bookmarkedRoom = await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
       await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
-      return res.send('즐겨찾기 등록')
+      console.log(bookmarkedRoom)
+      return res.send(bookmarkedRoom)
     }
   } catch (err) {
     console.error(err)
@@ -122,7 +123,8 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
     if (roomLikedAt) {
       await Room.updateOne({ roomId: roomId }, { $pull: { bookmarkedMembers: userId } })
       await Bookmark.findOneAndRemove({ roomId: roomId, member: userId })
-      return res.send('즐겨찾기 삭제')
+      const bookmarkedRoom = await Room.findOne({ roomId: roomId})
+      return res.send(bookmarkedRoom)
     }
   } catch (err) {
     console.error(err)
