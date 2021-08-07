@@ -214,7 +214,7 @@ router.post('/room', auth, async (req, res) => {
     const roomId = room.roomId;
     
     //create Bucket
-    const newBucket = await Buckets.create({ roomId: roomId });
+    const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] });
     const bucketId = newBucket.bucketId
 
     await BucketOrder.create({ roomId: roomId });

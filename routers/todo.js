@@ -21,7 +21,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         const { bucketName } = req.body;
 
         //create Bucket
-        const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId });
+        const newBucket = await Buckets.create({ bucketName: bucketName, roomId: roomId, cardOrder: [] });
 
         const bucketId = newBucket.bucketId
 
@@ -122,7 +122,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
-        await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: newCard.cardId } });
+        await Buckets.updateOne({ bucketId: bucketId },  { cardOrder: newCard.cardId });
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
