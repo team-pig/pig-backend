@@ -6,6 +6,7 @@ const auth = require('../middlewares/auth-middleware.js')
 const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 const Buckets = require('../schemas/bucket');
+const User = require('../schemas/users.js')
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -96,9 +97,9 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
       return res.status(400).send({ message: '이미 즐겨찾기 등록이 되어있습니다.' })
     }
     if (!roomLikedAt) {
-     const bookmarkedRoom = await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
+      await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
       await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
-      console.log(bookmarkedRoom)
+      const bookmarkedRoom = await Room.findOne({roomId: roomId})
       return res.send(bookmarkedRoom)
     }
   } catch (err) {
@@ -269,6 +270,24 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
     console.error(err)
     res.status(400).json(err)
   }
+})
+// 방의 멤버 정보 조회 (닉네임과 userId)
+router.get('/room/:roomId/members', auth, async (req, res)=> {
+  const {roomId} = req.params
+  const findRoom = await Room.findOne({roomId: roomId})
+  const allMembers = []
+
+  for (let i = 0; i<findRoom.members.length; i++) {
+    memberId = findRoom.members[i]
+    memberInfo = await User.findOne({ _id:memberId }, { email:false, password:false, __v:false}).lean()
+    memberInfo.memberId = memberInfo._id
+    memberInfo.memberName = memberInfo.nickname
+    delete memberInfo._id; delete memberInfo.nickname;
+    allMembers.push(memberInfo)
+  }
+
+  console.log(allMembers)
+  res.send({allMembers})
 })
 
 module.exports = router
