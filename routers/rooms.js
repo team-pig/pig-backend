@@ -22,12 +22,13 @@ router.get('/rooms', auth, async (req, res) => {
     const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId },{_id:false})
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
-    if (endIndex < (await Room.countDocuments().exec())) {
-      room.next = { page: page + 1, size: size }
-    }
-    if (startIndex > 0) {
-      room.previous = { page: page - 1, size: size }
-    }
+    room.userId = userId
+    // if (endIndex < (await Room.countDocuments().exec())) {
+    //   room.next = { page: page + 1, size: size }
+    // }
+    // if (startIndex > 0) {
+    //   room.previous = { page: page - 1, size: size }
+    // }
     room.room = await Room.find({ members: userId },{_id:false}).sort({ createdAt: 'desc' })
     // 찾은 방에서 bookmark된 방 빼기
     for (let i = 0; i < bookmarkedRoom.length; i++) {
@@ -272,22 +273,26 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
   }
 })
 // 방의 멤버 정보 조회 (닉네임과 userId)
-router.get('/room/:roomId/members', auth, async (req, res)=> {
-  const {roomId} = req.params
-  const findRoom = await Room.findOne({roomId: roomId})
-  const allMembers = []
-
-  for (let i = 0; i<findRoom.members.length; i++) {
-    memberId = findRoom.members[i]
-    memberInfo = await User.findOne({ _id:memberId }, { email:false, password:false, __v:false}).lean()
-    memberInfo.memberId = memberInfo._id
-    memberInfo.memberName = memberInfo.nickname
-    delete memberInfo._id; delete memberInfo.nickname;
-    allMembers.push(memberInfo)
+router.get('/room/:roomId/members', auth, async (req, res) => {
+  try {
+    const { roomId } = req.params
+    const findRoom = await Room.findOne({ roomId: roomId })
+    const allMembers = []
+    for (let i = 0; i < findRoom.members.length; i++) {
+      memberId = findRoom.members[i]
+      memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean()
+      memberInfo.memberId = memberInfo._id
+      memberInfo.memberName = memberInfo.nickname
+      delete memberInfo._id
+      delete memberInfo.nickname
+      allMembers.push(memberInfo)
+    }
+    console.log(allMembers)
+    res.send({ allMembers })
+  } catch (err) {
+    console.error(err)
+    res.status(400).json({message: '방 조회 혹은 멤버 불러오기 실패'})
   }
-
-  console.log(allMembers)
-  res.send({allMembers})
 })
 
 module.exports = router
