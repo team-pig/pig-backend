@@ -4,6 +4,15 @@ const app = express();
 const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
+
+const options = {
+  ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
+ }
 
 /*이미지 업로드
 const path = require("path");
@@ -77,6 +86,9 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
   res.send('Multiple Files Upload Success')
 })
 */
-app.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
-})
+// app.listen(port, () => {
+//     console.log(`listening at http://localhost:${port}`);
+// })
+
+http.createServer(app).listen(3000)
+https.createServer(options, app).listen(443)
