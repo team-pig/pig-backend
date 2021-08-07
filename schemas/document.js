@@ -15,6 +15,18 @@ const documentSchema = new Schema({
     roomId: {
         type: String
     },
+    nickname: {
+        type: String
+    },
+    createdAt: {
+        type: Date
+    },
+    modifiedAt: {
+        type: Date
+    },
+    canEdit:{
+        type: Boolean
+    }
     // stories: [{ type: Schema.Types.ObjectId, ref: 'Story' }]
 }
 );
