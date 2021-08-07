@@ -3,7 +3,7 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
-const BucketOrder = require('../schemas/bucketOrder.js')
+const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 
 const router = express.Router()
