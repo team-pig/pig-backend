@@ -138,11 +138,13 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
 
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user._id
-  const { roomName, roomImage, subtitle, tag } = req.body
+  const { roomName, roomImage, subtitle, tag, desc, endDate } = req.body
   try {
     const room = await Room.create({
       roomName,
       roomImage,
+      desc,
+      endDate,
       master: userId,
       members: userId,
       subtitle,
