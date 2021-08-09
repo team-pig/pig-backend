@@ -49,11 +49,14 @@ router.get('/rooms', auth, async (req, res) => {
   }
 })
 
-router.get('/rooms/search', async (req, res) => {
+router.get('/rooms/search', auth, async (req, res) => {
   try {
-    const { roomName, subtitle, tag } = req.query
-    const a = await Room.find({ $or: [{ roomName }, { subtitle }, { tag }] },{_id:false})
-    res.send(a)
+    const userId = res.locals.user._id
+    const { roomName } = req.query
+    // const { roomName, subtitle, tag } = req.body
+    // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
+    const room = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false })
+    res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
   }
