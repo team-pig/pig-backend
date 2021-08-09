@@ -80,10 +80,16 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
 })
 
 router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
-  const userId = res.locals.user._id
-  const {desc, tags} = req.body
-  const aw = await MemberStatus.create()
- })
+  try {
+    const userId = res.locals.user._id
+    const { roomId } = req.params
+    const { desc, tags } = req.body
+    await MemberStatus.updateOne({ memberId: userId, roomId }, { $set: { desc, tags } })
+    res.send({ message: '프로필 수정 성공' })
+  } catch (e) {
+    res.status(500).json({ message: '서버에러: 프로필 수정 실패' })
+  }
+})
 
 
 router.get('/room/:roomId/timeline', async (req, res) => { })
