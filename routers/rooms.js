@@ -48,7 +48,7 @@ router.get('/rooms', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
-
+// 방 검색하기
 router.get('/rooms/search', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
@@ -61,8 +61,18 @@ router.get('/rooms/search', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
   }
 })
-
-router.get('/room/:roomId/main', async (req, res) => { })
+// 방 메인페이지 불러오기
+router.get('/room/:roomId/main', auth, async (req, res) => { 
+  try {
+  const {roomId} = req.params
+  const userId = res.locals.user._id
+  const result = await Room.findOne({roomId, members: userId})
+  console.log({result})
+  res.send({result})
+  } catch (e) {
+    res.status(500).json({ message: '서버에러: 방 메인페이지 불러오기 실패'})
+  }
+})
 
 router.get('/room/:roomId/page', async (req, res) => { })
 
