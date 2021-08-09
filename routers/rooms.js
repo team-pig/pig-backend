@@ -211,7 +211,7 @@ router.post('/room/member', auth, async (req, res) => {
 router.put('/room', auth, async (req, res) => {
   // 입력하지 않은 roomName, roomImage, subtitle, tag는 기존 입력한 대로 가만히 둔다.
   try {
-    const { roomId, roomName, roomImage, subtitle, tag } = req.body
+    const { roomId, roomName, roomImage, subtitle, tag, desc, endDate } = req.body
     const { userId } = res.locals.user
     const findRoom = await Room.findOne({roomId: roomId})
     console.log(tag.split(', '))
@@ -219,7 +219,7 @@ router.put('/room', auth, async (req, res) => {
       return res.send({ ok: false, message: '방 수정 권한이 없습니다.' })
     }
     if (roomId && findRoom.master == userId) {
-      await Room.updateOne({ roomId: roomId }, { $set: { roomName, roomImage, subtitle, tag: tag.split(', ') } })
+      await Room.updateOne({ roomId: roomId }, { $set: { roomName, roomImage, subtitle, tag: tag.split(', '), desc, endDate } })
       return res.json({ ok: true, message: '방 수정 성공' })
     }
     res.send("test")
