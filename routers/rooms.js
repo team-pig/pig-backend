@@ -7,6 +7,7 @@ const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 const Buckets = require('../schemas/bucket');
 const User = require('../schemas/users.js')
+const MemberStatus = require('../schemas/memberStatus.js')
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -74,9 +75,16 @@ router.get('/room/:roomId/main', auth, async (req, res) => {
   }
 })
 
-router.get('/room/:roomId/page', async (req, res) => { })
+router.get('/room/:roomId/main/status', auth, async (req, res) => { 
 
-router.get('/room/:roomId/board', async (req, res) => { })
+})
+
+router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
+  const userId = res.locals.user._id
+  const {desc, tags} = req.body
+  const aw = await MemberStatus.create()
+ })
+
 
 router.get('/room/:roomId/timeline', async (req, res) => { })
 
@@ -161,14 +169,14 @@ router.post('/room', auth, async (req, res) => {
       tag: tag.split(', '),
       inviteCode: v4(),
     })
-
-    
+    let nickname = await User.findById(userId,{__v:false, password:false, email:false, _id:false})
+    nickname = nickname.nickname
     const roomId = room.roomId;
     
     //create Bucket
     const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] });
     const bucketId = newBucket.bucketId
-
+    await MemberStatus.create({ roomId: roomId, memberId: userId, nickname })
     await BucketOrder.create({ roomId: roomId });
     await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
     res.json({ room })
@@ -207,6 +215,10 @@ router.post('/room/member', auth, async (req, res) => {
     if (inviteCode && !findRoom.members.includes(userId)) {
       await Room.updateOne({ inviteCode }, { $push: { members: userId } })
       const room = await Room.findOne({ inviteCode })
+      let nickname  = await User.findById(userId,{__v:false, password:false, email:false, _id:false})
+      nickname = nickname.nickname
+      const roomId = room.id
+      await MemberStatus.create({ roomId: roomId, memberId: userId, nickname })
       return res.json({ room })
     }
   } catch (error) {
