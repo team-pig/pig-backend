@@ -3,9 +3,11 @@ const express = require('express')
 const Room = require('../schemas/room.js')
 const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
+const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
-const BucketOrder = require('../schemas/bucketOrder');
 const Buckets = require('../schemas/bucket');
+const User = require('../schemas/users.js')
+const deleteAll = require('../middlewares/deleting');
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -21,12 +23,13 @@ router.get('/rooms', auth, async (req, res) => {
     const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId },{_id:false})
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
-    if (endIndex < (await Room.countDocuments().exec())) {
-      room.next = { page: page + 1, size: size }
-    }
-    if (startIndex > 0) {
-      room.previous = { page: page - 1, size: size }
-    }
+    room.userId = userId
+    // if (endIndex < (await Room.countDocuments().exec())) {
+    //   room.next = { page: page + 1, size: size }
+    // }
+    // if (startIndex > 0) {
+    //   room.previous = { page: page - 1, size: size }
+    // }
     room.room = await Room.find({ members: userId },{_id:false}).sort({ createdAt: 'desc' })
     // 찾은 방에서 bookmark된 방 빼기
     for (let i = 0; i < bookmarkedRoom.length; i++) {
@@ -47,11 +50,14 @@ router.get('/rooms', auth, async (req, res) => {
   }
 })
 
-router.get('/rooms/search', async (req, res) => {
+router.get('/rooms/search', auth, async (req, res) => {
   try {
-    const { roomName, subtitle, tag } = req.query
-    const a = await Room.find({ $or: [{ roomName }, { subtitle }, { tag }] },{_id:false})
-    res.send(a)
+    const userId = res.locals.user._id
+    const { roomName } = req.query
+    // const { roomName, subtitle, tag } = req.body
+    // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
+    const room = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false })
+    res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
   }
@@ -98,7 +104,8 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
     if (!roomLikedAt) {
       await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
       await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
-      return res.send('즐겨찾기 등록')
+      const bookmarkedRoom = await Room.findOne({roomId: roomId})
+      return res.send(bookmarkedRoom)
     }
   } catch (err) {
     console.error(err)
@@ -121,7 +128,8 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
     if (roomLikedAt) {
       await Room.updateOne({ roomId: roomId }, { $pull: { bookmarkedMembers: userId } })
       await Bookmark.findOneAndRemove({ roomId: roomId, member: userId })
-      return res.send('즐겨찾기 삭제')
+      const bookmarkedRoom = await Room.findOne({ roomId: roomId})
+      return res.send(bookmarkedRoom)
     }
   } catch (err) {
     console.error(err)
@@ -226,6 +234,11 @@ router.delete('/room', auth, async (req, res) => {
     const { roomId } = req.body
     const findRoom = await Room.findOne({roomId:roomId})
     if (findRoom.master == userId) {
+      
+
+      //룸안에 속해있는 모든걸 삭제하기
+      await deleteAll.deleteDocuments(roomId);
+      await deleteAll.deleteBuckets(roomId);
       await Room.findOneAndRemove({roomId:roomId})
       return res.json({
         ok: true,
@@ -266,6 +279,28 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
+  }
+})
+// 방의 멤버 정보 조회 (닉네임과 userId)
+router.get('/room/:roomId/members', auth, async (req, res) => {
+  try {
+    const { roomId } = req.params
+    const findRoom = await Room.findOne({ roomId: roomId })
+    const allMembers = []
+    for (let i = 0; i < findRoom.members.length; i++) {
+      memberId = findRoom.members[i]
+      memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean()
+      memberInfo.memberId = memberInfo._id
+      memberInfo.memberName = memberInfo.nickname
+      delete memberInfo._id
+      delete memberInfo.nickname
+      allMembers.push(memberInfo)
+    }
+    console.log(allMembers)
+    res.send({ allMembers })
+  } catch (err) {
+    console.error(err)
+    res.status(400).json({message: '방 조회 혹은 멤버 불러오기 실패'})
   }
 })
 
