@@ -111,39 +111,44 @@ router.get('/room/:roomId/main', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 메인페이지 불러오기 실패'})
   }
 })
-// 방 유저 현황 불러오기  8월 9일 todo에 roomId가 있으면 편하게 진행될 것 같다. 현재 todo에 cardId말고 documentId로 찾으려고 코드를 짰는데 배포용 DB에는 bucket에 documentId가 안담겨있고, cardId만 담겨져 있다. 
-router.get('/room/:roomId/main/status', auth, async (req, res) => { 
-  //projectStatus{endDate, checked, notChecked}
-  //memberStatus:[{userId, nickname, desc, tags, checked, notChecked}]
+// 방 유저 현황 불러오기 8월 10일 완성
+router.get('/room/:roomId/main/status', auth, async (req, res) => {
   const userId = res.locals.user._id
-  const {roomId} = req.params
+  const { roomId } = req.params
   let projectStatus = {}
-  let memberStatus= []
-  let todo = []
-  let count = 0
-  let endDate = await Room.findOne({roomIㅉd, members:userId},{_id:false, endDate:true})
+  let memberStatus = []
+  let endDate = await Room.findOne({ roomId, members: userId }, { _id: false, endDate: true })
   endDate = endDate.endDate
-  console.log(endDate)
-  aw = await Buckets.find({roomId})
-  for (let i=0; i<aw.length; i++) {
-    var bucketId = (aw[i].bucketId,'aasdasdasdsdasd')
-    ac = await Todo.find({bucketId})
-    console.log('ac', ac)
-    todo.push(ac)
-    console.log('123123', ac)
-  }
-  for (let i=0; i<todo.length; i++) {
-    if(todo[i].isChecked) {
-      count += 1
+  let checked = 0
+  let notChecked = 0
+  const todo = await Todo.find({ roomId })
+  for (let i = 0; i < todo.length; i++) {
+    if (todo[i].isChecked === true) {
+      checked += 1
+    } else {
+      notChecked += 1
     }
   }
-  console.log(todo)
-  const checked = count
-  const notChecked = (todo.length - count)
-  projectStatus = {'endDate':endDate, 'checked':checked, 'notChecked':notChecked}
-  console.log(projectStatus)
-  
-  ac = await Todo.find()
+  projectStatus = { endDate, checked, notChecked }
+  //위에까지 projectStatus, 아래부터memberStatus 시작
+  const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()
+  for (let j = 0; j < findMemberStatus.length; j++) {
+    var findTodo = await Todo.find({ members: findMemberStatus[j].userId })
+    bchecked = 0
+    bnotChecked = 0
+    for (let k = 0; k < findTodo.length; k++) {
+      if (findTodo[k].isChecked === true) {
+        bchecked += 1
+      } else {
+        bnotChecked += 1
+      }
+    }
+    memberStatus.push(findMemberStatus[j])
+    memberStatus[j].checked = bchecked
+    memberStatus[j].notChecked = bnotChecked
+  }
+  console.log({ projectStatus, memberStatus })
+  res.send({ projectStatus, memberStatus })
 })
 
 router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
@@ -151,7 +156,7 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { desc, tags } = req.body
-    await MemberStatus.updateOne({ memberId: userId, roomId }, { $set: { desc, tags } })
+    await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
     res.send({ message: '프로필 수정 성공' })
   } catch (e) {
     res.status(500).json({ message: '서버에러: 프로필 수정 실패' })
@@ -249,7 +254,7 @@ router.post('/room', auth, async (req, res) => {
     //create Bucket
     const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] });
     const bucketId = newBucket.bucketId
-    await MemberStatus.create({ roomId: roomId, memberId: userId, nickname })
+    await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await BucketOrder.create({ roomId: roomId });
     await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
     res.json({ room })
@@ -290,8 +295,9 @@ router.post('/room/member', auth, async (req, res) => {
       const room = await Room.findOne({ inviteCode })
       let nickname  = await User.findById(userId,{__v:false, password:false, email:false, _id:false})
       nickname = nickname.nickname
-      const roomId = room.id
-      await MemberStatus.create({ roomId: roomId, memberId: userId, nickname })
+      const roomId = room.roomId
+      console.log(roomId)
+      await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
       return res.json({ room })
     }
   } catch (error) {
