@@ -52,6 +52,38 @@ router.get('/rooms', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
+//즐겨 찾기 된 방 불러오기
+router.get('/rooms/markedlist', auth, async (req, res) => {
+  try {
+    const userId = res.locals.user._id
+    const markedList = await Room.find({ bookmarkedMembers: userId }, { _id: false }).sort({ createdAt: 'desc' })
+    res.send({ markedList })
+  } catch (err) {
+    res.status(400).send({ message: '즐겨찾기된 방 조회 실패' })
+  }
+})
+//즐겨찾기 안된 방 불러오기
+router.get('/rooms/unmarkedlist', auth, async (req, res) => {
+  try {
+    const userId = res.locals.user._id
+    const room = {}
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false }).sort({ createdAt: 'desc' })
+    room.room = await Room.find({ members: userId }, { _id: false }).sort({ createdAt: 'desc' })
+    // console.log(room)
+    for (let i = 0; i < bookmarkedRoom.length; i++) {
+      var idx = room.room.findIndex(function (item) {
+        return item.roomId == String(bookmarkedRoom[i].roomId)
+      })
+      if (idx > -1) {
+        room.room.splice(idx, 1)
+      }
+    }
+    const unMarkedList = room.room
+    res.send({ unMarkedList })
+  } catch (err) {
+    res.status(400).send({ message: '즐겨찾기 안된 방 조회 실패'})
+  }
+})
 
 // 방 검색하기
 
