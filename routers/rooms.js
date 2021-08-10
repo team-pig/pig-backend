@@ -113,42 +113,46 @@ router.get('/room/:roomId/main', auth, async (req, res) => {
 })
 // 방 유저 현황 불러오기 8월 10일 완성
 router.get('/room/:roomId/main/status', auth, async (req, res) => {
-  const userId = res.locals.user._id
-  const { roomId } = req.params
-  let projectStatus = {}
-  let memberStatus = []
-  let endDate = await Room.findOne({ roomId, members: userId }, { _id: false, endDate: true })
-  endDate = endDate.endDate
-  let checked = 0
-  let notChecked = 0
-  const todo = await Todo.find({ roomId })
-  for (let i = 0; i < todo.length; i++) {
-    if (todo[i].isChecked === true) {
-      checked += 1
-    } else {
-      notChecked += 1
-    }
-  }
-  projectStatus = { endDate, checked, notChecked }
-  //위에까지 projectStatus, 아래부터memberStatus 시작
-  const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()
-  for (let j = 0; j < findMemberStatus.length; j++) {
-    var findTodo = await Todo.find({ members: findMemberStatus[j].userId })
-    bchecked = 0
-    bnotChecked = 0
-    for (let k = 0; k < findTodo.length; k++) {
-      if (findTodo[k].isChecked === true) {
-        bchecked += 1
+  try {
+    const userId = res.locals.user._id
+    const { roomId } = req.params
+    let projectStatus = {}
+    let memberStatus = []
+    let endDate = await Room.findOne({ roomId, members: userId }, { _id: false, endDate: true })
+    endDate = endDate.endDate
+    let checked = 0
+    let notChecked = 0
+    const todo = await Todo.find({ roomId })
+    for (let i = 0; i < todo.length; i++) {
+      if (todo[i].isChecked === true) {
+        checked += 1
       } else {
-        bnotChecked += 1
+        notChecked += 1
       }
     }
-    memberStatus.push(findMemberStatus[j])
-    memberStatus[j].checked = bchecked
-    memberStatus[j].notChecked = bnotChecked
+    projectStatus = { endDate, checked, notChecked }
+    //위에까지 projectStatus, 아래부터memberStatus 시작
+    const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()
+    for (let j = 0; j < findMemberStatus.length; j++) {
+      var findTodo = await Todo.find({ members: findMemberStatus[j].userId })
+      bchecked = 0
+      bnotChecked = 0
+      for (let k = 0; k < findTodo.length; k++) {
+        if (findTodo[k].isChecked === true) {
+          bchecked += 1
+        } else {
+          bnotChecked += 1
+        }
+      }
+      memberStatus.push(findMemberStatus[j])
+      memberStatus[j].checked = bchecked
+      memberStatus[j].notChecked = bnotChecked
+    }
+    console.log({ projectStatus, memberStatus })
+    res.send({ projectStatus, memberStatus })
+  } catch (err) {
+    res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
   }
-  console.log({ projectStatus, memberStatus })
-  res.send({ projectStatus, memberStatus })
 })
 
 router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
