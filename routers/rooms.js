@@ -239,7 +239,8 @@ router.delete('/room', auth, async (req, res) => {
       //룸안에 속해있는 모든걸 삭제하기
       await deleteAll.deleteDocuments(roomId);
       await deleteAll.deleteBuckets(roomId);
-      await Room.findOneAndRemove({roomId:roomId})
+      await Room.findOneAndRemove({roomId:roomId});
+      await BucketOrder.deleteOne({roomId:roomId});
       return res.json({
         ok: true,
         message: '방 삭제 성공',

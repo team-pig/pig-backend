@@ -74,7 +74,6 @@ const deleteAll = module.exports = {
             }
         } catch (error) {
             console.log('deletingTodos function Error', error);
-
         }
     }
 }
