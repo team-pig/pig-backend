@@ -377,6 +377,7 @@ router.delete('/room', auth, async (req, res) => {
       await deleteAll.deleteBuckets(roomId)
       await Room.findOneAndRemove({ roomId: roomId })
       await BucketOrder.deleteOne({ roomId: roomId })
+      await MemberStatus.findOneAndRemove({ roomId: roomId })
       return res.json({
         ok: true,
         message: '방 삭제 성공',
@@ -408,7 +409,8 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
         message: '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
       })
     }
-    await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId } })
+    await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId, memberStatus: { userId: userId, roomId: roomId} } })
+    await MemberStatus.findOneAndRemove({ roomId: roomId })
     res.json({
       ok: true,
       message: '방 나가기 성공',
