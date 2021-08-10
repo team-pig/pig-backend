@@ -26,7 +26,10 @@ router.get('/rooms', auth, async (req, res) => {
     // const startIndex = (page - 1) * size
     // const endIndex = page * size
     const room = {}
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false })
+    const bookmarkedRoom = await Room.find(
+      { bookmarkedMembers: userId },
+      { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+    )
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
     room.userId = userId
@@ -67,7 +70,7 @@ router.get('/rooms', auth, async (req, res) => {
 router.get('/rooms/markedlist', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
-    const markedList = await Room.find({ bookmarkedMembers: userId }, { _id: false }).sort({ createdAt: 'desc' })
+    const markedList = await Room.find({ bookmarkedMembers: userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ createdAt: 'desc' })
     res.send({ markedList })
   } catch (err) {
     res.status(400).send({ message: '즐겨찾기된 방 조회 실패' })
@@ -79,7 +82,7 @@ router.get('/rooms/unmarkedlist', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
     const room = {}
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false }).sort({ createdAt: 'desc' })
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ createdAt: 'desc' })
     room.room = await Room.find({ members: userId }, { _id: false }).sort({ createdAt: 'desc' })
     // console.log(room)
     for (let i = 0; i < bookmarkedRoom.length; i++) {
@@ -104,7 +107,7 @@ router.get('/rooms/search', auth, async (req, res) => {
     const { roomName } = req.query
     // const { roomName, subtitle, tag } = req.body
     // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
-    const room = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false })
+    const room = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
     res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
@@ -115,7 +118,7 @@ router.get('/room/:roomId/main', auth, async (req, res) => {
   try {
     const { roomId } = req.params
     const userId = res.locals.user._id
-    const result = await Room.findOne({ roomId, members: userId })
+    const result = await Room.findOne({ roomId, members: userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
     console.log({ result })
     res.send({ result })
   } catch (e) {
@@ -197,6 +200,7 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
     const { roomId } = req.params
     const { desc, tags } = req.body
     await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
+    await Room.updateMany({roomId:roomId, 'memberStatus.userId':userId}, {$set: {'memberStatus.$.desc': desc, 'memberStatus.$.tags': tags}})
     res.send({ message: '프로필 수정 성공' })
   } catch (e) {
     res.status(500).json({ message: '서버에러: 프로필 수정 실패' })
