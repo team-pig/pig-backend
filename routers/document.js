@@ -49,10 +49,11 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
     const { roomId } = req.params
 
     const result = await Documents.find({ roomId: roomId })
-    if (result.length === 0) {
-      res.status(400).send({
-        ok: false,
-        message: '이 방에는 도큐먼트가 없습니다.',
+    if (result.length === 0) {     //방에 도큐먼트가 없을시 result에 []가 담겨온다. 그래서 length===0
+      res.status(200).send({
+        ok: true,
+        message: '이 방에는 아직 도큐먼트가 없습니다.',
+        result: [],
       })
       return
     }
@@ -74,7 +75,7 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
 //DOCUMENT 상세 보여주기
 router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async (req, res) => {
   try {
-    const { roomId, documentId } = req.params
+    const { documentId } = req.params
 
     const result = await Documents.findOne({ documentId: documentId })
 

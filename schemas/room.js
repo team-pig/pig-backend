@@ -9,16 +9,18 @@ const roomSchema = new mongoose.Schema(
     inviteCode: String,
     subtitle: String,
     tag: [String],
+    desc: String,
     members: [String],
     createdAt: {
       type: Date,
       default: Date.now,
     },
+    endDate: String,
     // likedAt:{
     //   type: Date,
     //   default: ''
     // }
-    bookmarkedMembers: [String]
+    bookmarkedMembers: [String],
   },
   {
     versionKey: false,
