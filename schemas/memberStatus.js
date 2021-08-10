@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const memberStatusSchema = new mongoose.Schema({
   roomId : String,
-  memberId: String,
+  userId: String,
   nickname: String,
   desc: String,
   tags: [String],
