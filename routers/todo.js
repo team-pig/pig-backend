@@ -8,6 +8,7 @@ const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
+const deleteAll = require('../middlewares/deleting');
 
 const router = express.Router();
 const mongoose = require('mongoose');
@@ -107,7 +108,8 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
 
         //버킷오더에서도 해당 버킷 삭제하기
         await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } });
-        // await deleteCards();
+
+        await deleteAll.deleteCards([bucketId]);
         res.status(200).send({
             'ok': true,
             message: '버킷 삭제 성공'
@@ -216,8 +218,7 @@ router.delete('/room/:roomId/card', authMiddleware, isMember, async (req, res) =
 
         //버킷안에있는 cardOrder에서 해당 카드 삭제하기
         await Buckets.updateOne({ bucketId: bucketId }, { $pull: { cardOrder: cardId } });
-
-        // await deleteTodos();
+        await deleteAll.deleteTodos([cardId]);
 
         res.status(200).send({
             'ok': true,
