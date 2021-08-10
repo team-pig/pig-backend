@@ -1,5 +1,6 @@
 
 const mongoose = require('mongoose')
+const MemberStatus = require('./memberStatus')
 const roomSchema = new mongoose.Schema(
   {
     roomId: { auto: true, type: 'objectId', index: true },
@@ -21,6 +22,9 @@ const roomSchema = new mongoose.Schema(
     //   default: ''
     // }
     bookmarkedMembers: [String],
+    memberStatus: [MemberStatus.schema]
+    // memberStatus: [{}]
+
   },
   {
     versionKey: false,
