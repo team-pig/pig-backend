@@ -5,29 +5,28 @@ const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
-const Buckets = require('../schemas/bucket');
+const Buckets = require('../schemas/bucket')
 const User = require('../schemas/users.js')
-const deleteAll = require('../middlewares/deleting');
+const deleteAll = require('../middlewares/deleting')
 const MemberStatus = require('../schemas/memberStatus.js')
 const Todo = require('../schemas/todo.js')
-
 const router = express.Router()
-// pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
-router.get('/tttt', auth, async (req, res) => {
-  const aa = await Room.findOne({roomId:'611264bc61828c22387aad46'},{_id:false, 'memberStatus.nickname':true})
-  console.log(aa)
-}
-)
 
+router.get('/tttt', auth, async (req, res) => {
+  const aa = await Room.findOne({ roomId: '611264bc61828c22387aad46' }, { _id: false, 'memberStatus.nickname': true })
+  console.log(aa)
+})
+
+// pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
 router.get('/rooms', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
     const page = parseInt(req.query.page)
     const size = parseInt(req.query.size)
-    const startIndex = (page - 1) * size
-    const endIndex = page * size
+    // const startIndex = (page - 1) * size
+    // const endIndex = page * size
     const room = {}
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId },{_id:false})
+    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false })
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
     room.userId = userId
@@ -37,54 +36,25 @@ router.get('/rooms', auth, async (req, res) => {
     // if (startIndex > 0) {
     //   room.previous = { page: page - 1, size: size }
     // }
-    room.room = await Room.find({ members: userId },{_id:false, 'memberStatus.tags':false, 'memberStatus._id':false, 'memberStatus.roomId':false}).sort({ createdAt: 'desc' }).lean()
+    room.room = await Room.find(
+      { members: userId },
+      { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+    )
+      .sort({ createdAt: 'desc' })
+      .lean()
     // 찾은 방에서 bookmark된 방 빼기
     for (let i = 0; i < bookmarkedRoom.length; i++) {
       var idx = room.room.findIndex(function (item) {
         return item.roomId == String(bookmarkedRoom[i].roomId)
       })
-      if (idx > -1) {room.room.splice(idx, 1)}
+      if (idx > -1) {
+        room.room.splice(idx, 1)
+      }
     }
     // 찾은 방에서 mookmark된 방 넣기(정렬때문에)
     for (let i = 0; i < bookmarkedRoom.length; i++) {
       room.room.unshift(bookmarkedRoom[i])
     }
-    // const c4 = []
-    // for (let i= 0; i < room.room.length; i++) {
-    //   // console.log('targetroom',room.room[i])
-    //   for (let j= 0; j < room.room[i].members.length; j++) {
-    //     // console.log('내부112반복',room.room[i].members[j])
-    //     var ac = await User.findById(room.room[i].members[j],{_id:false, nickname:true}).lean()
-    //     console.log(room.room[i].members,'iiii')
-    //     for (let k = 0; k < room.room[i].members[j]; k++) {
-    //       console.log('몇번')
-    //     }
-    //     console.log('ac',ac)
-    //     c4.push(ac)
-    //     console.log('덤덤',room.room)
-    //     console.log('i번째', room.room[i].members)
-    //   }
-    // }
-    // console.log('ㅊ3',c4)
-    // console.log(room.room)
-      
-
-    // let roomId = 머시기 
-    // const findRoom = await Room.findOne({ roomId: roomId })
-    // const allMembers = []
-    // for (let i = 0; i < findRoom.members.length; i++) {
-    //   memberId = findRoom.members[i]
-    //   memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean()
-    //   memberInfo.memberId = memberInfo._id
-    //   memberInfo.memberName = memberInfo.nickname
-    //   delete memberInfo._id
-    //   delete memberInfo.nickname
-    //   allMembers.push(memberInfo)
-    // }
-    // console.log(allMembers)
-    // console.log(room.room[0].members[0])
-    
-
     //페이지네이션
     room.room = room.room.slice((page - 1) * size, page * size)
     res.send(room)
@@ -92,6 +62,7 @@ router.get('/rooms', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
+
 //즐겨 찾기 된 방 불러오기
 router.get('/rooms/markedlist', auth, async (req, res) => {
   try {
@@ -102,6 +73,7 @@ router.get('/rooms/markedlist', auth, async (req, res) => {
     res.status(400).send({ message: '즐겨찾기된 방 조회 실패' })
   }
 })
+
 //즐겨찾기 안된 방 불러오기
 router.get('/rooms/unmarkedlist', auth, async (req, res) => {
   try {
@@ -121,12 +93,11 @@ router.get('/rooms/unmarkedlist', auth, async (req, res) => {
     const unMarkedList = room.room
     res.send({ unMarkedList })
   } catch (err) {
-    res.status(400).send({ message: '즐겨찾기 안된 방 조회 실패'})
+    res.status(400).send({ message: '즐겨찾기 안된 방 조회 실패' })
   }
 })
 
 // 방 검색하기
-
 router.get('/rooms/search', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
@@ -140,17 +111,18 @@ router.get('/rooms/search', auth, async (req, res) => {
   }
 })
 // 방 메인페이지 불러오기
-router.get('/room/:roomId/main', auth, async (req, res) => { 
+router.get('/room/:roomId/main', auth, async (req, res) => {
   try {
-  const {roomId} = req.params
-  const userId = res.locals.user._id
-  const result = await Room.findOne({roomId, members: userId})
-  console.log({result})
-  res.send({result})
+    const { roomId } = req.params
+    const userId = res.locals.user._id
+    const result = await Room.findOne({ roomId, members: userId })
+    console.log({ result })
+    res.send({ result })
   } catch (e) {
-    res.status(500).json({ message: '서버에러: 방 메인페이지 불러오기 실패'})
+    res.status(500).json({ message: '서버에러: 방 메인페이지 불러오기 실패' })
   }
 })
+
 // 방 유저 현황 불러오기 8월 10일 완성
 router.get('/room/:roomId/main/status', auth, async (req, res) => {
   try {
@@ -194,6 +166,7 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
   }
 })
+
 // 방의 멤버 정보 불러오기 (닉네임과 userId)
 router.get('/room/:roomId/members', auth, async (req, res) => {
   try {
@@ -216,6 +189,7 @@ router.get('/room/:roomId/members', auth, async (req, res) => {
     res.status(400).json({ message: '방 조회 혹은 멤버 불러오기 실패' })
   }
 })
+
 // 방 프로필 수정하기
 router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
   try {
@@ -228,6 +202,7 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 프로필 수정 실패' })
   }
 })
+
 // 북마크 추가
 router.post('/room/:roomId/bookmark', auth, async (req, res) => {
   const { userId } = res.locals.user
@@ -244,7 +219,7 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
     if (!roomLikedAt) {
       await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
       await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
-      const bookmarkedRoom = await Room.findOne({roomId: roomId})
+      const bookmarkedRoom = await Room.findOne({ roomId: roomId })
       return res.send(bookmarkedRoom)
     }
   } catch (err) {
@@ -252,6 +227,7 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
     res.status(400).json(err)
   }
 })
+
 // 북마크 삭제
 router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
   const { userId } = res.locals.user
@@ -268,7 +244,7 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
     if (roomLikedAt) {
       await Room.updateOne({ roomId: roomId }, { $pull: { bookmarkedMembers: userId } })
       await Bookmark.findOneAndRemove({ roomId: roomId, member: userId })
-      const bookmarkedRoom = await Room.findOne({ roomId: roomId})
+      const bookmarkedRoom = await Room.findOne({ roomId: roomId })
       return res.send(bookmarkedRoom)
     }
   } catch (err) {
@@ -276,6 +252,7 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
     res.status(400).json(err)
   }
 })
+
 // 방 만들기
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user._id
@@ -292,28 +269,30 @@ router.post('/room', auth, async (req, res) => {
       tag: tag.split(', '),
       inviteCode: v4(),
     })
-    let nickname = await User.findById(userId,{__v:false, password:false, email:false, _id:false})
+    let nickname = await User.findById(userId, { __v: false, password: false, email: false, _id: false })
     nickname = nickname.nickname
-    const roomId = room.roomId;
-    
+    const roomId = room.roomId
+
     //create Bucket
-    const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] });
+    const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] })
     const bucketId = newBucket.bucketId
     await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
-    await Room.findOneAndUpdate({roomId: room.roomId}, {$push: {memberStatus:{ roomId : roomId,
-      userId: userId,
-      nickname: nickname,}}})
-    await BucketOrder.create({ roomId: roomId });
-    await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
+    await Room.findOneAndUpdate(
+      { roomId: room.roomId },
+      { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname } } }
+    )
+    await BucketOrder.create({ roomId: roomId })
+    await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } })
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 방 만들기 실패'
+      message: '서버에러: 방 만들기 실패',
     })
   }
 })
+
 // 방 추가하기(입장)
 router.post('/room/member', auth, async (req, res) => {
   const userId = res.locals.user._id
@@ -322,9 +301,7 @@ router.post('/room/member', auth, async (req, res) => {
 
   if (!findRoom) {
     console.log('찾으려는 방이 없습니다.')
-    return res
-      .status(400)
-      .send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
+    return res.status(400).send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
   }
   try {
     const memberInRoom = await findRoom.members.includes(userId)
@@ -336,15 +313,18 @@ router.post('/room/member', auth, async (req, res) => {
     if (!findInviteCode) {
       res.status(400).send({
         ok: false,
-        message: '서버에러: 존재하지 않는 초대코드입니다.'
+        message: '서버에러: 존재하지 않는 초대코드입니다.',
       })
     }
     if (inviteCode && !findRoom.members.includes(userId)) {
-      let nickname  = await User.findById(userId,{__v:false, password:false, email:false, _id:false})
+      let nickname = await User.findById(userId, { __v: false, password: false, email: false, _id: false })
       nickname = nickname.nickname
       const room = await Room.findOne({ inviteCode })
       const roomId = room.roomId
-      await Room.findOneAndUpdate({ inviteCode }, { $push: { members: userId, memberStatus: {userId:userId, nickname, roomId} } })
+      await Room.findOneAndUpdate(
+        { inviteCode },
+        { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId } } }
+      )
       await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
       return res.json({ room })
     }
@@ -352,44 +332,47 @@ router.post('/room/member', auth, async (req, res) => {
     console.log('방 추가 실패', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 다른 사람 방 추가 실패'
+      message: '서버에러: 다른 사람 방 추가 실패',
     })
   }
 })
+
 // 방 수정하기 (put에서 patch로 프론트와 얘기 후 바꿔야함)
 router.put('/room', auth, async (req, res) => {
   try {
     const { roomId, roomName, roomImage, subtitle, tag, desc, endDate } = req.body
     const { userId } = res.locals.user
-    const findRoom = await Room.findOne({roomId: roomId})
+    const findRoom = await Room.findOne({ roomId: roomId })
     console.log(tag.split(', '))
     if (findRoom.master != userId) {
       return res.send({ ok: false, message: '방 수정 권한이 없습니다.' })
     }
     if (roomId && findRoom.master == userId) {
-      await Room.updateOne({ roomId: roomId }, { $set: { roomName, roomImage, subtitle, tag: tag.split(', '), desc, endDate } })
+      await Room.updateOne(
+        { roomId: roomId },
+        { $set: { roomName, roomImage, subtitle, tag: tag.split(', '), desc, endDate } }
+      )
       return res.json({ ok: true, message: '방 수정 성공' })
     }
-    res.send("test")
+    res.send('test')
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
   }
 })
+
 // 방 삭제하기
 router.delete('/room', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
     const { roomId } = req.body
-    const findRoom = await Room.findOne({roomId:roomId})
+    const findRoom = await Room.findOne({ roomId: roomId })
     if (findRoom.master == userId) {
-      
-
       //룸안에 속해있는 모든걸 삭제하기
-      await deleteAll.deleteDocuments(roomId);
-      await deleteAll.deleteBuckets(roomId);
-      await Room.findOneAndRemove({roomId:roomId});
-      await BucketOrder.deleteOne({roomId:roomId});
+      await deleteAll.deleteDocuments(roomId)
+      await deleteAll.deleteBuckets(roomId)
+      await Room.findOneAndRemove({ roomId: roomId })
+      await BucketOrder.deleteOne({ roomId: roomId })
       return res.json({
         ok: true,
         message: '방 삭제 성공',
@@ -407,21 +390,21 @@ router.delete('/room', auth, async (req, res) => {
     res.status(400).json(err)
   }
 })
+
 //방 나가기
 router.delete('/room/member/:roomId', auth, async (req, res) => {
   try {
     const roomId = req.params.roomId
     const userId = res.locals.user._id
-    const findRoom = await Room.findOne({roomId:roomId})
+    const findRoom = await Room.findOne({ roomId: roomId })
     const members = findRoom.members
 
     if (members.length === 1) {
       return res.json({
-        message:
-          '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
+        message: '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
       })
     }
-    await Room.findOneAndUpdate({roomId: roomId}, { $pull: { members: userId } })
+    await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId } })
     res.json({
       ok: true,
       message: '방 나가기 성공',
@@ -431,6 +414,5 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
     res.status(400).json(err)
   }
 })
-
 
 module.exports = router
