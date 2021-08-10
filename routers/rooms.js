@@ -52,6 +52,13 @@ router.get('/rooms', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
+//즐겨 찾기 된 방 불러오기
+router.get('/rooms/markedlist', auth, async(req, res) => {
+  const userId = res.locals.user._id
+  const markedlist = await Room.find({ bookmarkedMembers: userId },{_id:false}).sort({ createdAt: 'desc' })
+  res.send({markedlist})
+})
+
 
 // 방 검색하기
 
