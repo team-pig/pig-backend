@@ -10,7 +10,7 @@ const bucketSchema = new Schema({
         type: String
     },
     cardOrder:{
-        type: Array
+        type: [String]
     }
 }
 );

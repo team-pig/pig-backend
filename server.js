@@ -4,6 +4,7 @@ const app = express();
 const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
+
 /* https할 때 필요
 const fs = require('fs')
 const http = require('http')
@@ -15,6 +16,7 @@ const options = {
   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
  }
 */
+
 
 /*이미지 업로드
 const path = require("path");
@@ -92,7 +94,9 @@ app.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
 })
 
+
 /* https할 때 필요
 http.createServer(app).listen(3000)
 https.createServer(options, app).listen(443)
 */
+

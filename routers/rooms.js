@@ -7,8 +7,10 @@ const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 const Buckets = require('../schemas/bucket');
 const User = require('../schemas/users.js')
+const deleteAll = require('../middlewares/deleting');
 const MemberStatus = require('../schemas/memberStatus.js')
 const Todo = require('../schemas/todo.js')
+
 
 const router = express.Router()
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -50,7 +52,9 @@ router.get('/rooms', auth, async (req, res) => {
     res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
 })
+
 // 방 검색하기
+
 router.get('/rooms/search', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
@@ -294,6 +298,11 @@ router.delete('/room', auth, async (req, res) => {
     const { roomId } = req.body
     const findRoom = await Room.findOne({roomId:roomId})
     if (findRoom.master == userId) {
+      
+
+      //룸안에 속해있는 모든걸 삭제하기
+      await deleteAll.deleteDocuments(roomId);
+      await deleteAll.deleteBuckets(roomId);
       await Room.findOneAndRemove({roomId:roomId})
       return res.json({
         ok: true,
