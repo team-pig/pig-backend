@@ -1,3 +1,4 @@
+  
 
 const mongoose = require("mongoose");
 
@@ -8,6 +9,9 @@ const todoSchema = new Schema({
     todoTitle: {
         type: String,
     },
+    roomId: {
+        type: String
+    },
     bucketId: {
         type: String
     },
@@ -15,7 +19,7 @@ const todoSchema = new Schema({
         type: String,
     },
     members: {
-        type: [Object],
+        type: [String],
     },
     isChecked: {
         type: Boolean,

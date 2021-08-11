@@ -30,7 +30,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         // if (!bucketExist) {
         //await BucketOrder.create({ roomId: roomId });
         // }
-        await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
+        await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: { $each: [bucketId], $position: 0 } } });
 
         res.status(200).send({
             'ok': true,
@@ -122,7 +122,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
-        await Buckets.updateOne({ bucketId: bucketId },  { cardOrder: newCard.cardId });
+        await Buckets.updateOne({ bucketId: bucketId },  { $push: { cardOrder: newCard.cardId } } );
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
@@ -323,9 +323,10 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
 //todo 생성
 router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
     try {
+        const { roomId } = req.params;
         const { cardId, todoTitle } = req.body;
 
-        const newTodo = await Todos.create({ cardId: cardId, todoTitle, todoTitle, isChecked: false });
+        const newTodo = await Todos.create({ roomId: roomId, cardId: cardId, todoTitle: todoTitle, isChecked: false });
 
         res.status(200).send({
             'ok': true,
@@ -387,6 +388,35 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
             message: '서버에러: 투두 삭제 실패'
         })
 
+    }
+})
+
+// 메인 페이지 유저 할일 리스트 보여주기
+router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const userId = res.locals.user._id;
+
+        // 단순한 [String] array에서 특정 값이 있는지 찾고 싶을때는 그냥 x:y 해도 된다.
+        const checked = await Todos.find({ roomId: roomId, members: userId, isChecked: true},{ members: false, _id: false, cardId: false, __v: false }
+        );
+        const notChecked = await Todos.find({ roomId: roomId, members: userId, isChecked: false},{ members: false, _id: false, cardId: false, __v: false }
+        );
+
+        res.status(200).send({
+            'ok': true,
+            message: '유저 할일 보여주기 성공',
+            result: {
+                checked: checked,
+                notChecked: notChecked
+            }
+        });
+    } catch (error) {
+        console.log('메인페이지 유저 할일 보여주기 error', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 유저 할일 보여주기 실패'
+        })
     }
 })
 

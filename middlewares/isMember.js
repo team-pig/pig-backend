@@ -20,6 +20,7 @@ module.exports = async (req, res, next) => {
             })
             return;
         }
+        next();
     } catch (error) {
         console.log('member check error', error);
         res.status(400).send({
@@ -27,5 +28,4 @@ module.exports = async (req, res, next) => {
             message: '서버에러: isMember 체크 실패'
         });
     }
-    next();
 }

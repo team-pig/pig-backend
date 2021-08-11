@@ -5,14 +5,24 @@ const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
 const fs = require('fs')
-const http = require('http')
-const https = require('https')
+const http = require('http').createServer(app);
+// const https = require('https')
+const { Server } = require('socket.io');
+const io = new Server(http);
 
-const options = {
-  ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
-  key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
- }
+io.on('connection', function(socket){
+  console.log('연결되었어요');
+
+  socket.on('join', ({ nickname, roomId }, callback) => {
+   
+  })
+});
+
+// const options = {
+//   ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
+//   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
+//   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
+//  }
 
 /*이미지 업로드
 const path = require("path");
@@ -86,9 +96,7 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
   res.send('Multiple Files Upload Success')
 })
 */
-// app.listen(port, () => {
-//     console.log(`listening at http://localhost:${port}`);
-// })
-
-http.createServer(app).listen(3000)
-https.createServer(options, app).listen(443)
+http.listen(port, () => {
+    console.log(`listening at http://localhost:${port}`);
+})
+// https.createServer(options, app).listen(443)
