@@ -262,7 +262,7 @@ router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user._id
   const { roomName, roomImage, subtitle, tag, desc, endDate } = req.body
   try {
-    const room = await Room.create({
+    let room = await Room.create({
       roomName,
       roomImage,
       desc,
@@ -287,6 +287,7 @@ router.post('/room', auth, async (req, res) => {
     )
     await BucketOrder.create({ roomId: roomId })
     await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } })
+    room = await Room.findOne({ roomId: room.roomId })
     res.json({ room })
   } catch (error) {
     console.log('방 만들기 실패', error)
@@ -323,13 +324,14 @@ router.post('/room/member', auth, async (req, res) => {
     if (inviteCode && !findRoom.members.includes(userId)) {
       let nickname = await User.findById(userId, { __v: false, password: false, email: false, _id: false })
       nickname = nickname.nickname
-      const room = await Room.findOne({ inviteCode })
+      let room = await Room.findOne({ inviteCode })
       const roomId = room.roomId
       await Room.findOneAndUpdate(
         { inviteCode },
         { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId } } }
       )
       await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
+      room = await Room.findOne({ roomId: roomId})
       return res.json({ room })
     }
   } catch (error) {
@@ -342,7 +344,7 @@ router.post('/room/member', auth, async (req, res) => {
 })
 
 // 방 수정하기 (put에서 patch로 프론트와 얘기 후 바꿔야함)
-router.put('/room', auth, async (req, res) => {
+router.patch('/room', auth, async (req, res) => {
   try {
     const { roomId, roomName, roomImage, subtitle, tag, desc, endDate } = req.body
     const { userId } = res.locals.user
@@ -356,7 +358,8 @@ router.put('/room', auth, async (req, res) => {
         { roomId: roomId },
         { $set: { roomName, roomImage, subtitle, tag: tag.split(', '), desc, endDate } }
       )
-      return res.json({ ok: true, message: '방 수정 성공' })
+      const room = await Room.findOne({ roomId: roomId })
+      return res.json({ room })
     }
     res.send('test')
   } catch (err) {
