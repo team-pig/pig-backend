@@ -71,7 +71,7 @@ router.get('/rooms', auth, async (req, res) => {
 })
 
 //방 불러오기 (inviteCode 입력 시)
-router.get('/room/:inviteCode', auth, async (req, res) => {
+router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
   try {const {inviteCode} = req.params
   const room = await Room.findOne({inviteCode: inviteCode})
   if (!room) {
@@ -405,11 +405,12 @@ router.delete('/room', auth, async (req, res) => {
       })
     }
     if (findRoom.master != userId) {
-      return res.json({
+      return res.status(400).json({
         ok: false,
         message: '방장이 아닙니다.',
       })
     }
+    
     res.status(400).json({ errorMessage: '방Id를 찾을 수 없습니다.' })
   } catch (err) {
     console.error(err)
@@ -424,9 +425,11 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
     const userId = res.locals.user._id
     const findRoom = await Room.findOne({ roomId: roomId })
     const members = findRoom.members
-
+    // if (master == userId) {
+    //   return res.status(400).json({message: 'master는 나갈 수 없어요, 권한을 넘겨줘야 나갈 수 있어요!'})
+    // }
     if (members.length === 1) {
-      return res.json({
+      return res.status(400).json({
         message: '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
       })
     }
