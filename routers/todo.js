@@ -9,7 +9,6 @@ const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const deleteAll = require('../middlewares/deleting');
-
 const router = express.Router();
 const mongoose = require('mongoose');
 const { kStringMaxLength } = require('buffer');
@@ -128,9 +127,9 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
 router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { bucketId, cardTitle } = req.body;
+        const { bucketId, cardTitle, color, startDate, endDate } = req.body;
 
-        const newCard = await Cards.create({ bucketId: bucketId, cardTitle: cardTitle, roomId: roomId });
+        const newCard = await Cards.create({ bucketId: bucketId, roomId: roomId,cardTitle: cardTitle,color:color, startDate:startDate, endDate:endDate });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
@@ -330,12 +329,12 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
         //닉네임을 변경하면 해당 유저의 닉네임이 저장된곳을 다 찾아서 변경해주는게 더나은가?
         //
 
-        for (i = 0; i < allTodos.length; i++) {
-            for (k = 0; k < allTodos[i].members.length; k++) {
-                console.log('allmembers', allTodos[i].members[k]);
+        // for (i = 0; i < allTodos.length; i++) {
+        //     for (k = 0; k < allTodos[i].members.length; k++) {
+        //         console.log('allmembers', allTodos[i].members[k]);
 
-            }
-        }
+        //     }
+        // }
 
         res.status(200).send({
             'ok': true,
@@ -358,7 +357,7 @@ router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => 
         const { roomId } = req.params;
         const { cardId, todoTitle } = req.body;
 
-        const newTodo = await Todos.create({ roomId: roomId, cardId: cardId, todoTitle, todoTitle, isChecked: false });
+        const newTodo = await Todos.create({ roomId: roomId, cardId: cardId, todoTitle: todoTitle, isChecked: false });
 
         res.status(200).send({
             'ok': true,
@@ -388,11 +387,19 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
         // if(addMember){
 
         // }
+
+
         if (addMember != null && addMember.length !== 0) {
-            await Todos.updateOne({ todoId: todoId }, { $push: { members: addMember } });
+            const user = await Users.findOne({ _id: addMember });
+            const nickname = user.nickname;
+            const add = { memberId: addMember, memberName: nickname }
+            await Todos.updateOne({ todoId: todoId }, { $push: { members: add } });
         };
         if (removeMember != null && removeMember.length !== 0) {
-            await Todos.updateOne({ todoId: todoId }, { $pull: { members: removeMember } });
+            const user = await Users.findOne({ _id: removeMember });
+            const nickname = user.nickname;
+            const remove = { memberId: addMember, memberName: nickname }
+            await Todos.updateOne({ todoId: todoId }, { $pull: { members: remove } });
         };
         res.status(200).send({
             'ok': true,
@@ -435,8 +442,9 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
 
         // 단순한 [String] array에서 특정 값이 있는지 찾고싶을때는 그냥 x:y 해도 된다
         //memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean();
-        const checked = await Todos.find({ roomId: roomId, members: userId, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
-        const notChecked = await Todos.find({ roomId: roomId, members: userId, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
+
+        const checked = await Todos.find({ roomId: roomId, members: { $elemMatch:{memberId: userId} }, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
+        const notChecked = await Todos.find({ roomId: roomId, members: { $elemMatch:{memberId: userId} }, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
 
         res.status(200).send({
             'ok': true,
@@ -454,5 +462,40 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
             message: '서버에러: 유저 할일 보여주기 실패'
         })
     }
+})
+
+//닉네임 변경
+router.put('/nickname', authMiddleware, async (req, res,) => {
+    try {
+        //최대한 DB에 말거는 횟수 적도록.
+
+        const userId = res.locals.user._id;
+        const { newNickname } = req.body;
+        await Users.findByIdAndUpdate(userId, ({ nickname: newNickname }));
+
+        const inRoom = await Rooms.find({ members: userId });
+        if (inRoom) {
+
+
+            const inCard = await Cards.find({})
+            if (inCard) {
+
+            }
+        }
+
+
+
+        res.status(200).send({
+            'ok': true,
+            message: '닉네임 변경 성공'
+        })
+    } catch (error) {
+        console.log('닉네임 변경에러', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 닉네임 변경 실패'
+        })
+    }
+
 })
 module.exports = router

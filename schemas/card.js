@@ -14,7 +14,6 @@ const cardSchema = new Schema({
     color:{
         type: String
     },
-
     startDate: {
         type: String,
     },

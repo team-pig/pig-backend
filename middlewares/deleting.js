@@ -11,6 +11,7 @@ const deleteAll = module.exports = {
                 await Documents.deleteMany({ roomId: roomId });
             } catch (error) {
                 console.log('deleting documents function Error', error);
+                throw new Error(error);
 
             }
 
@@ -18,23 +19,18 @@ const deleteAll = module.exports = {
     },
     deleteBuckets: async function (roomId) {
         try {
-            //버킷이 하나 남았을경우 삭제 불가이어야한다.
-            //버킷 오더에서도 지워야한다
-
             const buckets = await Buckets.find({ roomId: roomId })
-            //extract bucketId from the list of buckets...and put them in bucketsIdsArray
             const bucketIdsArray = [];
             for (i = 0; i < buckets.length; i++) {
                 await bucketIdsArray.push(buckets[i].bucketId);
             }
             console.log('bucketIdsArray', bucketIdsArray);
 
-
             await Buckets.deleteMany({ roomId: roomId });
             await deleteAll.deleteCards(bucketIdsArray);
         } catch (error) {
             console.log('deletingBuckets function Error', error);
-
+            throw new Error(error);
         }
     },
     deleteCards: async function (bucketIdsArray) {
@@ -59,7 +55,7 @@ const deleteAll = module.exports = {
 
         } catch (error) {
             console.log('deleting Cards function Error', error);
-
+            throw new Error(error);
         }
     },
     deleteTodos: async function (cardIdsArray) {
@@ -74,6 +70,7 @@ const deleteAll = module.exports = {
             }
         } catch (error) {
             console.log('deletingTodos function Error', error);
+            throw new Error(error);
         }
     }
 }

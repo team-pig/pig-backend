@@ -296,7 +296,7 @@ router.post('/room', auth, async (req, res) => {
     const roomId = room.roomId
 
     //create Bucket
-    const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [] })
+    const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [], bucketName: null })
     const bucketId = newBucket.bucketId
     await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await Room.findOneAndUpdate(
