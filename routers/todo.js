@@ -9,7 +9,6 @@ const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
 const deleteAll = require('../middlewares/deleting');
-
 const router = express.Router();
 const mongoose = require('mongoose');
 const { kStringMaxLength } = require('buffer');
@@ -128,9 +127,9 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
 router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { bucketId, cardTitle } = req.body;
+        const { bucketId, cardTitle, color, startDate, endDate } = req.body;
 
-        const newCard = await Cards.create({ bucketId: bucketId, cardTitle: cardTitle, roomId: roomId });
+        const newCard = await Cards.create({ bucketId: bucketId, roomId: roomId,cardTitle: cardTitle,color:color, startDate:startDate, endDate:endDate });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
