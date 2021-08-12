@@ -12,9 +12,13 @@ const MemberStatus = require('../schemas/memberStatus.js')
 const Todo = require('../schemas/todo.js')
 const router = express.Router()
 
-router.get('/tttt', auth, async (req, res) => {
-  const aa = await Room.findOne({ roomId: '611264bc61828c22387aad46' }, { _id: false, 'memberStatus.nickname': true })
-  console.log(aa)
+router.post('/tttt', auth, async (req, res) => {
+  const userId = res.locals.user._id
+  const {roomId} = req.body
+  const findMemberStatus = await Room.find({ roomId }, { _id: false }).lean()
+
+  // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()
+  console.log(findMemberStatus)
 })
 
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
