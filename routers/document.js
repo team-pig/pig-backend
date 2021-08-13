@@ -247,4 +247,3 @@ module.exports = router
 //     const posts = await Posts.find().sort('-contentId');
 
 //     await Posts.updateOne({ 'contentId': contentId, 'password': password }, { $set: { 'title': title, 'name': name, 'content': content } });
-

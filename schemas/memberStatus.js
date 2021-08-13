@@ -14,4 +14,5 @@ const memberStatusSchema = new mongoose.Schema({
 )
 
 
+
 module.exports = mongoose.model('MemberStatus', memberStatusSchema)

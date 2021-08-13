@@ -35,10 +35,6 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         // if (!bucketExist) {
         //await BucketOrder.create({ roomId: roomId });
         // }
-
-
-        // await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } });
-        //버킷 생성시 버킷오더 배열 맨앞으로 넣기
         await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: { $each: [bucketId], $position: 0 } } });
 
         res.status(200).send({
@@ -134,7 +130,6 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
         await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: newCard.cardId } });
-
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
@@ -500,7 +495,6 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
 
         const checked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
         const notChecked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
-
         res.status(200).send({
             'ok': true,
             message: '유저 할일 보여주기 성공',
@@ -509,7 +503,6 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
                 notChecked: notChecked
             }
         });
-
     } catch (error) {
         console.log('메인페이지 유저 할일 보여주기 error', error);
         res.status(400).send({
@@ -519,11 +512,11 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
     }
 })
 
+
 //닉네임 변경
 router.put('/nickname', authMiddleware, async (req, res,) => {
     try {
         //최대한 DB에 말거는 횟수 적도록.
-
         const userId = res.locals.user._id;
         const { newNickname } = req.body;
         await Users.findByIdAndUpdate(userId, ({ nickname: newNickname }));

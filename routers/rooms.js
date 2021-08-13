@@ -5,11 +5,13 @@ const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
+
 const Buckets = require('../schemas/bucket')
 const User = require('../schemas/users.js')
 const deleteAll = require('../middlewares/deleting')
 const MemberStatus = require('../schemas/memberStatus.js')
 const Todo = require('../schemas/todo.js')
+
 const router = express.Router()
 
 router.post('/tttt', auth, async (req, res) => {
@@ -58,7 +60,7 @@ router.get('/rooms', auth, async (req, res) => {
         room.room.splice(idx, 1)
       }
     }
-    // 찾은 방에서 mookmark된 방 넣기(정렬때문에)
+    // 찾은 방에서 bookmark된 방 넣기(정렬때문에)
     for (let i = 0; i < bookmarkedRoom.length; i++) {
       room.room.unshift(bookmarkedRoom[i])
     }
@@ -291,6 +293,7 @@ router.post('/room', auth, async (req, res) => {
       tag: tag.split(', '),
       inviteCode: v4(),
     })
+
     let nickname = await User.findById(userId, { __v: false, password: false, email: false, _id: false })
     nickname = nickname.nickname
     const roomId = room.roomId
@@ -298,6 +301,7 @@ router.post('/room', auth, async (req, res) => {
     //create Bucket
     const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [], bucketName: null })
     const bucketId = newBucket.bucketId
+
     await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await Room.findOneAndUpdate(
       { roomId: room.roomId },
