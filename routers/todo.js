@@ -418,7 +418,7 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
             await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
 
-        
+
         if (removeMember != null && removeMember.length !== 0) {
             const user = await Users.findOne({ _id: removeMember });
             const nickname = user.nickname;
