@@ -129,7 +129,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         const { roomId } = req.params;
         const { bucketId, cardTitle, color, startDate, endDate } = req.body;
 
-        const newCard = await Cards.create({ bucketId: bucketId, roomId: roomId,cardTitle: cardTitle,color:color, startDate:startDate, endDate:endDate });
+        const newCard = await Cards.create({ bucketId: bucketId, roomId: roomId, cardTitle: cardTitle, color: color, startDate: startDate, endDate: endDate, memberCount: 0 });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
@@ -153,13 +153,13 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 //카드 내용 수정
 router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
-        const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt, color } = req.body;
+        const { cardId, cardTitle, startDate, endDate, desc, createdAt, modifiedAt, color } = req.body;
 
         const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
                 startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
-                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
+                createdAt: createdAt, modifiedAt: modifiedAt, color: color
             }, { omitUndefined: true });
 
 
@@ -382,7 +382,7 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
     try {
         const { todoId, todoTitle, isChecked, addMember, removeMember } = req.body;
 
-        await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
+        const todo = await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
 
         // if(addMember){
 
@@ -394,13 +394,68 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
             const nickname = user.nickname;
             const add = { memberId: addMember, memberName: nickname }
             await Todos.updateOne({ todoId: todoId }, { $push: { members: add } });
+
+            //카드의 memberCount update
+            const cardId = todo.cardId;
+            const allTodos = await Todos.find({ cardId: cardId });
+            let array = [];
+            for (let i = 0; i < allTodos.length; i++) {
+                for (let k = 0; k < allTodos[i].members.length; k++) {
+                    array.push(allTodos[i].members[k].memberId);
+                }
+            }
+            console.log('ARRAYY', array);
+            let finalArray = [];
+            for (let i = 0; i < array.length; i++) {
+                if (!finalArray.includes(array[i])) {
+                    finalArray.push(array[i]);
+                }
+            }
+            console.log('finalarray', finalArray);
+            const memberCount = finalArray.length;
+            console.log('membercount', memberCount);
+
+            await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
+
+        
         if (removeMember != null && removeMember.length !== 0) {
             const user = await Users.findOne({ _id: removeMember });
             const nickname = user.nickname;
             const remove = { memberId: addMember, memberName: nickname }
             await Todos.updateOne({ todoId: todoId }, { $pull: { members: remove } });
+
+            //카드의 memberCount update
+            const cardId = todo.cardId;
+            const allTodos = await Todos.find({ cardId: cardId });
+            let array = [];
+            for (let i = 0; i < allTodos.length; i++) {
+                for (let k = 0; k < allTodos[i].members.length; k++) {
+                    array.push(allTodos[i].members[k].memberId);
+                }
+            }
+            console.log('ARRAYY', array);
+            let finalArray = [];
+            for (let i = 0; i < array.length; i++) {
+                if (!finalArray.includes(array[i])) {
+                    finalArray.push(array[i]);
+                }
+            }
+            console.log('finalarray', finalArray);
+            const memberCount = finalArray.length;
+            console.log('membercount', memberCount);
+
+            await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
+
+
+
+
+
+
+        // const newCount =
+        // await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: newCount });
+
         res.status(200).send({
             'ok': true,
             message: '투두 수정 성공',
@@ -443,8 +498,8 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
         // 단순한 [String] array에서 특정 값이 있는지 찾고싶을때는 그냥 x:y 해도 된다
         //memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean();
 
-        const checked = await Todos.find({ roomId: roomId, members: { $elemMatch:{memberId: userId} }, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
-        const notChecked = await Todos.find({ roomId: roomId, members: { $elemMatch:{memberId: userId} }, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
+        const checked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
+        const notChecked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
 
         res.status(200).send({
             'ok': true,
