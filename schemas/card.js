@@ -1,5 +1,6 @@
 
 const mongoose = require("mongoose");
+const { isNumber } = require("util");
 
 
 const { Schema } = mongoose;
@@ -11,10 +12,12 @@ const cardSchema = new Schema({
     cardTitle: {
         type: String,
     },
+    memberCount: {
+        type: Number
+    },
     color:{
         type: String
     },
-
     startDate: {
         type: String,
     },
@@ -23,9 +26,6 @@ const cardSchema = new Schema({
     },
     desc: {
         type: String,
-    },
-    taskMembers: {
-        type: [String],
     },
     createdAt: {
         type: String,

@@ -8,11 +8,16 @@ const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
-
+const deleteAll = require('../middlewares/deleting');
 const router = express.Router();
 const mongoose = require('mongoose');
+const { kStringMaxLength } = require('buffer');
 
 mongoose.set('useFindAndModify', false);
+
+// memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean();
+
+
 
 //버킷 만들기
 router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) => {
@@ -98,6 +103,8 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
 
         //버킷오더에서도 해당 버킷 삭제하기
         await BucketOrder.updateOne({ roomId: roomId }, { $pull: { bucketOrder: bucketId } });
+
+        await deleteAll.deleteCards([bucketId]);
         res.status(200).send({
             'ok': true,
             message: '버킷 삭제 성공'
@@ -116,13 +123,13 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
 router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { bucketId, cardTitle } = req.body;
+        const { bucketId, cardTitle, color, startDate, endDate } = req.body;
 
-        const newCard = await Cards.create({ bucketId: bucketId, cardTitle: cardTitle, roomId: roomId });
+        const newCard = await Cards.create({ bucketId: bucketId, roomId: roomId, cardTitle: cardTitle, color: color, startDate: startDate, endDate: endDate, memberCount: 0 });
 
         //  해당 버킷 cardOrder 마지막 순서에 새로운 카드의 카드아이디 넣기
         // await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: { cardId: newCard.cardId, cardTitle: newCard.cardTitle, startDate: null, endDate: null } } });
-        await Buckets.updateOne({ bucketId: bucketId },  { $push: { cardOrder: newCard.cardId } } );
+        await Buckets.updateOne({ bucketId: bucketId }, { $push: { cardOrder: newCard.cardId } });
         res.status(200).send({
             'ok': true,
             message: '카드 생성 성공',
@@ -141,13 +148,13 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
 //카드 내용 수정
 router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) => {
     try {
-        const { cardId, cardTitle, startDate, endDate, desc, taskMembers, createdAt, modifiedAt, color } = req.body;
+        const { cardId, cardTitle, startDate, endDate, desc, createdAt, modifiedAt, color } = req.body;
 
         const card = await Cards.findOneAndUpdate({ cardId: cardId },
             {
                 startDate: startDate, cardTitle: cardTitle,
                 endDate: endDate, desc: desc,
-                taskMembers: taskMembers, createdAt: createdAt, modifiedAt: modifiedAt, color: color
+                createdAt: createdAt, modifiedAt: modifiedAt, color: color
             }, { omitUndefined: true });
 
 
@@ -205,6 +212,8 @@ router.delete('/room/:roomId/card', authMiddleware, isMember, async (req, res) =
 
         //버킷안에있는 cardOrder에서 해당 카드 삭제하기
         await Buckets.updateOne({ bucketId: bucketId }, { $pull: { cardOrder: cardId } });
+        await deleteAll.deleteTodos([cardId]);
+
         res.status(200).send({
             'ok': true,
             message: '카드 삭제 성공'
@@ -305,6 +314,23 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
     try {
         const { cardId } = req.params;
         const allTodos = await Todos.find({ cardId: cardId });
+
+        //방이 삭제되면 -> 버킷 다 삭제 -> 카드 내용물도 삭제 - > 카드 삭제되면 -> 투두도 다 삭제 
+
+        //투두 생성할때 닉네임 스트링을 넣어주면 여기서 포문 돌려서 변경된 닉네임 가지고와서 보내줄 필요없다.
+        //하지만 그럴경우 닉네임이 변경되면 그게 반영되지않고 생성할때의 닉네임이 보존된다.
+
+        //여기서 더블 포문안쓰고 할 방법이 있는가?
+        //닉네임을 변경하면 해당 유저의 닉네임이 저장된곳을 다 찾아서 변경해주는게 더나은가?
+        //
+
+        // for (i = 0; i < allTodos.length; i++) {
+        //     for (k = 0; k < allTodos[i].members.length; k++) {
+        //         console.log('allmembers', allTodos[i].members[k]);
+
+        //     }
+        // }
+
         res.status(200).send({
             'ok': true,
             message: '투두 보여주기 성공',
@@ -344,20 +370,87 @@ router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => 
 
 //todo 수정
 router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => {
+
+    //프론트엔드에서 이미 추가되어있는 멤버를 또 추가할수있게 되어있나?
+    //멤버를 삭제할대도 해당 투두에 이미 등록되어있는 멤버만 보여주어야할것.
+
     try {
         const { todoId, todoTitle, isChecked, addMember, removeMember } = req.body;
 
-        await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
+        const todo = await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
 
         // if(addMember){
 
         // }
+
+
         if (addMember != null && addMember.length !== 0) {
-            await Todos.updateOne({ todoId: todoId }, { $push: { members: addMember } });
+            const user = await Users.findOne({ _id: addMember });
+            const nickname = user.nickname;
+            const add = { memberId: addMember, memberName: nickname }
+            await Todos.updateOne({ todoId: todoId }, { $push: { members: add } });
+
+            //카드의 memberCount update
+            const cardId = todo.cardId;
+            const allTodos = await Todos.find({ cardId: cardId });
+            let array = [];
+            for (let i = 0; i < allTodos.length; i++) {
+                for (let k = 0; k < allTodos[i].members.length; k++) {
+                    array.push(allTodos[i].members[k].memberId);
+                }
+            }
+            console.log('ARRAYY', array);
+            let finalArray = [];
+            for (let i = 0; i < array.length; i++) {
+                if (!finalArray.includes(array[i])) {
+                    finalArray.push(array[i]);
+                }
+            }
+            console.log('finalarray', finalArray);
+            const memberCount = finalArray.length;
+            console.log('membercount', memberCount);
+
+            await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
+
+        
         if (removeMember != null && removeMember.length !== 0) {
-            await Todos.updateOne({ todoId: todoId }, { $pull: { members: removeMember } });
+            const user = await Users.findOne({ _id: removeMember });
+            const nickname = user.nickname;
+            const remove = { memberId: addMember, memberName: nickname }
+            await Todos.updateOne({ todoId: todoId }, { $pull: { members: remove } });
+
+            //카드의 memberCount update
+            const cardId = todo.cardId;
+            const allTodos = await Todos.find({ cardId: cardId });
+            let array = [];
+            for (let i = 0; i < allTodos.length; i++) {
+                for (let k = 0; k < allTodos[i].members.length; k++) {
+                    array.push(allTodos[i].members[k].memberId);
+                }
+            }
+            console.log('ARRAYY', array);
+            let finalArray = [];
+            for (let i = 0; i < array.length; i++) {
+                if (!finalArray.includes(array[i])) {
+                    finalArray.push(array[i]);
+                }
+            }
+            console.log('finalarray', finalArray);
+            const memberCount = finalArray.length;
+            console.log('membercount', memberCount);
+
+            await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
+
+
+
+
+
+
+        // const newCount =
+        // await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: newCount });
+
         res.status(200).send({
             'ok': true,
             message: '투두 수정 성공',
@@ -391,18 +484,17 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
     }
 })
 
-// 메인 페이지 유저 할일 리스트 보여주기
+//메인 페이지 유저 할일 리스트 보여주기
 router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res) => {
     try {
-        const { roomId } = req.params;
+        const { roomId } = req.params
         const userId = res.locals.user._id;
 
-        // 단순한 [String] array에서 특정 값이 있는지 찾고 싶을때는 그냥 x:y 해도 된다.
-        const checked = await Todos.find({ roomId: roomId, members: userId, isChecked: true},{ members: false, _id: false, cardId: false, __v: false }
-        );
-        const notChecked = await Todos.find({ roomId: roomId, members: userId, isChecked: false},{ members: false, _id: false, cardId: false, __v: false }
-        );
+        // 단순한 [String] array에서 특정 값이 있는지 찾고싶을때는 그냥 x:y 해도 된다
+        //memberInfo = await User.findOne({ _id: memberId }, { email: false, password: false, __v: false }).lean();
 
+        const checked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: true }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
+        const notChecked = await Todos.find({ roomId: roomId, members: { $elemMatch: { memberId: userId } }, isChecked: false }, { members: false, _id: false, roomId: false, cardId: false, __v: false });
         res.status(200).send({
             'ok': true,
             message: '유저 할일 보여주기 성공',
@@ -420,25 +512,38 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
     }
 })
 
+
+//닉네임 변경
+router.put('/nickname', authMiddleware, async (req, res,) => {
+    try {
+        //최대한 DB에 말거는 횟수 적도록.
+        const userId = res.locals.user._id;
+        const { newNickname } = req.body;
+        await Users.findByIdAndUpdate(userId, ({ nickname: newNickname }));
+
+        const inRoom = await Rooms.find({ members: userId });
+        if (inRoom) {
+
+
+            const inCard = await Cards.find({})
+            if (inCard) {
+
+            }
+        }
+
+
+
+        res.status(200).send({
+            'ok': true,
+            message: '닉네임 변경 성공'
+        })
+    } catch (error) {
+        console.log('닉네임 변경에러', error);
+        res.status(400).send({
+            'ok': false,
+            message: '서버에러: 닉네임 변경 실패'
+        })
+    }
+
+})
 module.exports = router
-
-
-
-// original sourceBucketCardOrder = [4,1]
-//         original destinationBucketCardOrder = [2,5]
-
-//         incoming sourceOrder = [1]
-//         incoming destinationOrder = [2,5,4]
-// ------------------------------------------------------------
-//         original sourceorder = [1]
-//         original destination = [2,5,4]
-
-//         incoming source = [1,4]
-//         incoming destination = [2,5]
-
-//         바뀐것만 보내주나? 안바뀐 버킷 cardOrder까지 다 보내주면 그냥 덮어버려졌을것. 그럼 일단 카드가 2군데에 가는 경우는 없을것.
-//         만약 그냥 덮어버린다면 새로고침을 해야 바뀐걸 알아차릴수 있을텐데. 매번 새로고침하게할수도 없고...그럼 소켓을 쓰면 다 해결이 되긴함.
-
-
-//         버킷1[1,4]
-//         버킷2[4,5] 라면 첫번쨰버킷을 [1,4]로 변경하고 두번째 버킷에서 4를 빼준다.

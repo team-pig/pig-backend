@@ -4,6 +4,9 @@ const app = express();
 const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
+
+
+/* https할 때 필요
 const fs = require('fs')
 // const http = require('http').createServer(app);
 // const https = require('https')
@@ -13,6 +16,7 @@ const http = require('http');
 const socketio = require('socket.io');
 const server = http.createServer(app); 
 const io = socketio(server);
+
 
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
@@ -128,7 +132,13 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
   res.send('Multiple Files Upload Success')
 })
 */
+
 server.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
 })
-// https.createServer(options, app).listen(443)
+
+/* https할 때 필요
+http.createServer(app).listen(3000)
+https.createServer(options, app).listen(443)
+*/
+

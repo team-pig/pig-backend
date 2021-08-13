@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const memberStatusSchema = new mongoose.Schema({
   roomId : String,
-  memberId: String,
+  userId: String,
   nickname: String,
   desc: String,
   tags: [String],
@@ -12,6 +12,7 @@ const memberStatusSchema = new mongoose.Schema({
   versionKey: false,
 }
 )
+
 
 
 module.exports = mongoose.model('MemberStatus', memberStatusSchema)
