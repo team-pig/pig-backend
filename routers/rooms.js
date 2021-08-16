@@ -120,14 +120,20 @@ router.get('/rooms/unmarkedlist', auth, async (req, res) => {
   }
 })
 
-// 방 검색하기
+// 방 검색하기 2021 08 16(월) pagination 추가
 router.get('/rooms/search', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
     const { roomName } = req.query
+    const page = parseInt(req.query.page)
+    const size = parseInt(req.query.size)
+    const totalPages = Math.ceil((await Room.find({ members: userId, roomName: roomName})).length / size)
     // const { roomName, subtitle, tag } = req.body
     // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
-    const room = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
+    let room = {}
+    findroom = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
+    room.totalPages = totalPages
+    room.room = findroom.slice((page - 1) * size, page * size)
     res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
