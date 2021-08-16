@@ -51,19 +51,19 @@ router.get('/rooms', auth, async (req, res) => {
     )
       .sort({ createdAt: 'desc' })
       .lean()
-    // 찾은 방에서 bookmark된 방 빼기
-    for (let i = 0; i < bookmarkedRoom.length; i++) {
-      var idx = room.room.findIndex(function (item) {
-        return item.roomId == String(bookmarkedRoom[i].roomId)
-      })
-      if (idx > -1) {
-        room.room.splice(idx, 1)
-      }
-    }
-    // 찾은 방에서 bookmark된 방 넣기(정렬때문에)
-    for (let i = 0; i < bookmarkedRoom.length; i++) {
-      room.room.unshift(bookmarkedRoom[i])
-    }
+    // // 찾은 방에서 bookmark된 방 빼기
+    // for (let i = 0; i < bookmarkedRoom.length; i++) {
+    //   var idx = room.room.findIndex(function (item) {
+    //     return item.roomId == String(bookmarkedRoom[i].roomId)
+    //   })
+    //   if (idx > -1) {
+    //     room.room.splice(idx, 1)
+    //   }
+    // }
+    // // 찾은 방에서 bookmark된 방 넣기(정렬때문에)
+    // for (let i = 0; i < bookmarkedRoom.length; i++) {
+    //   room.room.unshift(bookmarkedRoom[i])
+    // }
     //페이지네이션
     room.room = room.room.slice((page - 1) * size, page * size)
     res.send(room)
