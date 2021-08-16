@@ -228,13 +228,14 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
   }
 })
 
-// 북마크 추가
+// 즐겨찾기 북마크 추가
 router.post('/room/:roomId/bookmark', auth, async (req, res) => {
   const { userId } = res.locals.user
   const roomId = req.params.roomId
   try {
     const findRoom = await Room.findOne({ roomId: roomId })
     const roomLikedAt = findRoom.bookmarkedMembers.includes(userId)
+    const room = {}
     if (!roomId) {
       return res.status(400).send({ message: 'roomId에 해당하는 방을 찾을 수 없습니다.' })
     }
@@ -245,7 +246,26 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
       await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
       await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
       const bookmarkedRoom = await Room.findOne({ roomId: roomId })
-      return res.send(bookmarkedRoom)
+      const markedList = await Room.find(
+        { bookmarkedMembers: userId },
+        { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      )
+      room.room = await Room.find(
+        { members: userId },
+        { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      )
+        .sort({ createdAt: 'desc' })
+        .lean()
+        for (let i = 0; i < markedList.length; i++) {
+          var idx = room.room.findIndex(function (item) {
+            return item.roomId == String(markedList[i].roomId)
+          })
+          if (idx > -1) {
+            room.room.splice(idx, 1)
+          }
+        }
+      const unBookmkarkedRoom = room.room
+      return res.send({bookmarkedRoom, markedList, unBookmkarkedRoom})
     }
   } catch (err) {
     console.error(err)
@@ -270,7 +290,11 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
       await Room.updateOne({ roomId: roomId }, { $pull: { bookmarkedMembers: userId } })
       await Bookmark.findOneAndRemove({ roomId: roomId, member: userId })
       const bookmarkedRoom = await Room.findOne({ roomId: roomId })
-      return res.send(bookmarkedRoom)
+      const markedList = await Room.find(
+        { bookmarkedMembers: userId },
+        { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      )
+      return res.send({bookmarkedRoom, markedList})
     }
   } catch (err) {
     console.error(err)
@@ -372,14 +396,13 @@ router.patch('/room', auth, async (req, res) => {
     const { roomId, roomName, roomImage, subtitle, tag, desc, endDate } = req.body
     const { userId } = res.locals.user
     const findRoom = await Room.findOne({ roomId: roomId })
-    console.log(tag.split(', '))
     if (findRoom.master != userId) {
       return res.send({ ok: false, message: '방 수정 권한이 없습니다.' })
     }
     if (roomId && findRoom.master == userId) {
       await Room.updateOne(
         { roomId: roomId },
-        { $set: { roomName, roomImage, subtitle, tag: tag.split(', '), desc, endDate } }
+        { $set: { roomName, roomImage, subtitle, tag: tag, desc, endDate } }
       )
       const room = await Room.findOne({ roomId: roomId })
       return res.json({ room })
