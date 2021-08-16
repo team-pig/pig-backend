@@ -250,22 +250,22 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
         { bookmarkedMembers: userId },
         { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
       )
-      room.room = await Room.find(
-        { members: userId },
-        { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-      )
-        .sort({ createdAt: 'desc' })
-        .lean()
-        for (let i = 0; i < markedList.length; i++) {
-          var idx = room.room.findIndex(function (item) {
-            return item.roomId == String(markedList[i].roomId)
-          })
-          if (idx > -1) {
-            room.room.splice(idx, 1)
-          }
-        }
-      const unmarkedList = room.room
-      return res.send({message:"즐겨찾기가 등록되었습니다.", bookmarkedRoom, markedList, unmarkedList})
+      // room.room = await Room.find(
+      //   { members: userId },
+      //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      // )
+      //   .sort({ createdAt: 'desc' })
+      //   .lean()
+      //   for (let i = 0; i < markedList.length; i++) {
+      //     var idx = room.room.findIndex(function (item) {
+      //       return item.roomId == String(markedList[i].roomId)
+      //     })
+      //     if (idx > -1) {
+      //       room.room.splice(idx, 1)
+      //     }
+      //   }
+      // const unmarkedList = room.room
+      return res.send({message:"즐겨찾기가 등록되었습니다.", bookmarkedRoom, markedList})
     }
   } catch (err) {
     console.error(err)
@@ -295,22 +295,22 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
         { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
       )
       const room = {}
-      room.room = await Room.find(
-        { members: userId },
-        { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-      )
-        .sort({ createdAt: 'desc' })
-        .lean()
-        for (let i = 0; i < markedList.length; i++) {
-          var idx = room.room.findIndex(function (item) {
-            return item.roomId == String(markedList[i].roomId)
-          })
-          if (idx > -1) {
-            room.room.splice(idx, 1)
-          }
-        }
-      const unmarkedList = room.room
-      return res.send({message:"즐겨찾기가 취소되었습니다.", markedList, unmarkedList})
+      // room.room = await Room.find(
+      //   { members: userId },
+      //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      // )
+      //   .sort({ createdAt: 'desc' })
+      //   .lean()
+      //   for (let i = 0; i < markedList.length; i++) {
+      //     var idx = room.room.findIndex(function (item) {
+      //       return item.roomId == String(markedList[i].roomId)
+      //     })
+      //     if (idx > -1) {
+      //       room.room.splice(idx, 1)
+      //     }
+      //   }
+      // const unmarkedList = room.room
+      return res.send({message:"즐겨찾기가 취소되었습니다.", markedList})
     }
   } catch (err) {
     console.error(err)
