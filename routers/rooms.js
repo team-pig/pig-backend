@@ -32,10 +32,10 @@ router.get('/rooms', auth, async (req, res) => {
     // const startIndex = (page - 1) * size
     // const endIndex = page * size
     const room = {}
-    const bookmarkedRoom = await Room.find(
-      { bookmarkedMembers: userId },
-      { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-    )
+    // const bookmarkedRoom = await Room.find(
+    //   { 'bookmarkedMembers.userId': userId },
+    //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+    // )
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
     room.userId = userId
@@ -90,7 +90,7 @@ router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
 router.get('/rooms/markedlist', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
-    const markedList = await Room.find({ bookmarkedMembers: userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ createdAt: 'desc' })
+    const markedList = await Room.find({ 'bookmarkedMembers.userId': userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ 'bookmarkedMembers.bookmarkedAt': -1 })
     res.send({ markedList })
   } catch (err) {
     res.status(400).send({ message: '즐겨찾기된 방 조회 실패' })
@@ -102,12 +102,12 @@ router.get('/rooms/unmarkedlist', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
     const room = {}
-    const bookmarkedRoom = await Room.find({ bookmarkedMembers: userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ createdAt: 'desc' })
+    const markedList = await Room.find({ 'bookmarkedMembers.userId': userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }).sort({ 'bookmarkedMembers.bookmarkedAt': -1 })
     room.room = await Room.find({ members: userId }, { _id: false }).sort({ createdAt: 'desc' })
     // console.log(room)
-    for (let i = 0; i < bookmarkedRoom.length; i++) {
+    for (let i = 0; i < markedList.length; i++) {
       var idx = room.room.findIndex(function (item) {
-        return item.roomId == String(bookmarkedRoom[i].roomId)
+        return item.roomId == String(markedList[i].roomId)
       })
       if (idx > -1) {
         room.room.splice(idx, 1)
@@ -239,23 +239,21 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
   const { userId } = res.locals.user
   const roomId = req.params.roomId
   try {
-    const findRoom = await Room.findOne({ roomId: roomId })
-    const roomLikedAt = findRoom.bookmarkedMembers.includes(userId)
-    const room = {}
+    const markedRoom = await Room.findOne({roomId, 'bookmarkedMembers.userId': userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
     if (!roomId) {
       return res.status(400).send({ message: 'roomId에 해당하는 방을 찾을 수 없습니다.' })
     }
-    if (roomLikedAt) {
+    if (markedRoom) {
       return res.status(400).send({ message: '이미 즐겨찾기 등록이 되어있습니다.' })
     }
-    if (!roomLikedAt) {
-      await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: userId } })
-      await Bookmark.create({ roomId, member: userId, bookmarkedAt: Date.now() })
+    if (!markedRoom) {
+      await Room.findOneAndUpdate({ roomId: roomId }, { $push: { bookmarkedMembers: {userId, roomId } }})
       const bookmarkedRoom = await Room.findOne({ roomId: roomId })
       const markedList = await Room.find(
-        { bookmarkedMembers: userId },
+        { 'bookmarkedMembers.userId': userId },
         { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-      )
+      ).sort({'bookmarkedMembers.bookmarkedAt': -1})
+      // const room = {}
       // room.room = await Room.find(
       //   { members: userId },
       //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
@@ -271,7 +269,7 @@ router.post('/room/:roomId/bookmark', auth, async (req, res) => {
       //     }
       //   }
       // const unmarkedList = room.room
-      return res.send({message:"즐겨찾기가 등록되었습니다.", bookmarkedRoom, markedList})
+      return res.send({message:"즐겨찾기가 등록되었습니다.", markedList, bookmarkedRoom})
     }
   } catch (err) {
     console.error(err)
@@ -284,23 +282,28 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
   const { userId } = res.locals.user
   const roomId = req.params.roomId
   try {
-    const findRoom = await Room.findOne({ roomId: roomId })
-    const roomLikedAt = findRoom.bookmarkedMembers.includes(userId)
+    const markedRoom = await Room.findOne({roomId, 'bookmarkedMembers.userId': userId }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
     if (!roomId) {
       return res.status(400).send({ message: 'roomId에 해당하는 방을 찾을 수 없습니다.' })
     }
-    if (!roomLikedAt) {
+    if (!markedRoom) {
       return res.status(400).send({ message: '이미 즐겨찾기에서 삭제되었습니다.' })
     }
-    if (roomLikedAt) {
-      await Room.updateOne({ roomId: roomId }, { $pull: { bookmarkedMembers: userId } })
-      await Bookmark.findOneAndRemove({ roomId: roomId, member: userId })
-      const bookmarkedRoom = await Room.findOne({ roomId: roomId })
+    if (markedRoom) {
+      // await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { bookmarkedMembers: {userId } }}) //아래와 기능 동일
+    Room.findOneAndUpdate(
+        { roomId: roomId },
+        { $pull: { bookmarkedMembers: { userId: userId} } },
+        { new: true },
+        function(err) {
+            if (err) { console.log(err) }
+        }
+    )
       const markedList = await Room.find(
-        { bookmarkedMembers: userId },
+        { 'bookmarkedMembers.userId': userId },
         { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-      )
-      const room = {}
+      ).sort({'bookmarkedMembers.bookmarkedAt': -1})
+      // const room = {}
       // room.room = await Room.find(
       //   { members: userId },
       //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
@@ -483,7 +486,7 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
         message: '방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.',
       })
     }
-    await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId, memberStatus: { userId: userId, roomId: roomId} } })
+    await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId, bookmarkedMembers: {userId},memberStatus: { userId} } })
     await MemberStatus.findOneAndRemove({ roomId: roomId })
     res.json({
       ok: true,
