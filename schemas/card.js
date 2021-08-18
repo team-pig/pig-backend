@@ -1,4 +1,7 @@
+
 const mongoose = require("mongoose");
+const { isNumber } = require("util");
+
 
 const { Schema } = mongoose;
 const cardSchema = new Schema({
@@ -8,6 +11,9 @@ const cardSchema = new Schema({
     },
     cardTitle: {
         type: String,
+    },
+    memberCount: {
+        type: Number
     },
     color:{
         type: String
@@ -21,9 +27,6 @@ const cardSchema = new Schema({
     desc: {
         type: String,
     },
-    taskMembers: {
-        type: [String],
-    },
     createdAt: {
         type: String,
     },
@@ -33,6 +36,8 @@ const cardSchema = new Schema({
     roomId: {
         type: String
     },
+
 }
 );
 module.exports = mongoose.model("Cards", cardSchema);
+

@@ -5,7 +5,7 @@ module.exports = async (req, res, next) => {
         const { roomId } = req.params;
         const userId = res.locals.user._id;
         const room = await Rooms.findOne({ roomId: roomId });
-        
+
         if (!room) {
             res.status(400).send({
                 'ok': false,
@@ -20,13 +20,13 @@ module.exports = async (req, res, next) => {
             })
             return;
         }
- 
+        next();
     } catch (error) {
         console.log('member check error', error);
         res.status(400).send({
             'ok': false,
             message: '서버에러: isMember 체크 실패'
         });
+        return;
     }
-    next();
 }

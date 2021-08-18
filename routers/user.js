@@ -7,11 +7,93 @@ const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
 const router = express.Router();
-// let refreshTokens = []
+const {v4} = require('uuid')
+const Auth = require('../schemas/auth')
+const transport = require('../services/mail.transport')
 
-function createJwtToken(id) {
-    return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
-}
+let refreshTokens = []
+
+
+//인증코드 발급
+router.post('/resetPassword/sendEmail', async (req, res) => {
+  try {
+    const { email } = req.body
+    const findEmail = await User.findOne({ email: email }, { email: true })
+    const userId = findEmail._id
+    if (findEmail.email != email) {
+        return res.status(400).json({ message: '협업돼지에 등록되지 않은 이메일입니다.' })
+    }
+    if (findEmail.email == email) {
+      const token = v4()
+      const data = {
+        // 데이터 정리
+        token,
+        userId: userId,
+        createdAt: Date.now(),
+      }
+      Auth.create(data)
+
+      transport
+        .sendMail({
+          from: `협업돼지 <awrde26@gmail.com>`,
+          to: email,
+        //   to: 'awrde26@gmail.com',
+          subject: '[협업돼지] 인증번호가 도착했습니다.',
+          text: '123456',
+          html: `
+          <div style="text-align: center;">
+            <h3 style="color: #FA5882">ABC</h3>
+            <br />
+            <p>비밀번호 초기화를 위해 URL을 클릭하세요! http://localhost:3000/password/${token}</p>
+          </div>
+        `,
+        })
+        .then((send) => res.json(send))
+        .catch((err) => next(err))
+    }
+  } catch (error) {
+    console.log ({ errMessage: '인증코드 발급에 실패했습니다.' })
+    res.status(500).json({ message: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+  }
+})
+
+router.get('/resetPassword/:token', async (req, res) => {
+  res.json({ message: '정상적으로 이동하였습니다.' })
+})
+
+router.post('/resetPassword/:token', async (req, res) => {
+  // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
+  try {
+    const token = req.params.token
+    const {password, confirmPassword} = req.body
+    const findAuth = await Auth.findOne({ token: token })
+    // 인증코드는 5분의 유효기간(300000ms) (개발 시 풀어놓기)
+    // if (Date.now() - findAuth.createdAt > 300000) {
+    //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    // }
+    if(password != confirmPassword) {
+        res.status(400).json({ message: '패스워드가 일치하지 않습니다.'})
+    }
+    const userId = findAuth.userId
+    const salt = await bcrypt.genSalt()
+    const hashed = await bcrypt.hash(password, salt)
+    const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
+    console.log(findUser)
+    res.status(201).json({
+      message: '비밀번호 재설정 성공',
+      email: findUser.email,
+      nickname: findUser.nickname,
+    })
+  } catch (error) {
+    res.status(400).json({ message: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+  }
+})
+
+// function createJwtToken(id, color, avatar) {
+//     return jwt.sign({ id, color, avatar}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
+
+// }
+
 
 const registerValidator = Joi.object({
     email: Joi.string().email().required(),
@@ -19,17 +101,28 @@ const registerValidator = Joi.object({
     password: Joi.string()
         .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
         .required(), 
-    confirmPassword: Joi.ref('password')
+    confirmPassword: Joi.ref('password'),
+    color: Joi.string().min(0),
+    avatar: Joi.string().min(0),
 }).with('password','confirmPassword')
 
 
 router.post('/register', async (req, res, next) => {
     try {
-        const { email, nickname, password, confirmPassword } = await registerValidator.validateAsync(req.body);
+        const { email, nickname, password, confirmPassword, color, avatar } = await registerValidator.validateAsync(req.body);
         // password가 일치한지 확인해야한다.
         if (password !== confirmPassword) {
             res.status(400).send({
                 errorMessage: "패스워드가 일치하지 않습니다.",
+            });
+            return;
+        }
+        
+        // 닉네임 3글자 미만은 회원가입 불가.
+        const nickName = await User.findOne({ nickname })
+        if (nickName.length < 3 ) {
+            res.status(400).send({
+                errorMessage: '닉네임에 적합하지 않습니다.'
             });
             return;
         }
@@ -47,17 +140,19 @@ router.post('/register', async (req, res, next) => {
         const salt = await bcrypt.genSalt();
         const hashed = await bcrypt.hash(password, salt);
 
-        const userId = await User.create({
+        const user = await User.create({
             email,
             nickname,
             password: hashed,
+            color,
+            avatar
         });
-        const accessToken = createJwtToken(userId)
         res.status(201).json({
             ok:true, 
             message: '회원가입 성공',
-            accessToken: accessToken, 
-            email: email,
+            email: user.email,
+            color: user.color,
+            avatar: user.avatar
         });
 
     } catch (error) {
@@ -66,21 +161,21 @@ router.post('/register', async (req, res, next) => {
 });
 
 router.post('/login', async (req, res, next) => {
-    console.log(process.env.ACCESS_TOKEN_SECRET)
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email })
         if (!user) {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
-
+        
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
         }
-        const accessToken = createJwtToken(user.id);
-        const refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
-        // refreshTokens.push(refreshToken);
+        let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
+        refreshTokens.push(refreshToken);
+
         res.status(200).json({
             ok: true, 
             message:'로그인 성공',
@@ -98,7 +193,7 @@ router.post('/login', async (req, res, next) => {
 
 router.get('/token', authMiddleware, async (req, res, next) => {
     try {
-        res.send({
+        res.status(200).send({
             ok: true,
             message:'토큰 인증 성공',
             user: res.locals.user
@@ -112,19 +207,23 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     }
 });
 
+
 router.post('/token', (req, res) => {
-    const refreshToken = req.body.token;
-    if (!refreshToken) {
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken || !refreshTokens.includes(refreshToken)) {
         return res.status(403).json({ message: 'User not authenticated'})
     }
+
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if(!err) {
-            const accessToken = createJwtToken(user.id);
-            return res.status(201).json({ accessToken: accessToken });
+            const accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+            return res.status(201).json({
+                ok: true,
+                message: 'accessToken 재발급 성공', 
+                accessToken: accessToken });
         } else {
-            return res.status(403).json({ message: 'User not authenticated'})
+        return res.status(403).json({ message: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
         }
-
     })
 });
 

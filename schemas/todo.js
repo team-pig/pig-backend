@@ -1,10 +1,16 @@
+  
+
 const mongoose = require("mongoose");
+
 
 const { Schema } = mongoose;
 const todoSchema = new Schema({
-    todoId: { auto: true, type: 'objectId', index: true},
+    todoId: { auto: true, type: 'objectId', index: true },
     todoTitle: {
         type: String,
+    },
+    roomId: {
+        type: String
     },
     bucketId: {
         type: String
@@ -12,11 +18,10 @@ const todoSchema = new Schema({
     cardId: {
         type: String,
     },
-    members: {
-        type: [Object],
-    },
+    members: [{memberId: String, memberName: String}],
     isChecked: {
         type: Boolean,
+
     },
 }
 );
