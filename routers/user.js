@@ -7,8 +7,80 @@ const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
 const router = express.Router();
+const {v4} = require('uuid')
+const Auth = require('../schemas/auth')
+// const nodemailer = require('nodemailer');
+const transport = require('../services/mail.transport')
 
 // let refreshTokens = []
+
+//인증코드 발급
+router.post('/forget', async (req, res) => {
+  try {
+    const { email } = req.body
+    const findEmail = await User.findOne({ email: email }, { email: true })
+    const userId = findEmail._id
+    console.log(findEmail)
+    if (findEmail.email != email) {
+        return res.status(400).json({ message: 'email 정보가 존재하지 않아요.' })
+    }
+    if (findEmail.email == email) {
+      const token = v4()
+      const data = {
+        // 데이터 정리
+        token,
+        userId: userId,
+        createdAt: Date.now(),
+      }
+      Auth.create(data)
+
+      transport
+        .sendMail({
+          from: `협업돼지 <awrde26@gmail.com>`,
+          to: email,
+          subject: '[협업돼지] 인증번호가 도착했습니다.',
+          text: '123456',
+          html: `
+          <div style="text-align: center;">
+            <h3 style="color: #FA5882">ABC</h3>
+            <br />
+            <p>비밀번호 초기화를 위해 URL을 클릭하세요! http://localhost:3000/password/${token}</p>
+          </div>
+        `,
+        })
+        .then((send) => res.json(send))
+        .catch((err) => next(err))
+    }
+  } catch (error) {
+    res.status(500).json({ message: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+  }
+})
+
+router.post('/password/:token', async (req, res) => {
+  // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
+  try {
+    const token = req.params.token
+    const password = req.body.password
+    const findAuth = await Auth.findOne({ token: token })
+    // 인증코드는 5분의 유효기간(300000ms)
+    if (Date.now() - findAuth.createdAt > 300000) {
+      return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    }
+    const userId = findAuth.userId
+    const salt = await bcrypt.genSalt()
+    const hashed = await bcrypt.hash(password, salt)
+    const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
+    console.log(findUser)
+    res.status(201).json({
+      ok: true,
+      message: '비밀번호 재설정 성공',
+      email: findUser.email,
+      nickname: findUser.nickname,
+    })
+  } catch (error) {
+    res.status(400).json({ message: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+  }
+})
 
 function createJwtToken(id) {
     return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
@@ -118,9 +190,11 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 
 
 router.post('/token', (req, res) => {
-    const refreshToken = req.body.token;
+    const refreshToken = req.body.refreshToken;
     if (!refreshToken) {
-        return res.status(403).json({ message: 'User not authenticated'})
+        console.log('리프레시 토큰이 없습니다.')
+        console.log(req.body)
+        return res.status(403).json({ message: 'User not authenticated, 리프레시 토큰이 없습니다.'})
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
@@ -128,7 +202,8 @@ router.post('/token', (req, res) => {
             const accessToken = createJwtToken(user.id);
             return res.status(201).json({ accessToken: accessToken });
         } else {
-            return res.status(403).json({ message: 'User not authenticated'})
+            console.log('리프레시 토큰 검증이 안됩니다.')
+            return res.status(403).json({ message: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
         }
 
     })
