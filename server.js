@@ -22,6 +22,7 @@ const io = socketio(server);
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
 const Message = require('./schemas/message');
+const Room = require('./schemas/room');
 connect()
 
 io.on('connection', (socket) => {
@@ -33,12 +34,12 @@ io.on('connection', (socket) => {
     // 받은 roomId의 socket room에 들어간다.
     socket.join(data.roomId);
     // 다른 사람들한테 내가 접속했다고 알림.
-    socket.to(data.roomId).emit('message', { user:'admin', text:`${data.userName}님이 접속했습니다.`})
+    socket.to(data.roomId).emit('message', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
     const chatData = await Message.find({ roomId: data.roomId })
     socket.emit('messages', chatData)
 
-    socket.emit('message', { user:'admin', text:`${data.roomId}에 접속했습니다.`})
+    socket.emit('message', { userName:'admin', text:`${data.roomId}에 접속했습니다.`})
 
   })
 
@@ -50,10 +51,12 @@ io.on('connection', (socket) => {
     io.to(data.roomId).emit('message',data )
   })
 
-  socket.on('disconnect', (data) => {
+  socket.on('leave', (data) => {
     socket.leave(data.roomId)
-    io.to(data.roomId).emit('message', { user:'admin', text:`${data.userName}님이 방에서 나갔습니다.`})
-    
+    io.to(data.roomId).emit('message', { userName:'admin', text:`${data.userName}님이 방에서 나갔습니다.`})
+  })
+
+  socket.on('disconnect', () => {
     console.log('연결이 해제되었어요.')
   })
 

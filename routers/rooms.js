@@ -383,7 +383,7 @@ router.patch('/room', auth, async (req, res) => {
       const room = await Room.findOne({ roomId: roomId })
       return res.json({ room })
     }
-    res.send('test')
+    // res.send('test')
   } catch (err) {
     console.error(err)
     res.status(400).json(err)
