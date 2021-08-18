@@ -14,13 +14,8 @@ const Todo = require('../schemas/todo.js')
 
 const router = express.Router()
 
-router.post('/tttt', auth, async (req, res) => {
-  const userId = res.locals.user._id
-  const {roomId} = req.body
-  const findMemberStatus = await Room.find({ roomId }, { _id: false }).lean()
-
-  // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()
-  console.log(findMemberStatus)
+router.post('/tttt', async (req, res) => {
+  res.status(200).send()
 })
 
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
@@ -47,7 +42,7 @@ router.get('/rooms', auth, async (req, res) => {
     // }
     room.room = await Room.find(
       { members: userId },
-      { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
+      { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false}
     )
       .sort({ createdAt: 'desc' })
       .lean()
@@ -131,7 +126,7 @@ router.get('/rooms/search', auth, async (req, res) => {
     // const { roomName, subtitle, tag } = req.body
     // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
     let room = {}
-    findroom = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false })
+    findroom = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false })
     room.totalPages = totalPages
     room.room = findroom.slice((page - 1) * size, page * size)
     res.send(room)
