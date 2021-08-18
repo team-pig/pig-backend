@@ -15,14 +15,13 @@ const transport = require('../services/mail.transport')
 // let refreshTokens = []
 
 //인증코드 발급
-router.post('/forget', async (req, res) => {
+router.post('/resetPassword/sendEmail', async (req, res) => {
   try {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
     const userId = findEmail._id
-    console.log(findEmail)
     if (findEmail.email != email) {
-        return res.status(400).json({ message: 'email 정보가 존재하지 않아요.' })
+        return res.status(400).json({ message: '협업돼지에 등록되지 않은 이메일입니다.' })
     }
     if (findEmail.email == email) {
       const token = v4()
@@ -38,6 +37,7 @@ router.post('/forget', async (req, res) => {
         .sendMail({
           from: `협업돼지 <awrde26@gmail.com>`,
           to: email,
+        //   to: 'awrde26@gmail.com',
           subject: '[협업돼지] 인증번호가 도착했습니다.',
           text: '123456',
           html: `
@@ -52,19 +52,27 @@ router.post('/forget', async (req, res) => {
         .catch((err) => next(err))
     }
   } catch (error) {
+    console.log ({ errMessage: '인증코드 발급에 실패했습니다.' })
     res.status(500).json({ message: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
   }
 })
 
-router.post('/password/:token', async (req, res) => {
+router.get('/resetPassword/:token', async (req, res) => {
+  res.json({ message: '정상적으로 이동하였습니다.' })
+})
+
+router.post('/resetPassword/:token', async (req, res) => {
   // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
   try {
     const token = req.params.token
-    const password = req.body.password
+    const {password, confirmPassword} = req.body
     const findAuth = await Auth.findOne({ token: token })
-    // 인증코드는 5분의 유효기간(300000ms)
-    if (Date.now() - findAuth.createdAt > 300000) {
-      return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    // 인증코드는 5분의 유효기간(300000ms) (개발 시 풀어놓기)
+    // if (Date.now() - findAuth.createdAt > 300000) {
+    //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    // }
+    if(password != confirmPassword) {
+        res.status(400).json({ message: '패스워드가 일치하지 않습니다.'})
     }
     const userId = findAuth.userId
     const salt = await bcrypt.genSalt()
@@ -72,7 +80,6 @@ router.post('/password/:token', async (req, res) => {
     const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
     console.log(findUser)
     res.status(201).json({
-      ok: true,
       message: '비밀번호 재설정 성공',
       email: findUser.email,
       nickname: findUser.nickname,
@@ -84,7 +91,6 @@ router.post('/password/:token', async (req, res) => {
 
 function createJwtToken(id) {
     return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
-
 }
 
 const registerValidator = Joi.object({
