@@ -143,3 +143,4 @@ http.createServer(app).listen(3000)
 https.createServer(options, app).listen(443)
 */
 
+module.exports = app;
