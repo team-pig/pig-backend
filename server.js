@@ -29,8 +29,14 @@ io.on('connection', (socket) => {
   console.log('연결되었어요');
 
   socket.on('join', async (data) => {
-
     console.log(data)
+    const findRoom= await Room.findOne({ roomId: data.roomId })
+    if(!findRoom) {
+      socket.emit('message', { text: '방을 찾을 수 없습니다. 방 입장 후 이용해주세요.'})
+    }
+    if(findRoom) {
+      for(let i = 0; i < findRoom.members.length; i++) {
+        if(findRoom.members[i] == data.userId) {
     // 받은 roomId의 socket room에 들어간다.
     socket.join(data.roomId);
     // 다른 사람들한테 내가 접속했다고 알림.
@@ -39,8 +45,10 @@ io.on('connection', (socket) => {
     const chatData = await Message.find({ roomId: data.roomId })
     socket.emit('messages', chatData)
 
-    socket.emit('message', { userName:'admin', text:`${data.roomId}에 접속했습니다.`})
-
+    socket.emit('message', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
+        }
+      }
+    }
   })
 
   socket.on('sendMessage', async (data) => {
