@@ -2,33 +2,98 @@ const app = require('../server')
 const supertest = require('supertest');
 // const request = require('supertest')
 const request = supertest(app);
+const clearData = require('./clearData')
+const undefinedData = require('./undefinedData')
+
+let refresh = "";
+let access = "";
+
 describe('test', () => {
   it('test', async () => {
     const res = await request.post('/tttt').send( 'hi' );
     expect(res.statusCode).toEqual(200);
   });
-
 });
-// 현재 유저 등록만 이뤄지고 삭제가 안이뤄져서 테스트코드 재활용이 불가능함 유저 삭제 테스트 코드를 추가하고 넣어야 함
-describe('유저 등록', () => {
+
+describe('유저 등록 성공', () => {
   it('register success', async () => {
     const response = await request.post('/register').send({
-      email: "qwertyt@naver.com",
-      nickname: "qwertyt",
-      password: "test11",
-      confirmPassword: "test11"
+      email: clearData.email,
+      nickname: clearData.nickname,
+      password: clearData.password,
+      confirmPassword: clearData.confirmPassword
     })
-  
     expect(response.body.message).toBe('회원가입 성공')
     expect(response.statusCode).toBe(201); 
   })
-
-  // it('register delete', async () => {
-  //   const response = await request.
-  // })
-
 })
 
-it('get rooms', () => {
+describe('유저 등록 실패', () => {
+  it('Register failed 이미 존재하는 email', async () => {
+    const response = await request.post('/register').send({
+      email: clearData.registerEmail,
+      nickname: clearData.nickname,
+      password: clearData.password,
+      confirmPassword: clearData.confirmPassword
+    })
+    expect(response.statusCode).toBe(400); 
+  })
 
+  it('Register failed 이미 존재하는 nickname', async () => {
+    const response = await request.post('/register').send({
+      email: clearData.email,
+      nickname: clearData.registerNickname,
+      password: clearData.password,
+      confirmPassword: clearData.confirmPassword
+    })
+    expect(response.statusCode).toBe(400); 
+  })
+})
+
+describe('로그인 성공', () => {
+  it('login success', async () => {
+    const response = await request.post('/login').send({
+      email: clearData.registerEmail,
+      password: clearData.registerPassword,
+    })
+    refresh = response.body.refreshToken;
+    access = response.body.accessToken;
+    expect(response.statusCode).toBe(200);
+    expect(response.body.refreshToken).toBeTruthy();
+    expect(response.body.refreshToken).toBeTruthy();
+  })
+})
+
+describe('로그인 실패', () => {
+  it('login failed 존재하지 않는 email, password', async () => {
+    const response = await request.post('/login').send({
+      email: undefinedData.email,
+      password: undefinedData.password,
+    })
+    expect(response.statusCode).toBe(401);
+  })
+  it('login failed: password 불일치', async () => {
+    const response = await request.post('/login').send({
+      email: clearData.registerEmail,
+      password: 'tttqwe',
+    })
+    expect(response.statusCode).toBe(401);
+  })
+})
+
+describe('회원 탈퇴하기', () => {
+  it('delete userInfo success', async () => {
+    const res = await request.delete('/userInfo').send({
+      email: clearData.email
+    });
+    expect(res.body.message).toBe('회원탈퇴 성공');
+    expect(res.statusCode).toBe(200);
+  })
+
+  it('delete userInfo false', async () => {
+    const res = await request.delete('/userInfo').send({
+      email: undefinedData.email
+    });
+    expect(res.statusCode).toBe(400);
+  })
 })
