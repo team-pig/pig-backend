@@ -211,9 +211,22 @@ router.post('/token', (req, res) => {
             console.log('리프레시 토큰 검증이 안됩니다.')
             return res.status(403).json({ message: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
         }
-
     })
 });
+// 회원 탈퇴 시 혼자 있던 room 찾아서 하위 항목들 다 삭제예정 현재는 임시 미완성 API
+router.delete('/userInfo', async (req, res) => {
+  try {
+    const email = req.body.email
+    // await findUser.delete({})
+    const remove = await User.findOneAndRemove({ email: email })
+    if(!remove) {
+        return res.status(400).json({ message: '이메일이 잘못되었습니다.'})
+    }
+    res.json({ message: '회원탈퇴 성공' })
+  } catch (err) {
+    res.status(500).json({ message: '회원탈퇴 실패' })
+  }
+})
 
 module.exports = router;
 
