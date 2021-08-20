@@ -21,7 +21,7 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
     const findEmail = await User.findOne({ email: email }, { email: true })
     const userId = findEmail._id
     if (findEmail.email != email) {
-        return res.status(400).json({ message: '협업돼지에 등록되지 않은 이메일입니다.' })
+        return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
     }
     if (findEmail.email == email) {
       const token = v4()
@@ -52,8 +52,8 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
         .catch((err) => next(err))
     }
   } catch (error) {
-    console.log ({ errMessage: '인증코드 발급에 실패했습니다.' })
-    res.status(500).json({ message: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+    console.log ({ errorMessage: '인증코드 발급에 실패했습니다.' })
+    res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
   }
 })
 
@@ -72,7 +72,7 @@ router.post('/resetPassword/:token', async (req, res) => {
     //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
     // }
     if(password != confirmPassword) {
-        res.status(400).json({ message: '패스워드가 일치하지 않습니다.'})
+        res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.'})
     }
     const userId = findAuth.userId
     const salt = await bcrypt.genSalt()
@@ -85,7 +85,7 @@ router.post('/resetPassword/:token', async (req, res) => {
       nickname: findUser.nickname,
     })
   } catch (error) {
-    res.status(400).json({ message: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+    res.status(400).json({ errorMessage: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
   }
 })
 
@@ -165,12 +165,12 @@ router.post('/login', async (req, res, next) => {
         const { email, password } = req.body;
         const user = await User.findOne({ email })
         if (!user) {
-            return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
+            return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-            return res.status(401).json({ message: '이메일 또는 패스워드가 틀렸습니다.' });
+            return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
         let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
@@ -185,7 +185,7 @@ router.post('/login', async (req, res, next) => {
     } catch (err) {
         res.status(400).send({
             ok: false, 
-            message: '서버 실패: 로그인 실패',
+            errorMessage: '서버 실패: 로그인 실패',
         })
         next(err);
     }
@@ -201,7 +201,7 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     } catch (err) {
         res.status(400).send({
             ok: false, 
-            message: '토큰 인증 실패'
+            errorMessage: '토큰 인증 실패'
         })
         next(err)
     }
@@ -211,7 +211,7 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 router.post('/token', (req, res) => {
     const refreshToken = req.body.refreshToken;
     if (!refreshToken || !refreshTokens.includes(refreshToken)) {
-        return res.status(403).json({ message: 'User not authenticated'})
+        return res.status(403).json({ errorMessage: 'User not authenticated'})
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
@@ -222,10 +222,24 @@ router.post('/token', (req, res) => {
                 message: 'accessToken 재발급 성공', 
                 accessToken: accessToken });
         } else {
-        return res.status(403).json({ message: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
+        return res.status(403).json({ errorMessage: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
         }
     })
 });
+// 회원 탈퇴 시 혼자 있던 room 찾아서 하위 항목들 다 삭제예정 현재는 임시 미완성 API
+router.delete('/userInfo', async (req, res) => {
+  try {
+    const email = req.body.email
+    // await findUser.delete({})
+    const remove = await User.findOneAndRemove({ email: email })
+    if(!remove) {
+        return res.status(400).json({ message: '이메일이 잘못되었습니다.'})
+    }
+    res.json({ message: '회원탈퇴 성공' })
+  } catch (err) {
+    res.status(500).json({ message: '회원탈퇴 실패' })
+  }
+})
 
 module.exports = router;
 
