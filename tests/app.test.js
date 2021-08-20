@@ -132,6 +132,15 @@ describe('방 검색하기 성공', () => {
   })
 })
 
+describe('방 메인페이지 불러오기 성공', () => { 
+  it('GET mainPage success', async () => {
+    const res = await request.get(`/room/${createdRoomId}/main`).auth(access, {type: 'bearer'})
+    expect(res.statusCode).toBe(200)
+    expect(res.body.result.roomId).toBe(createdRoomId)
+    expect(res.body.result.createdAt).toBeTruthy()
+  })
+})
+
 describe('방 삭제 성공', () => {
   it('delete room success', async () => {
     const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
