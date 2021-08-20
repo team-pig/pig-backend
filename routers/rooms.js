@@ -402,7 +402,7 @@ router.post('/room/member', auth, async (req, res) => {
         { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId, avatar, color } } }
       )
       // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
-      room = await Room.findOne({ roomId: roomId})
+      room = await Room.findOne({ roomId: roomId}, {_id: false, 'memberStatus._id': false})
       return res.json({ room })
     }
   } catch (error) {
