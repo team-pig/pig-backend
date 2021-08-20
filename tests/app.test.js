@@ -150,6 +150,14 @@ describe('방 유저 현황 불러오기 성공', () => {
   })
 })
 
+describe('방의 멤버 정보 불러오기 성공', () => { 
+  it('Get information about users in a room', async () => {
+    const res = await request.get(`/room/${createdRoomId}/members`).auth(access, {type: 'bearer'})
+    expect(res.statusCode).toBe(200)
+    expect(res.body.allMembers[0]).toBeTruthy()
+  })
+})
+
 describe('방 삭제 성공', () => {
   it('delete room success', async () => {
     const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
