@@ -69,16 +69,17 @@ router.get('/rooms', auth, async (req, res) => {
 
 //방 불러오기 (inviteCode 입력 시)
 router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
-  try {const {inviteCode} = req.params
-  const room = await Room.findOne({inviteCode: inviteCode})
-  if (!room) {
-    return res.status(400).json({ message: '방을 찾을 수 없어요! 초대코드를 확인하세요.'})
+  try {
+    const { inviteCode } = req.params
+    const room = await Room.findOne({ inviteCode: inviteCode })
+    if (!room) {
+      return res.status(400).json({ message: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
+    }
+    console.log(room)
+    res.send(room)
+  } catch (err) {
+    res.status(500).json({ message: '서버에러: 방 조회 실패' })
   }
-  console.log(room)
-  res.send(room)
-} catch (err) {
-  res.status(500).json({ message: '서버에러: 방 조회 실패'})
-}
 })
 
 //즐겨 찾기 된 방 불러오기
