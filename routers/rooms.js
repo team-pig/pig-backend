@@ -126,9 +126,10 @@ router.get('/rooms/search', auth, async (req, res) => {
     // const { roomName, subtitle, tag } = req.body
     // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
     let room = {}
-    findroom = await Room.find({ $and: [{ members: userId }, { roomName }] }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false })
-    room.totalPages = totalPages
-    room.room = findroom.slice((page - 1) * size, page * size)
+    findroom = await Room.find({ roomName:{$regex:roomName}, members: userId , }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false })
+    // room.totalPages = totalPages
+    // room.room = findroom.slice((page - 1) * size, page * size)
+    room.room = findroom
     res.send(room)
   } catch (e) {
     res.status(500).json({ message: '서버에러: 방 검색 실패' })
@@ -168,9 +169,11 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     }
     projectStatus = { endDate, checked, notChecked }
     //위에까지 projectStatus, 아래부터memberStatus 시작
-    const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()    
+    // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()  위에서 아래로 변화(memberstatus 따로 생성되는 부분 지워도 될듯)
+    const findRoom = await Room.findOne({ roomId }, { _id: false })
+    const findMemberStatus = findRoom.memberStatus
+
     for (let j = 0; j < findMemberStatus.length; j++) {
-      // const findTodo = await Todo.find({ members: findMemberStatus[j].userId })
       var findTodo = await Todo.find({ roomId: roomId, 'members.memberId': findMemberStatus[j].userId })
       bchecked = 0
       bnotChecked = 0
@@ -185,7 +188,6 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
       memberStatus[j].checked = bchecked
       memberStatus[j].notChecked = bnotChecked
     }
-    console.log({ projectStatus, memberStatus })
     res.send({ projectStatus, memberStatus })
   } catch (err) {
     res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
@@ -221,7 +223,7 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { desc, tags } = req.body
-    await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
+    // await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
     await Room.updateMany({roomId:roomId, 'memberStatus.userId':userId}, {$set: {'memberStatus.$.desc': desc, 'memberStatus.$.tags': tags}})
     res.send({ message: '프로필 수정 성공' })
   } catch (e) {
@@ -325,6 +327,7 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
 // 방 만들기
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user._id
+  const {avatar, color} = res.locals.user
   const { roomName, roomImage, subtitle, tag, desc, endDate } = req.body
   try {
     let room = await Room.create({
@@ -347,10 +350,10 @@ router.post('/room', auth, async (req, res) => {
     const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [], bucketName: null })
     const bucketId = newBucket.bucketId
 
-    await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
+    // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await Room.findOneAndUpdate(
       { roomId: room.roomId },
-      { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname } } }
+      { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname, avatar, color } } }
     )
     await BucketOrder.create({ roomId: roomId })
     await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } })
@@ -369,6 +372,7 @@ router.post('/room', auth, async (req, res) => {
 router.post('/room/member', auth, async (req, res) => {
   const userId = res.locals.user._id
   const { inviteCode } = req.body
+  const {avatar, color} = res.locals.user
   const findRoom = await Room.findOne({ inviteCode })
 
   if (!findRoom) {
@@ -395,10 +399,10 @@ router.post('/room/member', auth, async (req, res) => {
       const roomId = room.roomId
       await Room.findOneAndUpdate(
         { inviteCode },
-        { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId } } }
+        { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId, avatar, color } } }
       )
-      await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
-      room = await Room.findOne({ roomId: roomId})
+      // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
+      room = await Room.findOne({ roomId: roomId}, {_id: false, 'memberStatus._id': false})
       return res.json({ room })
     }
   } catch (error) {
@@ -446,7 +450,7 @@ router.delete('/room', auth, async (req, res) => {
       await deleteAll.deleteBuckets(roomId)
       await Room.findOneAndRemove({ roomId: roomId })
       await BucketOrder.deleteOne({ roomId: roomId })
-      await MemberStatus.findOneAndRemove({ roomId: roomId })
+      // await MemberStatus.findOneAndRemove({ roomId: roomId })
       return res.json({
         ok: true,
         message: '방 삭제 성공',
@@ -458,7 +462,6 @@ router.delete('/room', auth, async (req, res) => {
         message: '방장이 아닙니다.',
       })
     }
-    
     res.status(400).json({ errorMessage: '방Id를 찾을 수 없습니다.' })
   } catch (err) {
     console.error(err)
@@ -482,7 +485,7 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
       })
     }
     await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId, bookmarkedMembers: {userId},memberStatus: { userId} } })
-    await MemberStatus.findOneAndRemove({ roomId: roomId })
+    // await MemberStatus.findOneAndRemove({ roomId: roomId })
     res.json({
       ok: true,
       message: '방 나가기 성공',
