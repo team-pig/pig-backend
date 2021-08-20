@@ -104,6 +104,16 @@ describe('방 전체 목록 불러오기 pagination 성공', () => {
   })
 })
 
+describe('즐겨찾기 된 방 불러오기 성공', () => {
+  it('GET markedList success', async () => {
+    const res = await request.
+    get('/rooms/markedlist')
+    .auth(access, { type: 'bearer' }).send({})
+    expect(res.statusCode).toBe(200)
+    expect(res.body.markedList).toBeTruthy()
+  })
+})
+
 describe('방 삭제 성공', () => {
   it('delete room success', async () => {
     const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
