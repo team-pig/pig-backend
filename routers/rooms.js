@@ -372,6 +372,7 @@ router.post('/room', auth, async (req, res) => {
 router.post('/room/member', auth, async (req, res) => {
   const userId = res.locals.user._id
   const { inviteCode } = req.body
+  const {avatar, color} = res.locals.user
   const findRoom = await Room.findOne({ inviteCode })
 
   if (!findRoom) {
@@ -398,7 +399,7 @@ router.post('/room/member', auth, async (req, res) => {
       const roomId = room.roomId
       await Room.findOneAndUpdate(
         { inviteCode },
-        { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId } } }
+        { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId, avatar, color } } }
       )
       // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
       room = await Room.findOne({ roomId: roomId})
