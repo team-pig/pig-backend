@@ -327,6 +327,7 @@ router.delete('/room/:roomId/bookmark', auth, async (req, res) => {
 // 방 만들기
 router.post('/room', auth, async (req, res) => {
   const userId = res.locals.user._id
+  const {avatar, color} = res.locals.user
   const { roomName, roomImage, subtitle, tag, desc, endDate } = req.body
   try {
     let room = await Room.create({
@@ -352,7 +353,7 @@ router.post('/room', auth, async (req, res) => {
     // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await Room.findOneAndUpdate(
       { roomId: room.roomId },
-      { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname } } }
+      { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname, avatar, color } } }
     )
     await BucketOrder.create({ roomId: roomId })
     await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: bucketId } })
