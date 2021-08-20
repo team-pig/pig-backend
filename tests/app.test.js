@@ -5,8 +5,9 @@ const request = supertest(app);
 const clearData = require('./clearData')
 const undefinedData = require('./undefinedData')
 
-let refresh = "";
-let access = "";
+let refresh = ""
+let access = ""
+let createdRoomId = ""
 
 describe('test', () => {
   it('test', async () => {
@@ -79,6 +80,21 @@ describe('로그인 실패', () => {
     })
     expect(response.statusCode).toBe(401);
   })
+})
+
+describe('방 만들기 성공', () => {
+  it('create room success', async () => {
+    const res = await request.post('/room').auth(access, {type: 'bearer'}).send({
+    roomName: clearData.room.roomName,
+    roomImage: clearData.room.roomImage,
+    subtitle: clearData.room.subtitle,
+    tag: clearData.room.tag,
+    desc: clearData.room.desc })
+    createdRoomId = res.body.room.roomId
+    expect(res.statusCode).toBe(200)
+    expect(res.body.room.roomName).toBe(clearData.room.roomName)
+  })
+  
 })
 
 describe('회원 탈퇴하기', () => {
