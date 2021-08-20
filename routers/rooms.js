@@ -169,9 +169,11 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     }
     projectStatus = { endDate, checked, notChecked }
     //위에까지 projectStatus, 아래부터memberStatus 시작
-    const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()    
+    // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()  위에서 아래로 변화(memberstatus 따로 생성되는 부분 지워도 될듯)
+    const findRoom = await Room.findOne({ roomId }, { _id: false })
+    const findMemberStatus = findRoom.memberStatus
+
     for (let j = 0; j < findMemberStatus.length; j++) {
-      // const findTodo = await Todo.find({ members: findMemberStatus[j].userId })
       var findTodo = await Todo.find({ roomId: roomId, 'members.memberId': findMemberStatus[j].userId })
       bchecked = 0
       bnotChecked = 0
@@ -186,7 +188,6 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
       memberStatus[j].checked = bchecked
       memberStatus[j].notChecked = bnotChecked
     }
-    console.log({ projectStatus, memberStatus })
     res.send({ projectStatus, memberStatus })
   } catch (err) {
     res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
