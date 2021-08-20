@@ -96,6 +96,14 @@ describe('방 만들기 성공', () => {
   })
 })
 
+describe('방 전체 목록 불러오기 pagination 성공', () => {
+  it('GET roomList success', async () => {
+    const res = await request.get('/rooms/?page=1&size=8').auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.totalPages).toBeGreaterThan(0)
+  })
+})
+
 describe('방 삭제 성공', () => {
   it('delete room success', async () => {
     const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
