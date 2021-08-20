@@ -2,14 +2,14 @@ const express = require('express');
 const User = require('../schemas/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const authMiddleware = require('../middlewares/auth-middleware')
+const authMiddleware = require('../middlewares/auth-middleware');
 const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
+const {v4} = require('uuid');
+const Auth = require('../schemas/auth');
+const transport = require('../services/mail.transport');
 const router = express.Router();
-const {v4} = require('uuid')
-const Auth = require('../schemas/auth')
-const transport = require('../services/mail.transport')
 
 let refreshTokens = []
 
@@ -102,8 +102,8 @@ const registerValidator = Joi.object({
         .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
         .required(), 
     confirmPassword: Joi.ref('password'),
-    color: Joi.string().min(0),
-    avatar: Joi.string().min(0),
+    color: Joi.string().allow(''),
+    avatar: Joi.string().allow('')
 }).with('password','confirmPassword')
 
 
@@ -120,20 +120,25 @@ router.post('/register', async (req, res, next) => {
         
         // 닉네임 3글자 미만은 회원가입 불가.
         const nickName = await User.findOne({ nickname })
-        if (nickName.length < 3 ) {
+        if (nickName != null && nickName.length < 3 ) {
             res.status(400).send({
                 errorMessage: '닉네임에 적합하지 않습니다.'
             });
             return;
         }
 
-        // email or nickname이 동일한게 이미 있는지 확인하기 위해 가져온다.
-        const existsUsers = await User.findOne({
-            $or: [{ email }, { nickname }],
-        });
-        if (existsUsers) {
+        // email and nickname이 동일한게 이미 있는지 확인하기 위해 가져온다.
+        const existsEmail = await User.findOne({ email })
+        const existsNickname = await User.findOne({ nickname })
+        if (existsEmail) {
             res.status(400).send({
-                errorMessage: "이메일 또는 닉네임이 이미 사용중입니다.",
+                errorMessage: "이메일이 이미 사용중입니다.",
+            });
+            return;
+        }
+        if (existsNickname) {
+            res.status(400).send({
+                errorMessage: "닉네임이 이미 사용중입니다."
             });
             return;
         }
@@ -182,12 +187,12 @@ router.post('/login', async (req, res, next) => {
             accessToken: accessToken, refreshToken: refreshToken, 
             email: email,
         });
-    } catch (err) {
+    } catch (error) {
         res.status(400).send({
             ok: false, 
             errorMessage: '서버 실패: 로그인 실패',
         })
-        next(err);
+        next(error);
     }
 });
 

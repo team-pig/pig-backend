@@ -30,26 +30,16 @@ io.on('connection', (socket) => {
 
   socket.on('join', async (data) => {
     console.log(data)
-    const findRoom= await Room.findOne({ roomId: data.roomId })
-    if(!findRoom) {
-      socket.emit('message', { text: '방을 찾을 수 없습니다. 방 입장 후 이용해주세요.'})
-    }
-    if(findRoom) {
-      for(let i = 0; i < findRoom.members.length; i++) {
-        if(findRoom.members[i] == data.userId) {
     // 받은 roomId의 socket room에 들어간다.
     socket.join(data.roomId);
     // 다른 사람들한테 내가 접속했다고 알림.
-    socket.to(data.roomId).emit('message', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
+    socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
     const chatData = await Message.find({ roomId: data.roomId })
     socket.emit('messages', chatData)
 
-    socket.emit('message', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
-        }
-      }
-    }
-  })
+    socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
+ })
 
   socket.on('sendMessage', async (data) => {
      //DB에 메시지 저장
@@ -59,9 +49,13 @@ io.on('connection', (socket) => {
     io.to(data.roomId).emit('message',data )
   })
 
+  socket.on('warning', () => {
+    socket.emit('warning', { text: '방을 찾을 수 없습니다. 방 입장 후 이용해주세요.'})
+  })
+
   socket.on('leave', (data) => {
     socket.leave(data.roomId)
-    io.to(data.roomId).emit('message', { userName:'admin', text:`${data.userName}님이 방에서 나갔습니다.`})
+    io.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 방에서 나갔습니다.`})
   })
 
   socket.on('disconnect', () => {
