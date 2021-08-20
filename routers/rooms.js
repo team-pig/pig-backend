@@ -223,7 +223,7 @@ router.patch('/room/:roomId/myprofile', auth, async (req, res) => {
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { desc, tags } = req.body
-    await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
+    // await MemberStatus.updateOne({ userId: userId, roomId }, { $set: { desc, tags } })
     await Room.updateMany({roomId:roomId, 'memberStatus.userId':userId}, {$set: {'memberStatus.$.desc': desc, 'memberStatus.$.tags': tags}})
     res.send({ message: '프로필 수정 성공' })
   } catch (e) {
@@ -349,7 +349,7 @@ router.post('/room', auth, async (req, res) => {
     const newBucket = await Buckets.create({ roomId: roomId, cardOrder: [], bucketName: null })
     const bucketId = newBucket.bucketId
 
-    await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
+    // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
     await Room.findOneAndUpdate(
       { roomId: room.roomId },
       { $push: { memberStatus: { roomId: roomId, userId: userId, nickname: nickname } } }
@@ -399,7 +399,7 @@ router.post('/room/member', auth, async (req, res) => {
         { inviteCode },
         { $push: { members: userId, memberStatus: { userId: userId, nickname, roomId } } }
       )
-      await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
+      // await MemberStatus.create({ roomId: roomId, userId: userId, nickname })
       room = await Room.findOne({ roomId: roomId})
       return res.json({ room })
     }
@@ -448,7 +448,7 @@ router.delete('/room', auth, async (req, res) => {
       await deleteAll.deleteBuckets(roomId)
       await Room.findOneAndRemove({ roomId: roomId })
       await BucketOrder.deleteOne({ roomId: roomId })
-      await MemberStatus.findOneAndRemove({ roomId: roomId })
+      // await MemberStatus.findOneAndRemove({ roomId: roomId })
       return res.json({
         ok: true,
         message: '방 삭제 성공',
@@ -460,7 +460,6 @@ router.delete('/room', auth, async (req, res) => {
         message: '방장이 아닙니다.',
       })
     }
-    
     res.status(400).json({ errorMessage: '방Id를 찾을 수 없습니다.' })
   } catch (err) {
     console.error(err)
@@ -484,7 +483,7 @@ router.delete('/room/member/:roomId', auth, async (req, res) => {
       })
     }
     await Room.findOneAndUpdate({ roomId: roomId }, { $pull: { members: userId, bookmarkedMembers: {userId},memberStatus: { userId} } })
-    await MemberStatus.findOneAndRemove({ roomId: roomId })
+    // await MemberStatus.findOneAndRemove({ roomId: roomId })
     res.json({
       ok: true,
       message: '방 나가기 성공',
