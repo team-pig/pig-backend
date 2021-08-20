@@ -94,7 +94,15 @@ describe('방 만들기 성공', () => {
     expect(res.statusCode).toBe(200)
     expect(res.body.room.roomName).toBe(clearData.room.roomName)
   })
-  
+})
+
+describe('방 삭제 성공', () => {
+  it('delete room success', async () => {
+    const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
+    roomId: createdRoomId })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe('방 삭제 성공')
+  })
 })
 
 describe('회원 탈퇴하기', () => {
