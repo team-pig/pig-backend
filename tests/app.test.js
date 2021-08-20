@@ -98,7 +98,7 @@ describe('방 만들기 성공', () => {
 
 describe('방 전체 목록 불러오기 pagination 성공', () => {
   it('GET roomList success', async () => {
-    const res = await request.get('/rooms/?page=1&size=8').auth(access, { type: 'bearer' })
+    const res = await request.get('/rooms/?page=1&size=12').auth(access, { type: 'bearer' })
     expect(res.statusCode).toBe(200)
     expect(res.body.totalPages).toBeGreaterThan(0)
   })
@@ -138,6 +138,15 @@ describe('방 메인페이지 불러오기 성공', () => {
     expect(res.statusCode).toBe(200)
     expect(res.body.result.roomId).toBe(createdRoomId)
     expect(res.body.result.createdAt).toBeTruthy()
+  })
+})
+
+describe('방 유저 현황 불러오기 성공', () => { 
+  it('GET memberStatus, projectStatus success', async () => {
+    const res = await request.get(`/room/${createdRoomId}/main/status`).auth(access, {type: 'bearer'})
+    expect(res.statusCode).toBe(200)
+    expect(res.body.projectStatus).toBeTruthy()
+    expect(res.body.memberStatus).toBeTruthy()
   })
 })
 
