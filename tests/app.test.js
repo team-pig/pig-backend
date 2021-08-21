@@ -151,6 +151,18 @@ describe('방 불러오기(inviteCode) 실패', () => {
   })
 })
 
+describe('문서(document) 작성 성공', () => {
+  it('Post document success', async() => {
+    const res = await request.post(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      title: clearData.document.title,
+      content: clearData.document.content,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('document 작성 성공')
+  })
+})
+
 describe('방 추가하기(inviteCode) 성공', () => {
   it('Post entering the room success', async () => {
     const res = await request.post('/room/member').auth(access2, { type: 'bearer' }).send({
@@ -191,7 +203,7 @@ describe('방 나가기 실패', () => {
   it('Delete leave the room failed: 방에 혼자 남았을 때', async () => {
     const res = await request.delete(`/room/member/${createdRoomId2}`).auth(access, { type: 'bearer' })
     expect(res.statusCode).toBe(400)
-    expect(res.body.message).toBe('방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.')
+    expect(res.body.errorMessage).toBe('방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.')
   })
 
   it('Delete leave the room failed: 유효하지 않은 토큰일 때', async () => {
