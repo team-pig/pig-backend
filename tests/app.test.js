@@ -8,6 +8,7 @@ const undefinedData = require('./undefinedData')
 let refresh = ''
 let access = ''
 let createdRoomId = ''
+let createdRoomId2 = ''
 
 describe('test', () => {
   it('test', async () => {
@@ -93,6 +94,18 @@ describe('방 만들기 성공', () => {
     createdRoomId = res.body.room.roomId
     expect(res.statusCode).toBe(200)
     expect(res.body.room.roomName).toBe(clearData.room.roomName)
+  })
+
+  it('create room2 success', async () => {
+    const res = await request.post('/room').auth(access, {type: 'bearer'}).send({
+    roomName: clearData.room2.roomName,
+    roomImage: clearData.room2.roomImage,
+    subtitle: clearData.room2.subtitle,
+    tag: clearData.room2.tag,
+    desc: clearData.room2.desc })
+    createdRoomId2 = res.body.room.roomId
+    expect(res.statusCode).toBe(200)
+    expect(res.body.room.roomName).toBe(clearData.room2.roomName)
   })
 })
 
@@ -215,6 +228,15 @@ describe('방 삭제 성공', () => {
   it('delete room success', async () => {
     const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
     roomId: createdRoomId })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe('방 삭제 성공')
+  })
+})
+
+describe('방 삭제 성공', () => {
+  it('delete room success', async () => {
+    const res = await request.delete('/room').auth(access, {type: 'bearer'}).send({
+    roomId: createdRoomId2 })
     expect(res.statusCode).toBe(200)
     expect(res.body.message).toBe('방 삭제 성공')
   })
