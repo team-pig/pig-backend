@@ -105,9 +105,8 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
   try {
     const { documentId } = req.body;
     const userId = res.locals.user._id;
-    const targetUser = await Users.findById(userId);
+    const targetUser = await Documents.findOne({documentId})
     const nickname = targetUser.nickname;
-
     const document = await Documents.findOne({ documentId: documentId });
     if (document.canEdit === false) {
       res.status(200).send({
