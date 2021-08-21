@@ -103,6 +103,9 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
 //DOCUMENT 수정 가능여부 확인
 router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
+    //현재 상황에서 내가 문서 수정중인데 다른창에서 수정 버튼 클릭하면 canEdit이 false라서 수정 불가한가?
+    //이걸 고쳐주는 메세지를 보여줘야할까?
+
     const { documentId } = req.body;
     const userId = res.locals.user._id;
     const targetUser = await Users.findById(userId);
@@ -119,7 +122,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
       return;
     }
 
-    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false });
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname:nickname });
     res.status(200).send({
       'ok': true,
       message: '수정가능',
