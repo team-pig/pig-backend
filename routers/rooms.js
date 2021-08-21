@@ -194,7 +194,7 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     }
     res.send({ projectStatus, memberStatus })
   } catch (err) {
-    res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
+    res.status(400).send({ errorMessage: 'roomId를 찾을 수 없습니다' })
   }
 })
 
