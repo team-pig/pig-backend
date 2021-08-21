@@ -130,7 +130,18 @@ router.get('/rooms/search', auth, async (req, res) => {
     // const { roomName, subtitle, tag } = req.body
     // const room = await Room.find({ $and: [ {$or: [{ roomName }, { subtitle }, { tag }]} ] },{_id:false})
     let room = {}
-    findroom = await Room.find({ roomName:{$regex:roomName}, members: userId , }, { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false })
+    findroom = await Room.find(
+      { roomName: { $regex: roomName, $options: 'i' }, members: userId },
+      {
+        _id: false,
+        'memberStatus.tags': false,
+        'memberStatus._id': false,
+        'memberStatus.roomId': false,
+        'bookmarkedMembers._id': false,
+        'bookmarkedMembers.roomId': false,
+        'bookmarkedMembers.bookmarkedAt': false,
+      }
+    )
     // room.totalPages = totalPages
     // room.room = findroom.slice((page - 1) * size, page * size)
     room.room = findroom
