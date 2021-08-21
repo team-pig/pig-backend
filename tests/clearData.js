@@ -34,10 +34,14 @@ const CLEAR_DATA = {
     desc: " 설명은 생략하오 ",
     endDate: Date.now()+ 10000},
   
-
   myprofile:{
   desc: "우리 조에서 귀여움을 맡아요 냄새도 잘 맡아요", 
   tags: ['귀염둥이', '막내', 'INTP']
+  },
+
+  document:{
+  title: '문서 제목',
+  content: '문서 내용 디스이스내용',
   }
 };
 
