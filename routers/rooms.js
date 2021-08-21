@@ -338,7 +338,7 @@ router.post('/room', auth, async (req, res) => {
       master: userId,
       members: userId,
       subtitle,
-      tag: tag.split(', '),
+      tag: tag,
       inviteCode: v4(),
     })
 
