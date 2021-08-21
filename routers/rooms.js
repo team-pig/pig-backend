@@ -76,12 +76,12 @@ router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
     const { inviteCode } = req.params
     const room = await Room.findOne({ inviteCode: inviteCode })
     if (!room) {
-      return res.status(400).json({ message: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
+      return res.status(400).json({ errorMessage: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
     }
     console.log(room)
     res.send(room)
   } catch (err) {
-    res.status(500).json({ message: '서버에러: 방 조회 실패' })
+    res.status(500).json({ errorMessage: '서버에러: 방 조회 실패' })
   }
 })
 
