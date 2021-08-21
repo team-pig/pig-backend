@@ -283,6 +283,14 @@ describe('방 유저 현황 불러오기 성공', () => {
   })
 })
 
+describe('방 유저 현황 불러오기 실패', () => { 
+  it('GET memberStatus, projectStatus failed: 존재하지 않는 roomId', async () => {
+    const res = await request.get(`/room/asdlkjue098123e213e/main/status`).auth(access, {type: 'bearer'})
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('roomId를 찾을 수 없습니다')
+  })
+})
+
 describe('방의 멤버 정보 불러오기 성공', () => { 
   it('Get information about users in a room', async () => {
     const res = await request.get(`/room/${createdRoomId}/members`).auth(access, {type: 'bearer'})
