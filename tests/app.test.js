@@ -179,12 +179,35 @@ describe('방 즐겨찾기 성공', () => {
   })
 })
 
-describe('방 즐겨찾기 취소', () => {
+describe('방 즐겨찾기 취소 성공', () => {
   it('Delete bookmark room success', async () => {
     const res = await request.delete(`/room/${createdRoomId}/bookmark`).auth(access, { type: 'bearer' })
     expect(res.statusCode).toBe(200)
     expect(res.body.message).toBe("즐겨찾기가 취소되었습니다.")
     expect(res.body.markedList).toBeTruthy()
+  })
+})
+
+describe('방 수정하기 성공', () => {
+  it('Patch room success', async () => {
+    const res = await request.patch(`/room`).auth(access, { type: 'bearer' }).send({
+      roomId: createdRoomId,
+      roomName: clearData.room2.roomName,
+      roomImage: clearData.room2.roomImage,
+      subtitle: clearData.room2.subtitle,
+      tag: clearData.room2.tag,
+      desc: clearData.room2.desc,
+      endDate: clearData.room2.endDate
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe("방 수정이 성공적으로 이뤄졌습니다.")
+    expect(res.body.room.roomId).toBe(createdRoomId)
+    expect(res.body.room.roomName).toBe(clearData.room2.roomName)
+    expect(res.body.room.roomImage).toBe(clearData.room2.roomImage)
+    expect(res.body.room.subtitle).toBe(clearData.room2.subtitle)
+    expect(res.body.room.tag).toStrictEqual(clearData.room2.tag)
+    expect(res.body.room.desc).toBe(clearData.room2.desc)
+    expect(res.body.room.endDate).toBe(String(clearData.room2.endDate))
   })
 })
 
