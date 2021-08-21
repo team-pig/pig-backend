@@ -12,6 +12,8 @@ let access2 = ''
 let createdRoomId = ''
 let createdRoomId2 = ''
 let inviteCode = ''
+let createdDocumentId = ''
+
 describe('test', () => {
   it('test', async () => {
     const res = await request.post('/tttt').send( 'hi' );
@@ -157,9 +159,21 @@ describe('문서(document) 작성 성공', () => {
       title: clearData.document.title,
       content: clearData.document.content,
     })
+    createdDocumentId = res.body.documentId;
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(res.body.message).toBe('document 작성 성공')
+  })
+})
+
+describe('DOCUMENT 수정 가능여부 확인 성공', () => {
+  it('patch document success', async() => {
+    const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('수정가능')
   })
 })
 
