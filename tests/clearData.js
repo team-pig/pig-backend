@@ -3,6 +3,12 @@ const CLEAR_DATA = {
   password: "test12",
   confirmPassword: "test12",
   nickname: "보라돌이",
+
+  email2: "hi@gmail.com",
+  password2: "test12",
+  confirmPassword2: "test12",
+  nickname2: "HiMan",
+
   Authorization:
       "",
   SignAuthorization:
