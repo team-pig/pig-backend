@@ -11,7 +11,7 @@ const Auth = require('../schemas/auth');
 const transport = require('../services/mail.transport');
 const router = express.Router();
 
-let refreshTokens = []
+// let refreshTokens = []
 
 
 //인증코드 발급
@@ -181,7 +181,7 @@ router.post('/login', async (req, res, next) => {
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
         let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
-        refreshTokens.push(refreshToken);
+        // refreshTokens.push(refreshToken);
 
         res.status(200).json({
             ok: true, 
@@ -217,8 +217,8 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 
 router.post('/token', (req, res) => {
     const refreshToken = req.body.refreshToken;
-    if (!refreshToken || !refreshTokens.includes(refreshToken)) {
-        return res.status(403).json({ errorMessage: 'User not authenticated'})
+    if (refreshToken == null ) {
+        return res.status(401).json({ errorMessage: '리프레쉬 토큰이 없습니다.'})
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
@@ -229,7 +229,7 @@ router.post('/token', (req, res) => {
                 message: 'accessToken 재발급 성공', 
                 accessToken: accessToken });
         } else {
-        return res.status(403).json({ errorMessage: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
+        return res.status(403).json({ errorMessage: '리프레시 토큰 유효하지 않습니다.'})
         }
     })
 });
