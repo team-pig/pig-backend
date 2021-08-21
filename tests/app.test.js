@@ -13,13 +13,7 @@ let createdRoomId = ''
 let createdRoomId2 = ''
 let inviteCode = ''
 let createdDocumentId = ''
-
-describe('test', () => {
-  it('test', async () => {
-    const res = await request.post('/tttt').send( 'hi' );
-    expect(res.statusCode).toEqual(200);
-  });
-});
+let createdDocumentNickname = ''
 
 describe('유저 등록 성공', () => {
   it('register success', async () => {
@@ -166,6 +160,14 @@ describe('문서(document) 작성 성공', () => {
   })
 })
 
+describe('Document 상세 불러오기 성공', () => {
+  it('Post document success', async() => {
+    const res = await request.get(`/room/${createdRoomId}/document/${createdDocumentId}`).auth(access, { type: 'bearer' })
+    createdDocumentNickname = res.body.result.nickname
+    expect(res.statusCode).toBe(200)
+  })
+})
+
 describe('DOCUMENT 수정 가능여부 확인 성공', () => {
   it('patch document success', async() => {
     const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
@@ -174,6 +176,7 @@ describe('DOCUMENT 수정 가능여부 확인 성공', () => {
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(res.body.message).toBe('수정가능')
+    expect(res.body.canEdit).toBe(true)
   })
 })
 
