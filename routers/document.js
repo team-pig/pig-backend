@@ -38,7 +38,7 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
     console.error('document 작성 에러', err)
     res.status(400).send({
       ok: false,
-      message: 'document 작성 실패',
+      errorMessage: 'document 작성 실패',
     })
   }
 })
@@ -67,7 +67,7 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
     console.log('display document ERROR', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 보여주기 실패',
+      errorMessage: '서버에러: 도큐먼트 보여주기 실패',
     })
   }
 })
@@ -82,7 +82,7 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
     if (!result) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다.',
+        errorMessage: '존재하지 않는 도큐먼트 입니다.',
       })
       return
     }
@@ -96,7 +96,7 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
     console.log('display document ERROR', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 상세 도큐먼트 보여주기 실패',
+      errorMessage: '서버에러: 상세 도큐먼트 보여주기 실패',
     })
   }
 })
@@ -130,7 +130,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
     console.log('도큐먼트 수정가능여부 확인 에러', error);
     res.status(400).send({
       'ok': false,
-      message: '서버에러: 수정가능여부 api 실패'
+      errorMessage: '서버에러: 수정가능여부 api 실패'
     })
   }
 })
@@ -149,7 +149,7 @@ router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req,
     console.log('도큐먼트 수정 취소 서버에러', error);
     res.status(400).send({
       'ok': false,
-      message: 'api실패'
+      errorMessage: 'api실패'
     })
   }
 })
@@ -177,7 +177,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     if (!editDocument) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다.',
+        errorMessage: '존재하지 않는 도큐먼트 입니다.',
       })
       return;
     }
@@ -189,7 +189,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     console.log('document수정 서버에러', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 수정 실패',
+      errorMessage: '서버에러: 도큐먼트 수정 실패',
     })
   }
 })
@@ -203,7 +203,7 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
     if (!deleteDocument) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다',
+        errorMessage: '존재하지 않는 도큐먼트 입니다',
       })
       return;
     }
@@ -215,7 +215,7 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
   } catch (error) {
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 삭제 실패',
+      errorMessage: '서버에러: 도큐먼트 삭제 실패',
     })
   }
 })
@@ -235,7 +235,7 @@ router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (re
     console.log('문서 백업 에러', error);
     res.status(400).send({
       'ok': false,
-      message: '서버에러: 문서백업 실패'
+      errorMessage: '서버에러: 문서백업 실패'
     })
   }
 })

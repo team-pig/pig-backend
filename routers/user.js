@@ -239,11 +239,11 @@ router.delete('/userInfo', async (req, res) => {
     // await findUser.delete({})
     const remove = await User.findOneAndRemove({ email: email })
     if(!remove) {
-        return res.status(400).json({ message: '이메일이 잘못되었습니다.'})
+        return res.status(400).json({ errorMessage: '이메일이 잘못되었습니다.'})
     }
     res.json({ message: '회원탈퇴 성공' })
   } catch (err) {
-    res.status(500).json({ message: '회원탈퇴 실패' })
+    res.status(500).json({ errorMessage: '회원탈퇴 실패' })
   }
 })
 
