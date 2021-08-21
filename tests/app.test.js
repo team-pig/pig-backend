@@ -54,8 +54,8 @@ describe('유저 등록 실패', () => {
 describe('로그인 성공', () => {
   it('login success', async () => {
     const response = await request.post('/login').send({
-      email: clearData.registerEmail,
-      password: clearData.registerPassword,
+      email: clearData.email,
+      password: clearData.password,
     })
     refresh = response.body.refreshToken;
     access = response.body.accessToken;
