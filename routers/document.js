@@ -223,9 +223,9 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
 //문서 백업기능
 router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
   try {
-    const{roomId} = req.params;
+    const { roomId } = req.params;
     const { documentId } = req.body;
-    Documents.create({ roomId:roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
+    Documents.create({ roomId: roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
 
     res.status(200).send({
       'ok': true,
