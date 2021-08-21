@@ -217,7 +217,7 @@ router.get('/room/:roomId/members', auth, async (req, res) => {
     res.send({ allMembers })
   } catch (err) {
     console.error(err)
-    res.status(400).json({ message: '방 조회 혹은 멤버 불러오기 실패' })
+    res.status(400).json({ errorMessage: '방 조회 혹은 멤버 불러오기 실패' })
   }
 })
 
