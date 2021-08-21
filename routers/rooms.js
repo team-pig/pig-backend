@@ -24,6 +24,9 @@ router.get('/rooms', auth, async (req, res) => {
     const userId = res.locals.user._id
     const page = parseInt(req.query.page)
     const size = parseInt(req.query.size)
+    if(!page | !size) {
+      return res.status(400).send({errorMessage: '페이지 또는 사이즈를 입력하지 않았어요.'})
+    }
     // const startIndex = (page - 1) * size
     // const endIndex = page * size
     const room = {}
