@@ -257,6 +257,14 @@ describe('방 검색하기 성공', () => {
   })
 })
 
+describe('방 검색하기 실패', () => {
+  it('GET room search failed: ', async () => {
+    const res = await request.get(`/rooms/search?roomName=hangle 1`).auth('asdasd', {type: 'bearer'})
+    expect(res.statusCode).toBe(401)
+    expect(res.body.errorMessage).toBeTruthy()
+  })
+})
+
 describe('방 메인페이지 불러오기 성공', () => { 
   it('GET mainPage success', async () => {
     const res = await request.get(`/room/${createdRoomId}/main`).auth(access, {type: 'bearer'})
