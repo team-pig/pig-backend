@@ -135,6 +135,22 @@ describe('방 만들기 성공', () => {
   })
 })
 
+describe('방 불러오기(inviteCode) 성공', () => {
+  it('Get room information success', async () => {
+    const res = await request.get(`/rooms/room/${inviteCode}`).auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.inviteCode).toBe(inviteCode)
+  })
+})
+
+describe('방 불러오기(inviteCode) 실패', () => {
+  it('Get room information failed: 잘못된 초대코드', async () => {
+    const res = await request.get(`/rooms/room/1j23oijsdlkjfds`).auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('방을 찾을 수 없어요! 초대코드를 확인하세요.')
+  })
+})
+
 describe('방 추가하기(inviteCode) 성공', () => {
   it('Post entering the room success', async () => {
     const res = await request.post('/room/member').auth(access2, { type: 'bearer' }).send({
