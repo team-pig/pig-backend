@@ -7,6 +7,8 @@ const undefinedData = require('./undefinedData')
 
 let refresh = ''
 let access = ''
+let refresh2 = ''
+let access2 = ''
 let createdRoomId = ''
 let createdRoomId2 = ''
 
@@ -24,6 +26,17 @@ describe('유저 등록 성공', () => {
       nickname: clearData.nickname,
       password: clearData.password,
       confirmPassword: clearData.confirmPassword
+    })
+    expect(response.body.message).toBe('회원가입 성공')
+    expect(response.statusCode).toBe(201) 
+  })
+
+  it('register2 success', async () => {
+    const response = await request.post('/register').send({
+      email: clearData.email2,
+      nickname: clearData.nickname2,
+      password: clearData.password2,
+      confirmPassword: clearData.confirmPassword2
     })
     expect(response.body.message).toBe('회원가입 성공')
     expect(response.statusCode).toBe(201) 
@@ -60,6 +73,18 @@ describe('로그인 성공', () => {
     })
     refresh = response.body.refreshToken;
     access = response.body.accessToken;
+    expect(response.statusCode).toBe(200);
+    expect(response.body.refreshToken).toBeTruthy();
+    expect(response.body.refreshToken).toBeTruthy();
+  })
+
+  it('login2 success', async () => {
+    const response = await request.post('/login').send({
+      email: clearData.email2,
+      password: clearData.password2,
+    })
+    refresh2 = response.body.refreshToken;
+    access2 = response.body.accessToken;
     expect(response.statusCode).toBe(200);
     expect(response.body.refreshToken).toBeTruthy();
     expect(response.body.refreshToken).toBeTruthy();
@@ -246,6 +271,14 @@ describe('회원 탈퇴하기', () => {
   it('delete userInfo success', async () => {
     const res = await request.delete('/userInfo').send({
       email: clearData.email
+    });
+    expect(res.body.message).toBe('회원탈퇴 성공');
+    expect(res.statusCode).toBe(200);
+  })
+
+  it('delete userInfo2 success', async () => {
+    const res = await request.delete('/userInfo').send({
+      email: clearData.email2
     });
     expect(res.body.message).toBe('회원탈퇴 성공');
     expect(res.statusCode).toBe(200);
