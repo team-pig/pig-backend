@@ -378,13 +378,13 @@ router.post('/room/member', auth, async (req, res) => {
 
   if (!findRoom) {
     console.log('찾으려는 방이 없습니다.')
-    return res.status(400).send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
+    return res.status(400).send({ errorMessage: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
   }
   try {
     const memberInRoom = await findRoom.members.includes(userId)
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
-      res.json({ errorMessage: '이미 추가 된 방입니다.' })
+      res.status(400).json({ errorMessage: '이미 추가 된 방입니다.' })
       return
     }
     if (!findInviteCode) {
