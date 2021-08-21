@@ -430,7 +430,7 @@ router.patch('/room', auth, async (req, res) => {
         { $set: { roomName, roomImage, subtitle, tag: tag, desc, endDate } }
       )
       const room = await Room.findOne({ roomId: roomId })
-      return res.json({ room })
+      return res.json({ room, message:"방 수정이 성공적으로 이뤄졌습니다." })
     }
     // res.send('test')
   } catch (err) {
