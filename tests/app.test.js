@@ -163,6 +163,14 @@ describe('방 추가하기(inviteCode) 실패', () => {
   })
 })
 
+describe('방 나가기 성공', () => {
+  it('Delete leave the room success', async () => {
+    const res = await request.delete(`/room/member/${createdRoomId}`).auth(access2, { type: 'bearer' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe('방 나가기 성공')
+  })
+})
+
 describe('방 전체 목록 불러오기 pagination 성공', () => {
   it('GET roomList success', async () => {
     const res = await request.get('/rooms/?page=1&size=12').auth(access, { type: 'bearer' })
