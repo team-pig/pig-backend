@@ -15,7 +15,7 @@ let refreshTokens = []
 
 
 //인증코드 발급
-router.post('/resetPassword/sendEmail', async (req, res) => {
+router.post('/resetPassword/sendEmail', async (req, res, next) => {
   try {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
@@ -35,16 +35,17 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
 
       transport
         .sendMail({
-          from: `협업돼지 <awrde26@gmail.com>`,
+          from: `협업돼지 <${process.env.MAIL_ID}>`,
           to: email,
-        //   to: 'awrde26@gmail.com',
           subject: '[협업돼지] 인증번호가 도착했습니다.',
           text: '123456',
           html: `
           <div style="text-align: center;">
-            <h3 style="color: #FA5882">ABC</h3>
+            <h3 style="color: #FA5882">협업돼지</h3>
             <br />
-            <p>비밀번호 초기화를 위해 URL을 클릭하세요! http://localhost:3000/password/${token}</p>
+            <div>비밀번호 초기화를 위해
+            <A href="http://13.125.222.70/resetPassword/${token}"> 여기를 클릭하세요! </A>
+            </div>
           </div>
         `,
         })
