@@ -49,7 +49,7 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         console.log('버킷 만들기 캐치 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 버킷 만들기 실패'
+            errorMessage: '서버에러: 버킷 만들기 실패'
         })
     }
 })
@@ -80,7 +80,7 @@ router.patch('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) 
         console.log('버킷 위치/내용 수정 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 버킷 위치/내용 수정 실패'
+            errorMessage: '서버에러: 버킷 위치/내용 수정 실패'
         })
     }
 });
@@ -96,7 +96,7 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
         if (bucket.bucketOrder.length === 1) {
             res.status(400).send({
                 'ok': false,
-                message: '마지막 남은 버킷은 삭제 불가합니다'
+                errorMessage: '마지막 남은 버킷은 삭제 불가합니다'
             })
             return;
         }
@@ -115,7 +115,7 @@ router.delete('/room/:roomId/bucket', authMiddleware, isMember, async (req, res)
         console.log('bucket deleting error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 버킷 삭제 실패'
+            errorMessage: '서버에러: 버킷 삭제 실패'
         })
     }
 })
@@ -142,7 +142,7 @@ router.post('/room/:roomId/card', authMiddleware, isMember, async (req, res) => 
         console.log('카드생성 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드생성 실패'
+            errorMessage: '서버에러: 카드생성 실패'
         })
     }
 })
@@ -171,7 +171,7 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
         console.log('카드위치수정 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드 내용 수정 실패'
+            errorMessage: '서버에러: 카드 내용 수정 실패'
         })
     }
 });
@@ -202,7 +202,7 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
         console.log('카드위치수정 에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드위치 수정 실패'
+            errorMessage: '서버에러: 카드위치 수정 실패'
         })
     }
 });
@@ -228,7 +228,7 @@ router.delete('/room/:roomId/card', authMiddleware, isMember, async (req, res) =
         console.log('todo deleting error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드 삭제 실패'
+            errorMessage: '서버에러: 카드 삭제 실패'
         })
     }
 })
@@ -254,7 +254,7 @@ router.get('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =>
         console.log('전체보여주기 error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 전체 보여주기 실패'
+            errorMessage: '서버에러: 전체 보여주기 실패'
         })
     }
 });
@@ -277,7 +277,7 @@ router.get('/room/:roomId', authMiddleware, isMember, async (req, res) => {
         console.log('모든 카드보기 error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 모든 카드보기 실패'
+            errorMessage: '서버에러: 모든 카드보기 실패'
         })
     }
 })
@@ -308,7 +308,7 @@ router.get('/room/:roomId/card/:cardId', authMiddleware, isMember, async (req, r
         console.log('카드상세보기 error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 카드 상세보기 실패'
+            errorMessage: '서버에러: 카드 상세보기 실패'
         })
     }
 })
@@ -347,7 +347,7 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
         console.log('투두 보여주기 error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 투두 보여주기 실패'
+            errorMessage: '서버에러: 투두 보여주기 실패'
         })
     }
 })
@@ -369,7 +369,7 @@ router.post('/room/:roomId/todo', authMiddleware, isMember, async (req, res) => 
         console.log('todo creating error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 투두 생성 실패'
+            errorMessage: '서버에러: 투두 생성 실패'
         })
     }
 })
@@ -466,7 +466,7 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
         console.log('todo creating error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 투두 수정 실패'
+            errorMessage: '서버에러: 투두 수정 실패'
         })
     }
 })
@@ -485,7 +485,7 @@ router.delete('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =
         console.log('todo deleting error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 투두 삭제 실패'
+            errorMessage: '서버에러: 투두 삭제 실패'
         })
 
     }
@@ -514,7 +514,7 @@ router.get('/room/:roomId/main/todos', authMiddleware, isMember, async (req, res
         console.log('메인페이지 유저 할일 보여주기 error', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 유저 할일 보여주기 실패'
+            errorMessage: '서버에러: 유저 할일 보여주기 실패'
         })
     }
 })
@@ -548,7 +548,7 @@ router.put('/nickname', authMiddleware, async (req, res,) => {
         console.log('닉네임 변경에러', error);
         res.status(400).send({
             'ok': false,
-            message: '서버에러: 닉네임 변경 실패'
+            errorMessage: '서버에러: 닉네임 변경 실패'
         })
     }
 

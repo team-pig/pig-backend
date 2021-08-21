@@ -11,11 +11,11 @@ const Auth = require('../schemas/auth');
 const transport = require('../services/mail.transport');
 const router = express.Router();
 
-let refreshTokens = []
+// let refreshTokens = []
 
 
 //인증코드 발급
-router.post('/resetPassword/sendEmail', async (req, res) => {
+router.post('/resetPassword/sendEmail', async (req, res, next) => {
   try {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
@@ -35,21 +35,23 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
 
       transport
         .sendMail({
-          from: `협업돼지 <awrde26@gmail.com>`,
+          from: `협업돼지 <${process.env.MAIL_ID}>`,
           to: email,
-        //   to: 'awrde26@gmail.com',
           subject: '[협업돼지] 인증번호가 도착했습니다.',
           text: '123456',
           html: `
           <div style="text-align: center;">
-            <h3 style="color: #FA5882">ABC</h3>
+            <h3 style="color: #FA5882">협업돼지</h3>
             <br />
-            <p>비밀번호 초기화를 위해 URL을 클릭하세요! http://localhost:3000/password/${token}</p>
+            <div>비밀번호 초기화를 위해
+            <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
+            </div>
           </div>
         `,
         })
         .then((send) => res.json(send))
         .catch((err) => next(err))
+            //   <A href="http://13.125.222.70/resetPassword/${token}"> 여기를 클릭하세요! </A>
     }
   } catch (error) {
     console.log ({ errorMessage: '인증코드 발급에 실패했습니다.' })
@@ -179,7 +181,7 @@ router.post('/login', async (req, res, next) => {
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
         let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
-        refreshTokens.push(refreshToken);
+        // refreshTokens.push(refreshToken);
 
         res.status(200).json({
             ok: true, 
@@ -215,8 +217,8 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 
 router.post('/token', (req, res) => {
     const refreshToken = req.body.refreshToken;
-    if (!refreshToken || !refreshTokens.includes(refreshToken)) {
-        return res.status(403).json({ errorMessage: 'User not authenticated'})
+    if (refreshToken == null ) {
+        return res.status(401).json({ errorMessage: '리프레쉬 토큰이 없습니다.'})
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
@@ -227,7 +229,7 @@ router.post('/token', (req, res) => {
                 message: 'accessToken 재발급 성공', 
                 accessToken: accessToken });
         } else {
-        return res.status(403).json({ errorMessage: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
+        return res.status(403).json({ errorMessage: '리프레시 토큰 유효하지 않습니다.'})
         }
     })
 });
@@ -238,11 +240,11 @@ router.delete('/userInfo', async (req, res) => {
     // await findUser.delete({})
     const remove = await User.findOneAndRemove({ email: email })
     if(!remove) {
-        return res.status(400).json({ message: '이메일이 잘못되었습니다.'})
+        return res.status(400).json({ errorMessage: '이메일이 잘못되었습니다.'})
     }
     res.json({ message: '회원탈퇴 성공' })
   } catch (err) {
-    res.status(500).json({ message: '회원탈퇴 실패' })
+    res.status(500).json({ errorMessage: '회원탈퇴 실패' })
   }
 })
 
