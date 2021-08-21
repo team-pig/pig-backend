@@ -5,9 +5,9 @@ const request = supertest(app);
 const clearData = require('./clearData')
 const undefinedData = require('./undefinedData')
 
-let refresh = ""
-let access = ""
-let createdRoomId = ""
+let refresh = ''
+let access = ''
+let createdRoomId = ''
 
 describe('test', () => {
   it('test', async () => {
@@ -166,6 +166,16 @@ describe('방 프로필 수정하기 성공', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(res.body.message).toBeTruthy()
+  })
+})
+
+describe('방 즐겨찾기 성공', () => {
+  it('post bookmark room success', async () => {
+    const res = await request.post(`/room/${createdRoomId}/bookmark`).auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBeTruthy()
+    expect(res.body.markedList[0].roomId).toBeTruthy()
+    expect(res.body.bookmarkedRoom.roomId).toBe(createdRoomId)
   })
 })
 
