@@ -2,10 +2,10 @@ const mongoose = require('mongoose')
 const bookmarkSchema = new mongoose.Schema(
   {
     roomId : String,
-    member : String,
+    userId : String,
     bookmarkedAt:{
       type: Date,
-      default: ''
+      default: Date.now
     },
   },
   {

@@ -180,15 +180,16 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { cardOrder } = req.body;
+        const { cardOrder, cardId, destinationBucketId } = req.body;
         const bucketIdArray = Object.keys(cardOrder);
         const cardIdArray = Object.values(cardOrder);
         // console.log('bucketIdArrayyy', bucketIdArray);
         // console.log('cardIdArrayyyy', cardIdArray);
-
+        // 카드ID로 뭘 찾아서 destination버켓아이디 수정하기
         for (i = 0; i < bucketIdArray.length; i++) {
             await Buckets.findOneAndUpdate({ bucketId: bucketIdArray[i] }, { cardOrder: cardIdArray[i] });
         }
+        await Cards.findOneAndUpdate({cardId: cardId},{ $set: {bucketId: destinationBucketId}})
 
         res.status(200).send({
             'ok': true,
