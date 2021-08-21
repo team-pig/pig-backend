@@ -25,7 +25,7 @@ describe('유저 등록 성공', () => {
       confirmPassword: clearData.confirmPassword
     })
     expect(response.body.message).toBe('회원가입 성공')
-    expect(response.statusCode).toBe(201); 
+    expect(response.statusCode).toBe(201) 
   })
 })
 
@@ -155,6 +155,17 @@ describe('방의 멤버 정보 불러오기 성공', () => {
     const res = await request.get(`/room/${createdRoomId}/members`).auth(access, {type: 'bearer'})
     expect(res.statusCode).toBe(200)
     expect(res.body.allMembers[0]).toBeTruthy()
+  })
+})
+
+describe('방 프로필 수정하기 성공', () => {
+  it('Patch room myprofile success', async () => {
+    const res = await request.patch(`/room/${createdRoomId}/myprofile`).auth(access, { type: 'bearer' }).send({
+      desc: clearData.myprofile.desc,
+      tags: clearData.myprofile.tags,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBeTruthy()
   })
 })
 
