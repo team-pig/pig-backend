@@ -170,12 +170,21 @@ describe('방 프로필 수정하기 성공', () => {
 })
 
 describe('방 즐겨찾기 성공', () => {
-  it('post bookmark room success', async () => {
+  it('Post bookmark room success', async () => {
     const res = await request.post(`/room/${createdRoomId}/bookmark`).auth(access, { type: 'bearer' })
     expect(res.statusCode).toBe(200)
     expect(res.body.message).toBeTruthy()
     expect(res.body.markedList[0].roomId).toBeTruthy()
     expect(res.body.bookmarkedRoom.roomId).toBe(createdRoomId)
+  })
+})
+
+describe('방 즐겨찾기 취소', () => {
+  it('Delete bookmark room success', async () => {
+    const res = await request.delete(`/room/${createdRoomId}/bookmark`).auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe("즐겨찾기가 취소되었습니다.")
+    expect(res.body.markedList).toBeTruthy()
   })
 })
 
