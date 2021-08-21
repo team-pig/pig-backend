@@ -179,6 +179,9 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 //카드 위치 수정
 router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
     try {
+        //added cardId and destinationBucketId
+
+
         const { roomId } = req.params;
         const { cardOrder, cardId, destinationBucketId } = req.body;
         const bucketIdArray = Object.keys(cardOrder);
@@ -189,7 +192,7 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
         for (i = 0; i < bucketIdArray.length; i++) {
             await Buckets.findOneAndUpdate({ bucketId: bucketIdArray[i] }, { cardOrder: cardIdArray[i] });
         }
-        await Cards.findOneAndUpdate({cardId: cardId},{ $set: {bucketId: destinationBucketId}})
+        await Cards.findOneAndUpdate({cardId: cardId},{ $set: {bucketId: destinationBucketId}});
 
         res.status(200).send({
             'ok': true,
