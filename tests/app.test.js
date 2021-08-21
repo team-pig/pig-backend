@@ -299,6 +299,14 @@ describe('방의 멤버 정보 불러오기 성공', () => {
   })
 })
 
+describe('방의 멤버 정보 불러오기 실패', () => { 
+  it('Get information about users in a room failed: 잘못된 roomId', async () => {
+    const res = await request.get(`/room/123lkajsdiou123/members`).auth(access, {type: 'bearer'})
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('방 조회 혹은 멤버 불러오기 실패')
+  })
+})
+
 describe('방 프로필 수정하기 성공', () => {
   it('Patch room myprofile success', async () => {
     const res = await request.patch(`/room/${createdRoomId}/myprofile`).auth(access, { type: 'bearer' }).send({
