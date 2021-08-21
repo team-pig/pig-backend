@@ -17,7 +17,7 @@ const CLEAR_DATA = {
   roomName: "피카츄 가랏 백만볼트",
 	roomImage: "cat.img",
 	subtitle: "부제목",
-  tag: "이상해씨, 꼬부기",
+  tag: ["이상해씨", "꼬부기"],
 	desc: "나는 웅이라고 해! "},
 
   room2:{
