@@ -193,6 +193,26 @@ describe('방 전체 목록 불러오기 pagination 성공', () => {
   })
 })
 
+describe('방 전체 목록 불러오기 pagination 실패', () => {
+  it('GET roomList failed: size와 page 미입력', async () => {
+    const res = await request.get('/rooms').auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('페이지 또는 사이즈를 입력하지 않았어요.')
+  })
+
+  it('GET roomList failed: size 미입력', async () => {
+    const res = await request.get('/rooms/?page=1').auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('페이지 또는 사이즈를 입력하지 않았어요.')
+  })
+
+  it('GET roomList failed: size 미입력', async () => {
+    const res = await request.get('/rooms/?size=1').auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('페이지 또는 사이즈를 입력하지 않았어요.')
+  })
+})
+
 describe('즐겨찾기 된 방 불러오기 성공', () => {
   it('GET markedList success', async () => {
     const res = await request.
