@@ -24,6 +24,9 @@ router.get('/rooms', auth, async (req, res) => {
     const userId = res.locals.user._id
     const page = parseInt(req.query.page)
     const size = parseInt(req.query.size)
+    if(!page | !size) {
+      return res.status(400).send({errorMessage: '페이지 또는 사이즈를 입력하지 않았어요.'})
+    }
     // const startIndex = (page - 1) * size
     // const endIndex = page * size
     const room = {}
@@ -73,12 +76,12 @@ router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
     const { inviteCode } = req.params
     const room = await Room.findOne({ inviteCode: inviteCode })
     if (!room) {
-      return res.status(400).json({ message: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
+      return res.status(400).json({ errorMessage: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
     }
     console.log(room)
     res.send(room)
   } catch (err) {
-    res.status(500).json({ message: '서버에러: 방 조회 실패' })
+    res.status(500).json({ errorMessage: '서버에러: 방 조회 실패' })
   }
 })
 
@@ -191,7 +194,7 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     }
     res.send({ projectStatus, memberStatus })
   } catch (err) {
-    res.status(500).send({ message: '서버에러: 유저 현황 불러오기 실패' })
+    res.status(400).send({ errorMessage: 'roomId를 찾을 수 없습니다' })
   }
 })
 
@@ -339,7 +342,7 @@ router.post('/room', auth, async (req, res) => {
       master: userId,
       members: userId,
       subtitle,
-      tag: tag.split(', '),
+      tag: tag,
       inviteCode: v4(),
     })
 
@@ -378,13 +381,13 @@ router.post('/room/member', auth, async (req, res) => {
 
   if (!findRoom) {
     console.log('찾으려는 방이 없습니다.')
-    return res.status(400).send({ message: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
+    return res.status(400).send({ errorMessage: '초대코드가 잘못됐거나 방을 찾을 수 없어요' })
   }
   try {
     const memberInRoom = await findRoom.members.includes(userId)
     const findInviteCode = await Room.findOne({ inviteCode })
     if (memberInRoom) {
-      res.json({ errorMessage: '이미 추가 된 방입니다.' })
+      res.status(400).json({ errorMessage: '이미 추가 된 방입니다.' })
       return
     }
     if (!findInviteCode) {
@@ -430,7 +433,7 @@ router.patch('/room', auth, async (req, res) => {
         { $set: { roomName, roomImage, subtitle, tag: tag, desc, endDate } }
       )
       const room = await Room.findOne({ roomId: roomId })
-      return res.json({ room })
+      return res.json({ room, message:"방 수정이 성공적으로 이뤄졌습니다." })
     }
     // res.send('test')
   } catch (err) {
