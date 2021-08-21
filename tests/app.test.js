@@ -171,6 +171,20 @@ describe('방 나가기 성공', () => {
   })
 })
 
+describe('방 나가기 실패', () => {
+  it('Delete leave the room failed: 방에 혼자 남았을 때', async () => {
+    const res = await request.delete(`/room/member/${createdRoomId2}`).auth(access, { type: 'bearer' })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.message).toBe('방에 혼자 있어서 나갈 수 없어요. 정말 나가려면 방 삭제버튼을 눌러주세요.')
+  })
+
+  it('Delete leave the room failed: 유효하지 않은 토큰일 때', async () => {
+    const res = await request.delete(`/room/member/${createdRoomId}`).auth('adsfljk4280uj', { type: 'bearer' })
+    expect(res.statusCode).toBe(401)
+    expect(res.body.errorMessage).toBe('로그인 후 사용하세요')
+  })
+})
+
 describe('방 전체 목록 불러오기 pagination 성공', () => {
   it('GET roomList success', async () => {
     const res = await request.get('/rooms/?page=1&size=12').auth(access, { type: 'bearer' })
