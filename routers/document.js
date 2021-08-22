@@ -117,7 +117,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
         'ok': true,
         message: '도큐먼트 수정중',
         canEdit: false,
-        nickname: nickname
+        nickname: document.nickname
       })
       return;
     }
