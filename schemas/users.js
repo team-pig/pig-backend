@@ -17,6 +17,12 @@ const UserSchema = new Schema({
         required: true,
         unique: true,
     },
+    color: {
+        type: String,
+    },
+    avatar: {
+        type: String,
+    }
 });
 
 UserSchema.virtual('userId').get(function () {

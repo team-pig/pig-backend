@@ -1,3 +1,4 @@
+  
 
 const mongoose = require("mongoose");
 
@@ -18,7 +19,6 @@ const todoSchema = new Schema({
         type: String,
     },
     members: [{memberId: String, memberName: String}],
-
     isChecked: {
         type: Boolean,
 

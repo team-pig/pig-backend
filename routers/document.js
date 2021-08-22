@@ -38,7 +38,7 @@ router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res)
     console.error('document 작성 에러', err)
     res.status(400).send({
       ok: false,
-      message: 'document 작성 실패',
+      errorMessage: 'document 작성 실패',
     })
   }
 })
@@ -67,7 +67,7 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
     console.log('display document ERROR', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 보여주기 실패',
+      errorMessage: '서버에러: 도큐먼트 보여주기 실패',
     })
   }
 })
@@ -82,7 +82,7 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
     if (!result) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다.',
+        errorMessage: '존재하지 않는 도큐먼트 입니다.',
       })
       return
     }
@@ -96,13 +96,16 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
     console.log('display document ERROR', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 상세 도큐먼트 보여주기 실패',
+      errorMessage: '서버에러: 상세 도큐먼트 보여주기 실패',
     })
   }
 })
 //DOCUMENT 수정 가능여부 확인
 router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
+    //현재 상황에서 내가 문서 수정중인데 다른창에서 수정 버튼 클릭하면 canEdit이 false라서 수정 불가한가?
+    //이걸 고쳐주는 메세지를 보여줘야할까?
+
     const { documentId } = req.body;
     const userId = res.locals.user._id;
     const targetUser = await Users.findById(userId);
@@ -114,12 +117,12 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
         'ok': true,
         message: '도큐먼트 수정중',
         canEdit: false,
-        nickname: nickname
+        nickname: document.nickname
       })
       return;
     }
 
-    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false });
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname:nickname });
     res.status(200).send({
       'ok': true,
       message: '수정가능',
@@ -130,7 +133,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
     console.log('도큐먼트 수정가능여부 확인 에러', error);
     res.status(400).send({
       'ok': false,
-      message: '서버에러: 수정가능여부 api 실패'
+      errorMessage: '서버에러: 수정가능여부 api 실패'
     })
   }
 })
@@ -149,7 +152,7 @@ router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req,
     console.log('도큐먼트 수정 취소 서버에러', error);
     res.status(400).send({
       'ok': false,
-      message: 'api실패'
+      errorMessage: 'api실패'
     })
   }
 })
@@ -177,7 +180,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     if (!editDocument) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다.',
+        errorMessage: '존재하지 않는 도큐먼트 입니다.',
       })
       return;
     }
@@ -189,7 +192,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
     console.log('document수정 서버에러', error)
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 수정 실패',
+      errorMessage: '서버에러: 도큐먼트 수정 실패',
     })
   }
 })
@@ -203,7 +206,7 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
     if (!deleteDocument) {
       res.status(400).send({
         ok: false,
-        message: '존재하지 않는 도큐먼트 입니다',
+        errorMessage: '존재하지 않는 도큐먼트 입니다',
       })
       return;
     }
@@ -215,7 +218,7 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
   } catch (error) {
     res.status(400).send({
       ok: false,
-      message: '서버에러: 도큐먼트 삭제 실패',
+      errorMessage: '서버에러: 도큐먼트 삭제 실패',
     })
   }
 })
@@ -223,9 +226,9 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
 //문서 백업기능
 router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
   try {
-    const{roomId} = req.params;
+    const { roomId } = req.params;
     const { documentId } = req.body;
-    Documents.create({ roomId:roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
+    Documents.create({ roomId: roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
 
     res.status(200).send({
       'ok': true,
@@ -235,7 +238,7 @@ router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (re
     console.log('문서 백업 에러', error);
     res.status(400).send({
       'ok': false,
-      message: '서버에러: 문서백업 실패'
+      errorMessage: '서버에러: 문서백업 실패'
     })
   }
 })
@@ -247,4 +250,3 @@ module.exports = router
 //     const posts = await Posts.find().sort('-contentId');
 
 //     await Posts.updateOne({ 'contentId': contentId, 'password': password }, { $set: { 'title': title, 'name': name, 'content': content } });
-

@@ -12,9 +12,7 @@ const deleteAll = module.exports = {
             } catch (error) {
                 console.log('deleting documents function Error', error);
                 throw new Error(error);
-
             }
-
         };
     },
     deleteBuckets: async function (roomId) {
