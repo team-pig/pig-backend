@@ -147,6 +147,17 @@ describe('방 불러오기(inviteCode) 실패', () => {
   })
 })
 
+describe('Documents 모두 불러오기 성공: 방 안에 문서가 없을 때', () => {
+  it('Get all documents in room success: There are no documents in the room', async() => {
+    const res = await request.get(`/room/${createdRoomId}/documents`).auth(access, { type: 'bearer' })
+    createdDocumentId = res.body.documentId;
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('이 방에는 아직 도큐먼트가 없습니다.')
+    expect(res.body.result).toEqual([])
+  })
+})
+
 describe('Document 작성 성공', () => {
   it('Post document success', async() => {
     const res = await request.post(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
