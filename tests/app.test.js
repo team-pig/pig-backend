@@ -246,6 +246,17 @@ describe('Document 수정 성공', () => {
   })
 })
 
+describe('Document 삭제 성공', () => {
+  it ('Delete a document success', async() => {
+    const res = await request.delete(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe('도큐먼트 삭제 성공')
+    expect(res.body.ok).toBe(true)
+  })
+})
+
 describe('방 나가기 성공', () => {
   it('Delete leave the room success', async () => {
     const res = await request.delete(`/room/member/${createdRoomId}`).auth(access2, { type: 'bearer' })
