@@ -168,6 +168,34 @@ describe('Document 상세 불러오기 성공', () => {
   })
 })
 
+describe('방 추가하기(inviteCode) 성공', () => {
+  it('Post entering the room success', async () => {
+    const res = await request.post('/room/member').auth(access2, { type: 'bearer' }).send({
+      inviteCode: inviteCode,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.room.roomId).toBe
+  })
+})
+
+describe('방 추가하기(inviteCode) 실패', () => {
+  it('Post entering the room 이미 추가된 방 입장하기: failed ', async () => {
+    const res = await request.post('/room/member').auth(access, { type: 'bearer' }).send({
+      inviteCode: inviteCode,
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('이미 추가 된 방입니다.')
+  })
+
+  it('Post entering the room 잘못된 초대코드: failed ', async () => {
+    const res = await request.post('/room/member').auth(access, { type: 'bearer' }).send({
+      inviteCode: 'asdflkj-2134lkjdas0u',
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.body.errorMessage).toBe('초대코드가 잘못됐거나 방을 찾을 수 없어요')
+  })
+})
+
 describe('Document 수정가능 성공', () => {
   it('patch document success: 수정가능 하여 문서내부 진입', async() => {
     const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
@@ -204,34 +232,6 @@ describe('Document 도큐먼트 수정 중 성공', () => {
     expect(res.body.message).toBe('도큐먼트 수정중')
     expect(res.body.canEdit).toBe(false)
     expect(res.body.nickname).toBe(createdDocumentNickname)
-  })
-})
-
-describe('방 추가하기(inviteCode) 성공', () => {
-  it('Post entering the room success', async () => {
-    const res = await request.post('/room/member').auth(access2, { type: 'bearer' }).send({
-      inviteCode: inviteCode,
-    })
-    expect(res.statusCode).toBe(200)
-    expect(res.body.room.roomId).toBe
-  })
-})
-
-describe('방 추가하기(inviteCode) 실패', () => {
-  it('Post entering the room 이미 추가된 방 입장하기: failed ', async () => {
-    const res = await request.post('/room/member').auth(access, { type: 'bearer' }).send({
-      inviteCode: inviteCode,
-    })
-    expect(res.statusCode).toBe(400)
-    expect(res.body.errorMessage).toBe('이미 추가 된 방입니다.')
-  })
-
-  it('Post entering the room 잘못된 초대코드: failed ', async () => {
-    const res = await request.post('/room/member').auth(access, { type: 'bearer' }).send({
-      inviteCode: 'asdflkj-2134lkjdas0u',
-    })
-    expect(res.statusCode).toBe(400)
-    expect(res.body.errorMessage).toBe('초대코드가 잘못됐거나 방을 찾을 수 없어요')
   })
 })
 
