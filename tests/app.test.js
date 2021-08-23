@@ -171,6 +171,17 @@ describe('Document 작성 성공', () => {
   })
 })
 
+describe('Documents 모두 불러오기 성공: 방 안에 문서가 하나라도 있을 때', () => {
+  it('Get all documents in room success: There is one or more documents in the room', async() => {
+    const res = await request.get(`/room/${createdRoomId}/documents`).auth(access, { type: 'bearer' })
+    createdDocumentId = res.body.documentId;
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('도큐먼트 보여주기 성공')
+    expect(res.body.result.documentId).toBe(createdDocumentId)
+  })
+})
+
 describe('Document 상세 불러오기 성공', () => {
   it('Post document success', async() => {
     const res = await request.get(`/room/${createdRoomId}/document/${createdDocumentId}`).auth(access, { type: 'bearer' })
