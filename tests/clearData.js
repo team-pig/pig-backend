@@ -42,6 +42,11 @@ const CLEAR_DATA = {
   document:{
   title: '문서 제목',
   content: '문서 내용 디스이스내용',
+  },
+  
+  editDocument: {
+    title: '수정된 제목',
+    content: '문서 내용 바뀌었습니다'
   }
 };
 

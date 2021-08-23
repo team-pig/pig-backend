@@ -214,7 +214,6 @@ describe('Document 도큐먼트 수정 중 성공', () => {
     const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
       documentId : createdDocumentId
     })
-    console.log(res.body.nickname)
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(res.body.message).toBe('도큐먼트 수정중')
@@ -226,12 +225,24 @@ describe('Document 도큐먼트 수정 중 성공', () => {
     const res = await request.patch(`/room/${createdRoomId}/document`).auth(access2, { type: 'bearer' }).send({
       documentId : createdDocumentId
     })
-    console.log(res.body.nickname)
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(res.body.message).toBe('도큐먼트 수정중')
     expect(res.body.canEdit).toBe(false)
     expect(res.body.nickname).toBe(createdDocumentNickname)
+  })
+})
+
+describe('Document 수정 성공', () => {
+  it('put document success: document 수정 성공', async() => {
+    const res = await request.put(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId,
+      title: clearData.editDocument.title,
+      content: clearData.editDocument.content
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('도큐먼트 수정 성공')
   })
 })
 
