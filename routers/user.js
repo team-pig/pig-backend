@@ -34,7 +34,7 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
 
       transport
         .sendMail({
-          from: `협업돼지 <${process.env.MAIL_ID}>`,
+          from: `협업돼지 <${process.env.MAIL_IDD}>`,
           to: email,
           subject: '[협업돼지] 인증번호가 도착했습니다.',
           text: '123456',
