@@ -6,23 +6,24 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 
-/* https할 때 필요
+// https할 때 필요
 const fs = require('fs')
-// const http = require('http').createServer(app);
-// const https = require('https')
-// const { Server } = require('socket.io');
-// const io = new Server(http);
-*/
 const http = require('http');
+const https = require('https')
+const options = {
+  ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
+ }
+
 const socketio = require('socket.io');
-const server = http.createServer(app); 
+const server = https.createServer(options, app); 
 const io = socketio(server);
 
 
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
 const Message = require('./schemas/message');
-const Room = require('./schemas/room');
 connect()
 
 io.on('connection', (socket) => {
@@ -35,7 +36,7 @@ io.on('connection', (socket) => {
     // 다른 사람들한테 내가 접속했다고 알림.
     socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
-    const chatData = await Message.find({ roomId: data.roomId })
+    const chatData = await Message.find({ roomId: data.roomId }).sort({"submitTime": 1}).limit(100)
     socket.emit('messages', chatData)
 
     socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
@@ -43,10 +44,14 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async (data) => {
      //DB에 메시지 저장
-     console.log(data);
+    if(data.userName == null || data.roomId == null) {
+      return 
+    } else {
     await Message.create(data)
-    //같은 방에 있는 사람한테 
+      //같은 방에 있는 사람한테 
+      console.log(data);
     io.to(data.roomId).emit('message',data )
+    }
   })
 
   socket.on('warning', () => {
@@ -64,11 +69,7 @@ io.on('connection', (socket) => {
 
 });
 
-// const options = {
-//   ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
-//   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
-//  }
+
 
 /*이미지 업로드
 const path = require("path");
@@ -86,9 +87,18 @@ const fileStorageEngine = multer.diskStorage({
 */
 //CORS
 const cors = require('cors');
-app.use(
-    cors({ origin: '*', credentials: true, }
-    ));
+var whitelist = ['https://www.teampig.co.kr', 'https://teampig.co.kr/', 'localhost:3000']
+
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+}
+app.use( cors(corsOptions) );
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));
@@ -139,13 +149,13 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
 })
 */
 
-server.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
-})
+// server.listen(port, () => {
+//     console.log(`listening at http://localhost:${port}`);
+// })
 
-/* https할 때 필요
+// https할 때 필요
 http.createServer(app).listen(3000)
-https.createServer(options, app).listen(443)
-*/
+server.listen(443)
+
 
 module.exports = app;

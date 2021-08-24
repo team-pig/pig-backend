@@ -105,21 +105,20 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
   try {
     const { documentId } = req.body;
     const userId = res.locals.user._id;
-    const targetUser = await Users.findById(userId);
+    const targetUser = await Documents.findOne({documentId})
     const nickname = targetUser.nickname;
-
     const document = await Documents.findOne({ documentId: documentId });
     if (document.canEdit === false) {
       res.status(200).send({
         'ok': true,
         message: '도큐먼트 수정중',
         canEdit: false,
-        nickname: nickname
+        nickname: document.nickname
       })
       return;
     }
 
-    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false });
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname: nickname });
     res.status(200).send({
       'ok': true,
       message: '수정가능',
@@ -223,7 +222,7 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
 //문서 백업기능
 router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
   try {
-    const{roomId} = req.params;
+    const{ roomId } = req.params;
     const { documentId } = req.body;
     Documents.create({ roomId:roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
 
