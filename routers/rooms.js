@@ -5,7 +5,7 @@ const Bookmark = require('../schemas/bookmark.js')
 const auth = require('../middlewares/auth-middleware.js')
 const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
-
+const lodash = require("lodash")
 const Buckets = require('../schemas/bucket')
 const User = require('../schemas/users.js')
 const deleteAll = require('../middlewares/deleting')
@@ -180,7 +180,6 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()  위에서 아래로 변화(memberstatus 따로 생성되는 부분 지워도 될듯)
     const findRoom = await Room.findOne({ roomId }, { _id: false })
     const findMemberStatus = findRoom.memberStatus
-
     for (let j = 0; j < findMemberStatus.length; j++) {
       var findTodo = await Todo.find({ roomId: roomId, 'members.memberId': findMemberStatus[j].userId })
       bchecked = 0
@@ -196,7 +195,17 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
       memberStatus[j].checked = bchecked
       memberStatus[j].notChecked = bnotChecked
     }
-    res.send({ projectStatus, memberStatus })
+    // memberStatus에서 myStatus 빼기
+    const copyStatus = lodash.cloneDeep(memberStatus)
+    const memberStatusIdx = memberStatus.findIndex(function (item) {
+      return item.userId == userId
+    })
+    memberStatus.splice(memberStatusIdx, 1)
+    // myStatus 추출하기
+    const myStatus = copyStatus.filter(function (copyStatus) {
+      return copyStatus.userId == userId
+    })[0]
+    res.send({ projectStatus, memberStatus, myStatus })
   } catch (err) {
     res.status(400).send({ errorMessage: 'roomId를 찾을 수 없습니다' })
   }
