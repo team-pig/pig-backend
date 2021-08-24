@@ -13,13 +13,7 @@ let createdRoomId = ''
 let createdRoomId2 = ''
 let inviteCode = ''
 let createdDocumentId = ''
-
-describe('test', () => {
-  it('test', async () => {
-    const res = await request.post('/tttt').send( 'hi' );
-    expect(res.statusCode).toEqual(200);
-  });
-});
+let createdDocumentNickname = ''
 
 describe('유저 등록 성공', () => {
   it('register success', async () => {
@@ -153,7 +147,18 @@ describe('방 불러오기(inviteCode) 실패', () => {
   })
 })
 
-describe('문서(document) 작성 성공', () => {
+describe('Documents 모두 불러오기 성공: 방 안에 문서가 없을 때', () => {
+  it('Get all documents in room success: There are no documents in the room', async() => {
+    const res = await request.get(`/room/${createdRoomId}/documents`).auth(access, { type: 'bearer' })
+    createdDocumentId = res.body.documentId;
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('이 방에는 아직 도큐먼트가 없습니다.')
+    expect(res.body.result).toEqual([])
+  })
+})
+
+describe('Document 작성 성공', () => {
   it('Post document success', async() => {
     const res = await request.post(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
       title: clearData.document.title,
@@ -166,14 +171,22 @@ describe('문서(document) 작성 성공', () => {
   })
 })
 
-describe('DOCUMENT 수정 가능여부 확인 성공', () => {
-  it('patch document success', async() => {
-    const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
-      documentId : createdDocumentId
-    })
+describe('Documents 모두 불러오기 성공: 방 안에 문서가 하나라도 있을 때', () => {
+  it('Get all documents in room success: There is one or more documents in the room', async() => {
+    const res = await request.get(`/room/${createdRoomId}/documents`).auth(access, { type: 'bearer' })
+    createdDocumentId = res.body.documentId;
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
-    expect(res.body.message).toBe('수정가능')
+    expect(res.body.message).toBe('도큐먼트 보여주기 성공')
+    expect(res.body.result.documentId).toBe(createdDocumentId)
+  })
+})
+
+describe('Document 상세 불러오기 성공', () => {
+  it('Post document success', async() => {
+    const res = await request.get(`/room/${createdRoomId}/document/${createdDocumentId}`).auth(access, { type: 'bearer' })
+    createdDocumentNickname = res.body.result.nickname
+    expect(res.statusCode).toBe(200)
   })
 })
 
@@ -202,6 +215,67 @@ describe('방 추가하기(inviteCode) 실패', () => {
     })
     expect(res.statusCode).toBe(400)
     expect(res.body.errorMessage).toBe('초대코드가 잘못됐거나 방을 찾을 수 없어요')
+  })
+})
+
+describe('Document 수정가능 성공', () => {
+  it('patch document success: 수정가능 하여 문서내부 진입', async() => {
+    const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('수정가능')
+    expect(res.body.canEdit).toBe(true)
+  })
+
+})
+
+describe('Document 도큐먼트 수정 중 성공', () => {
+  it('patch document success: 누군가 수정 중', async() => {
+    const res = await request.patch(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('도큐먼트 수정중')
+    expect(res.body.canEdit).toBe(false)
+    expect(res.body.nickname).toBe(createdDocumentNickname)
+  })
+
+  it('patch document success: 누군가 수정 중', async() => {
+    const res = await request.patch(`/room/${createdRoomId}/document`).auth(access2, { type: 'bearer' }).send({
+      documentId : createdDocumentId
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('도큐먼트 수정중')
+    expect(res.body.canEdit).toBe(false)
+    expect(res.body.nickname).toBe(createdDocumentNickname)
+  })
+})
+
+describe('Document 수정 성공', () => {
+  it('put document success: document 수정 성공', async() => {
+    const res = await request.put(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId,
+      title: clearData.editDocument.title,
+      content: clearData.editDocument.content
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.message).toBe('도큐먼트 수정 성공')
+  })
+})
+
+describe('Document 삭제 성공', () => {
+  it ('Delete a document success', async() => {
+    const res = await request.delete(`/room/${createdRoomId}/document`).auth(access, { type: 'bearer' }).send({
+      documentId : createdDocumentId,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.message).toBe('도큐먼트 삭제 성공')
+    expect(res.body.ok).toBe(true)
   })
 })
 

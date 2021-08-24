@@ -26,7 +26,6 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
     if (findEmail.email == email) {
       const token = v4()
       const data = {
-        // 데이터 정리
         token,
         userId: userId,
         createdAt: Date.now(),
@@ -44,14 +43,13 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
             <h3 style="color: #FA5882">협업돼지</h3>
             <br />
             <div>비밀번호 초기화를 위해
-            <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
+            <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
             </div>
           </div>
         `,
         })
         .then((send) => res.json(send))
         .catch((err) => next(err))
-            //   <A href="http://13.125.222.70/resetPassword/${token}"> 여기를 클릭하세요! </A>
     }
   } catch (error) {
     console.log ({ errorMessage: '인증코드 발급에 실패했습니다.' })
@@ -67,14 +65,14 @@ router.post('/resetPassword/:token', async (req, res) => {
   // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
   try {
     const token = req.params.token
-    const {password, confirmPassword} = req.body
+    const { password, confirmPassword } = req.body
     const findAuth = await Auth.findOne({ token: token })
-    // 인증코드는 5분의 유효기간(300000ms) (개발 시 풀어놓기)
-    // if (Date.now() - findAuth.createdAt > 300000) {
-    //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
-    // }
-    if(password != confirmPassword) {
-        res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.'})
+    // 본 서버 적용   인증코드는 3분의 유효기간(180000ms)
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    }
+    if (password != confirmPassword) {
+      res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.' })
     }
     const userId = findAuth.userId
     const salt = await bcrypt.genSalt()

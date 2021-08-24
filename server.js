@@ -5,19 +5,18 @@ const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
 
-
-/* https할 때 필요
 const fs = require('fs')
-// const http = require('http').createServer(app);
-// const https = require('https')
-// const { Server } = require('socket.io');
-// const io = new Server(http);
-*/
-const http = require('http');
-const socketio = require('socket.io');
-const server = http.createServer(app); 
-const io = socketio(server);
+const http = require('http')
+const https = require('https')
+const options = {
+  ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
+ }
 
+const socketio = require('socket.io');
+const server = https.createServer(options, app); 
+const io = socketio(server);
 
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
@@ -61,14 +60,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('연결이 해제되었어요.')
   })
-
 });
 
-// const options = {
-//   ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
-//   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
-//  }
 
 /*이미지 업로드
 const path = require("path");
@@ -86,9 +79,19 @@ const fileStorageEngine = multer.diskStorage({
 */
 //CORS
 const cors = require('cors');
-app.use(
-    cors({ origin: '*', credentials: true, }
-    ));
+var whitelist = ['https://www.teampig.co.kr', 'https://teampig.co.kr/', 'localhost:3000']
+
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+}
+
+app.use( cors(corsOptions) );
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));
@@ -139,13 +142,13 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
 })
 */
 
-server.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
-})
+// server.listen(port, () => {
+//     console.log(`listening at http://localhost:${port}`);
+// })
 
-/* https할 때 필요
+// /* https할 때 필요
 http.createServer(app).listen(3000)
-https.createServer(options, app).listen(443)
-*/
+server.listen(443)
+// */
 
 module.exports = app;
