@@ -2,20 +2,20 @@ const express = require('express');
 const User = require('../schemas/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const authMiddleware = require('../middlewares/auth-middleware')
+const authMiddleware = require('../middlewares/auth-middleware');
 const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
+const {v4} = require('uuid');
+const Auth = require('../schemas/auth');
+const transport = require('../services/mail.transport');
 const router = express.Router();
-const {v4} = require('uuid')
-const Auth = require('../schemas/auth')
-const transport = require('../services/mail.transport')
 
-let refreshTokens = []
+// let refreshTokens = []
 
 
 //인증코드 발급
-router.post('/resetPassword/sendEmail', async (req, res) => {
+router.post('/resetPassword/sendEmail', async (req, res, next) => {
   try {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
@@ -26,7 +26,6 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
     if (findEmail.email == email) {
       const token = v4()
       const data = {
-        // 데이터 정리
         token,
         userId: userId,
         createdAt: Date.now(),
@@ -35,16 +34,17 @@ router.post('/resetPassword/sendEmail', async (req, res) => {
 
       transport
         .sendMail({
-          from: `협업돼지 <awrde26@gmail.com>`,
+          from: `협업돼지 <${process.env.MAIL_ID}>`,
           to: email,
-        //   to: 'awrde26@gmail.com',
           subject: '[협업돼지] 인증번호가 도착했습니다.',
           text: '123456',
           html: `
           <div style="text-align: center;">
-            <h3 style="color: #FA5882">ABC</h3>
+            <h3 style="color: #FA5882">협업돼지</h3>
             <br />
-            <p>비밀번호 초기화를 위해 URL을 클릭하세요! http://localhost:3000/password/${token}</p>
+            <div>비밀번호 초기화를 위해
+            <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+            </div>
           </div>
         `,
         })
@@ -65,14 +65,14 @@ router.post('/resetPassword/:token', async (req, res) => {
   // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
   try {
     const token = req.params.token
-    const {password, confirmPassword} = req.body
+    const { password, confirmPassword } = req.body
     const findAuth = await Auth.findOne({ token: token })
-    // 인증코드는 5분의 유효기간(300000ms) (개발 시 풀어놓기)
-    // if (Date.now() - findAuth.createdAt > 300000) {
-    //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
-    // }
-    if(password != confirmPassword) {
-        res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.'})
+    // 본 서버 적용   인증코드는 3분의 유효기간(180000ms)
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
+    }
+    if (password != confirmPassword) {
+      res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.' })
     }
     const userId = findAuth.userId
     const salt = await bcrypt.genSalt()
@@ -102,8 +102,8 @@ const registerValidator = Joi.object({
         .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
         .required(), 
     confirmPassword: Joi.ref('password'),
-    color: Joi.string().min(0),
-    avatar: Joi.string().min(0),
+    color: Joi.string().allow(''),
+    avatar: Joi.string().allow('')
 }).with('password','confirmPassword')
 
 
@@ -120,20 +120,25 @@ router.post('/register', async (req, res, next) => {
         
         // 닉네임 3글자 미만은 회원가입 불가.
         const nickName = await User.findOne({ nickname })
-        if (nickName.length < 3 ) {
+        if (nickName != null && nickName.length < 3 ) {
             res.status(400).send({
                 errorMessage: '닉네임에 적합하지 않습니다.'
             });
             return;
         }
 
-        // email or nickname이 동일한게 이미 있는지 확인하기 위해 가져온다.
-        const existsUsers = await User.findOne({
-            $or: [{ email }, { nickname }],
-        });
-        if (existsUsers) {
+        // email and nickname이 동일한게 이미 있는지 확인하기 위해 가져온다.
+        const existsEmail = await User.findOne({ email })
+        const existsNickname = await User.findOne({ nickname })
+        if (existsEmail) {
             res.status(400).send({
-                errorMessage: "이메일 또는 닉네임이 이미 사용중입니다.",
+                errorMessage: "이메일이 이미 사용중입니다.",
+            });
+            return;
+        }
+        if (existsNickname) {
+            res.status(400).send({
+                errorMessage: "닉네임이 이미 사용중입니다."
             });
             return;
         }
@@ -174,7 +179,7 @@ router.post('/login', async (req, res, next) => {
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
         let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
-        refreshTokens.push(refreshToken);
+        // refreshTokens.push(refreshToken);
 
         res.status(200).json({
             ok: true, 
@@ -182,12 +187,12 @@ router.post('/login', async (req, res, next) => {
             accessToken: accessToken, refreshToken: refreshToken, 
             email: email,
         });
-    } catch (err) {
+    } catch (error) {
         res.status(400).send({
             ok: false, 
             errorMessage: '서버 실패: 로그인 실패',
         })
-        next(err);
+        next(error);
     }
 });
 
@@ -210,8 +215,8 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 
 router.post('/token', (req, res) => {
     const refreshToken = req.body.refreshToken;
-    if (!refreshToken || !refreshTokens.includes(refreshToken)) {
-        return res.status(403).json({ errorMessage: 'User not authenticated'})
+    if (refreshToken == null ) {
+        return res.status(401).json({ errorMessage: '리프레쉬 토큰이 없습니다.'})
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
@@ -222,7 +227,7 @@ router.post('/token', (req, res) => {
                 message: 'accessToken 재발급 성공', 
                 accessToken: accessToken });
         } else {
-        return res.status(403).json({ errorMessage: 'User not authenticated, 리프레시 토큰 검증 안됩니다.'})
+        return res.status(403).json({ errorMessage: '리프레시 토큰 유효하지 않습니다.'})
         }
     })
 });
@@ -233,11 +238,11 @@ router.delete('/userInfo', async (req, res) => {
     // await findUser.delete({})
     const remove = await User.findOneAndRemove({ email: email })
     if(!remove) {
-        return res.status(400).json({ message: '이메일이 잘못되었습니다.'})
+        return res.status(400).json({ errorMessage: '이메일이 잘못되었습니다.'})
     }
     res.json({ message: '회원탈퇴 성공' })
   } catch (err) {
-    res.status(500).json({ message: '회원탈퇴 실패' })
+    res.status(500).json({ errorMessage: '회원탈퇴 실패' })
   }
 })
 
