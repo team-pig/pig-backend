@@ -405,7 +405,7 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
                     array.push(allTodos[i].members[k].memberId);
                 }
             }
-            console.log('ARRAYY', array);
+            // console.log('ARRAYY', array);
             //중복 체크
             let finalArray = [];
             for (let i = 0; i < array.length; i++) {
@@ -413,9 +413,9 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
                     finalArray.push(array[i]);
                 }
             }
-            console.log('finalarray', finalArray);
+            // console.log('finalarray', finalArray);
             const memberCount = finalArray.length;
-            console.log('membercount', memberCount);
+            // console.log('membercount', memberCount);
 
             await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
