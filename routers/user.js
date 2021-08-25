@@ -58,7 +58,15 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
 })
 
 router.get('/resetPassword/:token', async (req, res) => {
-  res.json({ message: '정상적으로 이동하였습니다.' })
+  try {
+    const findAuth = await Auth.findOne({ token: token })
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ errorMessage: '인증코드가 만료되었습니다.' })
+    }
+    res.json({ message: '정상적으로 이동하였습니다.' })
+  } catch (error) {
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드 또는 잘못된 인증코드입니다.' })
+  }
 })
 
 router.post('/resetPassword/:token', async (req, res) => {
@@ -78,14 +86,14 @@ router.post('/resetPassword/:token', async (req, res) => {
     const salt = await bcrypt.genSalt()
     const hashed = await bcrypt.hash(password, salt)
     const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
-    console.log(findUser)
+    await Auth.findOneAndDelete({userId: userId})
     res.status(201).json({
       message: '비밀번호 재설정 성공',
       email: findUser.email,
       nickname: findUser.nickname,
     })
   } catch (error) {
-    res.status(400).json({ errorMessage: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드거나 잘못된 인증코드입니다.' })
   }
 })
 
