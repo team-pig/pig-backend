@@ -469,6 +469,16 @@ describe('방 삭제 성공', () => {
   })
 })
 
+describe('비밀번호 변경페이지 링크가 담긴 이메일 보내기 성공', () => {
+  it('Send password change email success', async () => {
+    const res = await request.post('/resetPassword/sendEmail').send({
+      email: clearData.email
+    });
+    expect(res.body.accepted[0]).toEqual(clearData.email);
+    expect(res.statusCode).toBe(200);
+  })
+})
+
 describe('회원 탈퇴하기', () => {
   it('delete userInfo success', async () => {
     const res = await request.delete('/userInfo').send({
