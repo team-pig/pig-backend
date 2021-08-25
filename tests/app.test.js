@@ -479,6 +479,16 @@ describe('비밀번호 변경페이지 링크가 담긴 이메일 보내기 성�
   })
 })
 
+describe('비밀번호 변경페이지 링크가 담긴 이메일 보내기 실패', () => {
+  it('Send password change email failed: 가입되지 않은 유저 정보일 때', async () => {
+    const res = await request.post('/resetPassword/sendEmail').send({
+      email: undefinedData.email
+    });
+    expect(res.body.errorMessage).toBe('협업돼지에 등록되지 않은 이메일입니다.');
+    expect(res.statusCode).toBe(400);
+  })
+})
+
 describe('회원 탈퇴하기', () => {
   it('delete userInfo success', async () => {
     const res = await request.delete('/userInfo').send({
