@@ -20,40 +20,44 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
     const userId = findEmail._id
-    if (findEmail.email != email) {
-        return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
-    }
-    if (findEmail.email == email) {
-      const token = v4()
-      const data = {
-        token,
-        userId: userId,
-        createdAt: Date.now(),
-      }
-      Auth.create(data)
+    try {
+      // if (findEmail.email != email) {
+      //     return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
+      // }
+      if (findEmail.email == email) {
+        const token = v4()
+        const data = {
+          token,
+          userId: userId,
+          createdAt: Date.now(),
+        }
+        Auth.create(data)
 
-      transport
-        .sendMail({
-          from: `협업돼지 <${process.env.MAIL_IDD}>`,
-          to: email,
-          subject: '[협업돼지] 인증번호가 도착했습니다.',
-          text: '123456',
-          html: `
-          <div style="text-align: center;">
-            <h3 style="color: #FA5882">협업돼지</h3>
-            <br />
-            <div>비밀번호 초기화를 위해
-            <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+        transport
+          .sendMail({
+            from: `협업돼지 <${process.env.MAIL_IDD}>`,
+            to: email,
+            subject: '[협업돼지] 인증번호가 도착했습니다.',
+            text: '123456',
+            html: `
+            <div style="text-align: center;">
+              <h3 style="color: #FA5882">협업돼지</h3>
+              <br />
+              <div>비밀번호 초기화를 위해
+              <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+              </div>
             </div>
-          </div>
-        `,
-        })
-        .then((send) => res.json(send))
-        .catch((err) => next(err))
+          `,
+          })
+          .then((send) => res.json(send))
+          .catch((err) => next(err))
+      }
+    } catch (error) {
+      console.log({ errorMessage: '인증코드 발급에 실패했습니다.' })
+      res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
     }
-  } catch (error) {
-    console.log ({ errorMessage: '인증코드 발급에 실패했습니다.' })
-    res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+  } catch (err) {
+    return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
   }
 })
 
