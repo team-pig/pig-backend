@@ -44,7 +44,7 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
               <h3 style="color: #FA5882">협업돼지</h3>
               <br />
               <div>비밀번호 초기화를 위해
-              <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+              <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
               </div>
             </div>
           `,
