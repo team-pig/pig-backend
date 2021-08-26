@@ -22,7 +22,7 @@ const deleteAll = module.exports = {
             for (i = 0; i < buckets.length; i++) {
                 await bucketIdsArray.push(buckets[i].bucketId);
             }
-            console.log('bucketIdsArray', bucketIdsArray);
+            // console.log('bucketIdsArray', bucketIdsArray);
 
             await Buckets.deleteMany({ roomId: roomId });
             await deleteAll.deleteCards(bucketIdsArray);
@@ -33,7 +33,7 @@ const deleteAll = module.exports = {
     },
     deleteCards: async function (bucketIdsArray) {
         try {
-            console.log('bucketarray received', bucketIdsArray);
+            // console.log('bucketarray received', bucketIdsArray);
 
             const cardIdsArray = [];
             for (i = 0; i < bucketIdsArray.length; i++) {
@@ -47,7 +47,7 @@ const deleteAll = module.exports = {
 
                 await Cards.deleteMany({ bucketId: bucketIdsArray[i] });
             }
-            console.log('cardsIdsArray', cardIdsArray);
+            // console.log('cardsIdsArray', cardIdsArray);
 
             await deleteAll.deleteTodos(cardIdsArray);
 
@@ -58,7 +58,7 @@ const deleteAll = module.exports = {
     },
     deleteTodos: async function (cardIdsArray) {
         try {
-            console.log('receiving cardIdsarray', cardIdsArray);
+            // console.log('receiving cardIdsarray', cardIdsArray);
             for (i = 0; i < cardIdsArray.length; i++) {
                 const todo = await Todos.find({ cardId: cardIdsArray[i] });
                 if (!todo) {

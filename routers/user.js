@@ -20,45 +20,57 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
     const userId = findEmail._id
-    if (findEmail.email != email) {
-        return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
-    }
-    if (findEmail.email == email) {
-      const token = v4()
-      const data = {
-        token,
-        userId: userId,
-        createdAt: Date.now(),
-      }
-      Auth.create(data)
+    try {
+      // if (findEmail.email != email) {
+      //     return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
+      // }
+      if (findEmail.email == email) {
+        const token = v4()
+        const data = {
+          token,
+          userId: userId,
+          createdAt: Date.now(),
+        }
+        Auth.create(data)
 
-      transport
-        .sendMail({
-          from: `협업돼지 <${process.env.MAIL_ID}>`,
-          to: email,
-          subject: '[협업돼지] 인증번호가 도착했습니다.',
-          text: '123456',
-          html: `
-          <div style="text-align: center;">
-            <h3 style="color: #FA5882">협업돼지</h3>
-            <br />
-            <div>비밀번호 초기화를 위해
-            <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+        transport
+          .sendMail({
+            from: `협업돼지 <${process.env.MAIL_IDD}>`,
+            to: email,
+            subject: '[협업돼지] 인증번호가 도착했습니다.',
+            text: '123456',
+            html: `
+            <div style="text-align: center;">
+              <h3 style="color: #FA5882">협업돼지</h3>
+              <br />
+              <div>비밀번호 초기화를 위해
+              <A href="https://www.teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
+              </div>
             </div>
-          </div>
-        `,
-        })
-        .then((send) => res.json(send))
-        .catch((err) => next(err))
+          `,
+          })
+          .then((send) => res.json(send))
+          .catch((err) => next(err))
+      }
+    } catch (error) {
+      console.log({ errorMessage: '인증코드 발급에 실패했습니다.' })
+      res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
     }
-  } catch (error) {
-    console.log ({ errorMessage: '인증코드 발급에 실패했습니다.' })
-    res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+  } catch (err) {
+    return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
   }
 })
 
 router.get('/resetPassword/:token', async (req, res) => {
-  res.json({ message: '정상적으로 이동하였습니다.' })
+  try {
+    const findAuth = await Auth.findOne({ token: token })
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ errorMessage: '인증코드가 만료되었습니다.' })
+    }
+    res.json({ message: '정상적으로 이동하였습니다.' })
+  } catch (error) {
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드 또는 잘못된 인증코드입니다.' })
+  }
 })
 
 router.post('/resetPassword/:token', async (req, res) => {
@@ -78,14 +90,14 @@ router.post('/resetPassword/:token', async (req, res) => {
     const salt = await bcrypt.genSalt()
     const hashed = await bcrypt.hash(password, salt)
     const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
-    console.log(findUser)
+    await Auth.findOneAndDelete({userId: userId})
     res.status(201).json({
       message: '비밀번호 재설정 성공',
       email: findUser.email,
       nickname: findUser.nickname,
     })
   } catch (error) {
-    res.status(400).json({ errorMessage: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드거나 잘못된 인증코드입니다.' })
   }
 })
 
