@@ -103,23 +103,25 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
 //DOCUMENT 수정 가능여부 확인
 router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
+    //현재 상황에서 내가 문서 수정중인데 다른창에서 수정 버튼 클릭하면 canEdit이 false라서 수정 불가한가?
+    //이걸 고쳐주는 메세지를 보여줘야할까?
+
     const { documentId } = req.body;
     const userId = res.locals.user._id;
-    const targetUser = await Users.findById(userId);
+    const targetUser = await Documents.findOne({documentId})
     const nickname = targetUser.nickname;
-
     const document = await Documents.findOne({ documentId: documentId });
     if (document.canEdit === false) {
       res.status(200).send({
         'ok': true,
         message: '도큐먼트 수정중',
         canEdit: false,
-        nickname: nickname
+        nickname: document.nickname
       })
       return;
     }
 
-    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false });
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname:nickname });
     res.status(200).send({
       'ok': true,
       message: '수정가능',
@@ -223,9 +225,9 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
 //문서 백업기능
 router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
   try {
-    const{roomId} = req.params;
+    const { roomId } = req.params;
     const { documentId } = req.body;
-    Documents.create({ roomId:roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
+    Documents.create({ roomId: roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
 
     res.status(200).send({
       'ok': true,

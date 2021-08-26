@@ -35,6 +35,8 @@ router.post('/room/:roomId/bucket', authMiddleware, isMember, async (req, res) =
         // if (!bucketExist) {
         //await BucketOrder.create({ roomId: roomId });
         // }
+
+        //bucketorder 어레이 맨앞으로 넣기
         await BucketOrder.updateOne({ roomId: roomId }, { $push: { bucketOrder: { $each: [bucketId], $position: 0 } } });
 
         res.status(200).send({
@@ -177,6 +179,9 @@ router.patch('/room/:roomId/card', authMiddleware, isMember, async (req, res) =>
 //카드 위치 수정
 router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req, res) => {
     try {
+        //added cardId and destinationBucketId
+
+
         const { roomId } = req.params;
         const { cardOrder, cardId, destinationBucketId } = req.body;
         const bucketIdArray = Object.keys(cardOrder);
@@ -187,7 +192,7 @@ router.patch('/room/:roomId/cardLocation', authMiddleware, isMember, async (req,
         for (i = 0; i < bucketIdArray.length; i++) {
             await Buckets.findOneAndUpdate({ bucketId: bucketIdArray[i] }, { cardOrder: cardIdArray[i] });
         }
-        await Cards.findOneAndUpdate({cardId: cardId},{ $set: {bucketId: destinationBucketId}})
+        await Cards.findOneAndUpdate({cardId: cardId},{ $set: {bucketId: destinationBucketId}});
 
         res.status(200).send({
             'ok': true,
@@ -401,6 +406,7 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
                 }
             }
             console.log('ARRAYY', array);
+            //중복 체크
             let finalArray = [];
             for (let i = 0; i < array.length; i++) {
                 if (!finalArray.includes(array[i])) {

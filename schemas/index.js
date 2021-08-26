@@ -1,8 +1,10 @@
 const mongoose = require('mongoose')
+const dotenv = require('dotenv');
+dotenv.config();
 
 const connect = () => {
   mongoose
-    .connect('mongodb://test:test@localhost:27017/admin', {
+    .connect(`mongodb://${process.env.MONGODB_ID_PASSWORD}@localhost:27017/admin`, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useCreateIndex: true,

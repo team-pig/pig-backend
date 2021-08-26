@@ -14,10 +14,6 @@ const Todo = require('../schemas/todo.js')
 
 const router = express.Router()
 
-router.post('/tttt', async (req, res) => {
-  res.status(200).send()
-})
-
 // pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
 router.get('/rooms', auth, async (req, res) => {
   try {
