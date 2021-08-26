@@ -178,8 +178,8 @@ router.post('/login', async (req, res, next) => {
         if (!isValidPassword) {
             return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
-        let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
-        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
+        let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
         // refreshTokens.push(refreshToken);
 
         res.status(200).json({
@@ -222,7 +222,7 @@ router.post('/token', (req, res) => {
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if(!err) {
-            const accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
+            const accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
             return res.status(201).json({
                 ok: true,
                 message: 'accessToken 재발급 성공', 

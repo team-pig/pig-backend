@@ -15,7 +15,7 @@ const options = {
   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
  }
-
+// const http = require('http');   // 테스트용
 const socketio = require('socket.io');
 const server = https.createServer(options, app); 
 const io = socketio(server);
@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
     // 다른 사람들한테 내가 접속했다고 알림.
     socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
-    const chatData = await Message.find({ roomId: data.roomId }).sort({"submitTime": 1}).limit(100)
+    const chatData = await Message.find({ roomId: data.roomId }).sort({ submitTime: -1 }).limit(100)
     socket.emit('messages', chatData)
 
     socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
@@ -50,6 +50,7 @@ io.on('connection', (socket) => {
     await Message.create(data)
       //같은 방에 있는 사람한테 
       console.log(data);
+      data.submitTime = Date(Date.now)
     io.to(data.roomId).emit('message',data )
     }
   })
@@ -99,6 +100,12 @@ var corsOptions = {
   },
 }
 app.use( cors(corsOptions) );
+
+//CORS 테스트용
+// const cors = require('cors');
+// app.use(
+//     cors({ origin: '*', credentials: true, })
+//   );
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));

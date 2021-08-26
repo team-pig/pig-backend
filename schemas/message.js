@@ -16,7 +16,7 @@ const messageSchema = new Schema({
     },
     submitTime: {
         type: Date,
-        default: new Date()
+        default: Date.now,
     },
 });
 module.exports = mongoose.model("Message", messageSchema);
