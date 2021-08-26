@@ -178,7 +178,7 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
-        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '1d'})
+        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
         // refreshTokens.push(refreshToken);
 
         res.status(200).json({

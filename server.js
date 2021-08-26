@@ -13,7 +13,6 @@ const options = {
   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
  }
-
 const socketio = require('socket.io');
 const server = https.createServer(options, app); 
 const io = socketio(server);
@@ -21,7 +20,6 @@ const io = socketio(server);
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
 const Message = require('./schemas/message');
-const Room = require('./schemas/room');
 connect()
 
 io.on('connection', (socket) => {
@@ -34,7 +32,7 @@ io.on('connection', (socket) => {
     // 다른 사람들한테 내가 접속했다고 알림.
     socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
-    const chatData = await Message.find({ roomId: data.roomId })
+    const chatData = await Message.find({ roomId: data.roomId }).sort({ submitTime: -1 }).limit(100)
     socket.emit('messages', chatData)
 
     socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
@@ -42,10 +40,15 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async (data) => {
      //DB에 메시지 저장
-     console.log(data);
+    if(data.userName == null || data.roomId == null) {
+      return 
+    } else {
     await Message.create(data)
-    //같은 방에 있는 사람한테 
+      //같은 방에 있는 사람한테 
+      console.log(data);
+      data.submitTime = Date(Date.now)
     io.to(data.roomId).emit('message',data )
+    }
   })
 
   socket.on('warning', () => {
@@ -90,8 +93,13 @@ var corsOptions = {
     }
   },
 }
-
 app.use( cors(corsOptions) );
+
+//CORS 테스트용
+// const cors = require('cors');
+// app.use(
+//     cors({ origin: '*', credentials: true, })
+//   );
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));
