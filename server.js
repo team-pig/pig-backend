@@ -32,7 +32,8 @@ io.on('connection', (socket) => {
     // 다른 사람들한테 내가 접속했다고 알림.
     socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
-    const chatData = await Message.find({ roomId: data.roomId }).sort({ submitTime: -1 }).limit(100)
+    const findMessage = await Message.find({ roomId: data.roomId }).sort({ submitTime: -1 }).limit(100)
+    const chatData = findMessage.sort({ submitTime: 1 })
     socket.emit('messages', chatData)
 
     socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
@@ -43,10 +44,17 @@ io.on('connection', (socket) => {
     if(data.userName == null || data.roomId == null) {
       return 
     } else {
-    await Message.create(data)
+      data.submitTime = Date(Date.now)
+    await Message.create({
+      roomId: data.roomId,
+      userId: data.userId,
+      userName: data.userName,
+      text: data.text,
+      submitTime: data.submitTime,
+    })
       //같은 방에 있는 사람한테 
       console.log(data);
-      data.submitTime = Date(Date.now)
+      
     io.to(data.roomId).emit('message',data )
     }
   })
