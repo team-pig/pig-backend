@@ -150,13 +150,40 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
 })
 */
 
-server.listen(port, () => {
+let isAppGoingToBeClosed = false
+
+app.use(function(req, res, next) {
+  // 프로세스 종료 예정이라면 연결을 종료한다
+  if (isAppGoingToBeClosed) {
+    res.set('Connection', 'close')
+  }
+
+  next()
+})
+
+const listeningServer = server.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
+    if(process.send) {
+      process.send('ready')
+    }
 })
 
 /* https할 때 필요
 http.createServer(app).listen(3000)
 https.createServer(options, app).listen(443)
 */
+
+process.on('SIGINT', function() { // SIGINT 신호가 수신되었을 때
+  console.log('> received SIGNIT signal')
+
+  isAppGoingToBeClosed = true
+
+  // pm2 재시작 신호가 들어오면 서버를 종료시킨다.
+  // listeningServer: server.listen 메소드가 리턴하는 서버 인스턴스를 할당한 변수
+  listeningServer.close(function(err) {
+    console.log('server closed')
+    process.exit(err ? 1 : 0)
+  })
+})
 
 module.exports = app;
