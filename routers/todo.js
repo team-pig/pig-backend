@@ -3,7 +3,6 @@ const Buckets = require('../schemas/bucket');
 const BucketOrder = require('../schemas/bucketOrder');
 const Cards = require('../schemas/card');
 const Todos = require('../schemas/todo');
-const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
@@ -11,7 +10,7 @@ const isMember = require('../middlewares/isMember');
 const deleteAll = require('../middlewares/deleting');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { kStringMaxLength } = require('buffer');
+
 
 mongoose.set('useFindAndModify', false);
 
@@ -322,6 +321,13 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
         const allTodos = await Todos.find({ cardId: cardId });
 
         //avatar, color 추가로 보내줄것 요청받음.
+
+        //지금부터 수정되는 투두들에만 반영되어있음.
+        //여기서 if(color==null) 한 다음에 User 테이블에서 가져와서 보내줄 수 있음.
+        //아니면 따로 함수를 짜서 avatar, color이 안들어있는 모든 함수에 넣을 수 있음.
+
+        //한방에 다 디비에 넣어주면 끝
+        //하지만 이프문으로 매번 가져와서 보내주려면 계속 유저테이블 들락날락 해야한다.
 
         res.status(200).send({
             'ok': true,
