@@ -25,79 +25,91 @@ const Todos = require('../schemas/todo');
 
 //인증코드 발급
 router.post('/resetPassword/sendEmail', async (req, res, next) => {
-    try {
-        const { email } = req.body
-        const findEmail = await User.findOne({ email: email }, { email: true })
-        const userId = findEmail._id
-        if (findEmail.email != email) {
-            return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
-        }
-        if (findEmail.email == email) {
-            const token = v4()
-            const data = {
-                // 데이터 정리
-                token,
-                userId: userId,
-                createdAt: Date.now(),
-            }
-            Auth.create(data)
 
-            transport
-                .sendMail({
-                    from: `협업돼지 <${process.env.MAIL_ID}>`,
-                    to: email,
-                    subject: '[협업돼지] 인증번호가 도착했습니다.',
-                    text: '123456',
-                    html: `
-          <div style="text-align: center;">
-            <h3 style="color: #FA5882">협업돼지</h3>
-            <br />
-            <div>비밀번호 초기화를 위해
-            <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
-            </div>
-          </div>
-        `,
-                })
-                .then((send) => res.json(send))
-                .catch((err) => next(err))
-            //   <A href="http://13.125.222.70/resetPassword/${token}"> 여기를 클릭하세요! </A>
+  try {
+    const { email } = req.body
+    const findEmail = await User.findOne({ email: email }, { email: true })
+    const userId = findEmail._id
+    try {
+      // if (findEmail.email != email) {
+      //     return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
+      // }
+      if (findEmail.email == email) {
+        const token = v4()
+        const data = {
+          token,
+          userId: userId,
+          createdAt: Date.now(),
         }
+        Auth.create(data)
+
+        transport
+          .sendMail({
+            from: `협업돼지 <${process.env.MAIL_IDD}>`,
+            to: email,
+            subject: '[협업돼지] 인증번호가 도착했습니다.',
+            text: '123456',
+            html: `
+            <div style="text-align: center;">
+              <h3 style="color: #FA5882">협업돼지</h3>
+              <br />
+              <div>비밀번호 초기화를 위해
+              <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
+              </div>
+            </div>
+          `,
+          })
+          .then((send) => res.json(send))
+          .catch((err) => next(err))
+      }
     } catch (error) {
-        console.log({ errorMessage: '인증코드 발급에 실패했습니다.' })
-        res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
+      console.log({ errorMessage: '인증코드 발급에 실패했습니다.' })
+      res.status(500).json({ errorMessage: '인증코드 발급에 실패했습니다. 관리자에게 문의하세요.' })
     }
+  } catch (err) {
+    return res.status(400).json({ errorMessage: '협업돼지에 등록되지 않은 이메일입니다.' })
+  }
 })
 
 router.get('/resetPassword/:token', async (req, res) => {
+  try {
+    const findAuth = await Auth.findOne({ token: token })
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ errorMessage: '인증코드가 만료되었습니다.' })
+    }
     res.json({ message: '정상적으로 이동하였습니다.' })
+  } catch (error) {
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드 또는 잘못된 인증코드입니다.' })
+  }
 })
 
 router.post('/resetPassword/:token', async (req, res) => {
-    // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
-    try {
-        const token = req.params.token
-        const { password, confirmPassword } = req.body
-        const findAuth = await Auth.findOne({ token: token })
-        // 인증코드는 5분의 유효기간(300000ms) (개발 시 풀어놓기)
-        // if (Date.now() - findAuth.createdAt > 300000) {
-        //   return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
-        // }
-        if (password != confirmPassword) {
-            res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.' })
-        }
-        const userId = findAuth.userId
-        const salt = await bcrypt.genSalt()
-        const hashed = await bcrypt.hash(password, salt)
-        const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
-        console.log(findUser)
-        res.status(201).json({
-            message: '비밀번호 재설정 성공',
-            email: findUser.email,
-            nickname: findUser.nickname,
-        })
-    } catch (error) {
-        res.status(400).json({ errorMessage: '잘못된 token값 또는 유저 정보를 찾을 수 없어요.' })
+  // 입력받은 token 값이 Auth 테이블에 존재하며 아직 유효한지 확인
+  try {
+    const token = req.params.token
+    const { password, confirmPassword } = req.body
+    const findAuth = await Auth.findOne({ token: token })
+    // 본 서버 적용   인증코드는 3분의 유효기간(180000ms)
+    if (Date.now() - findAuth.createdAt > 180000) {
+      return res.status(400).json({ message: '인증코드가 만료되었습니다. ' })
     }
+    if (password != confirmPassword) {
+      res.status(400).json({ errorMessage: '패스워드가 일치하지 않습니다.' })
+    }
+    const userId = findAuth.userId
+    const salt = await bcrypt.genSalt()
+    const hashed = await bcrypt.hash(password, salt)
+    const findUser = await User.findOneAndUpdate({ _id: userId }, { $set: { password: hashed } })
+    await Auth.findOneAndDelete({userId: userId})
+    res.status(201).json({
+      message: '비밀번호 재설정 성공',
+      email: findUser.email,
+      nickname: findUser.nickname,
+    })
+  } catch (error) {
+    res.status(400).json({ errorMessage: '이미 사용된 인증코드거나 잘못된 인증코드입니다.' })
+  }
+
 })
 
 // function createJwtToken(id, color, avatar) {
@@ -190,7 +202,9 @@ router.post('/login', async (req, res, next) => {
             return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
-        let refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1d' })
+
+        let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
+
         // refreshTokens.push(refreshToken);
 
         res.status(200).json({
