@@ -3,7 +3,6 @@ const Buckets = require('../schemas/bucket');
 const BucketOrder = require('../schemas/bucketOrder');
 const Cards = require('../schemas/card');
 const Todos = require('../schemas/todo');
-const Documents = require('../schemas/document');
 const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
@@ -11,7 +10,7 @@ const isMember = require('../middlewares/isMember');
 const deleteAll = require('../middlewares/deleting');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { kStringMaxLength } = require('buffer');
+
 
 mongoose.set('useFindAndModify', false);
 
@@ -321,21 +320,14 @@ router.get('/room/:roomId/todo/:cardId', authMiddleware, isMember, async (req, r
         const { cardId } = req.params;
         const allTodos = await Todos.find({ cardId: cardId });
 
-        //방이 삭제되면 -> 버킷 다 삭제 -> 카드 내용물도 삭제 - > 카드 삭제되면 -> 투두도 다 삭제 
+        //avatar, color 추가로 보내줄것 요청받음.
 
-        //투두 생성할때 닉네임 스트링을 넣어주면 여기서 포문 돌려서 변경된 닉네임 가지고와서 보내줄 필요없다.
-        //하지만 그럴경우 닉네임이 변경되면 그게 반영되지않고 생성할때의 닉네임이 보존된다.
+        //지금부터 수정되는 투두들에만 반영되어있음.
+        //여기서 if(color==null) 한 다음에 User 테이블에서 가져와서 보내줄 수 있음.
+        //아니면 따로 함수를 짜서 avatar, color이 안들어있는 모든 함수에 넣을 수 있음.
 
-        //여기서 더블 포문안쓰고 할 방법이 있는가?
-        //닉네임을 변경하면 해당 유저의 닉네임이 저장된곳을 다 찾아서 변경해주는게 더나은가?
-        //
-
-        // for (i = 0; i < allTodos.length; i++) {
-        //     for (k = 0; k < allTodos[i].members.length; k++) {
-        //         console.log('allmembers', allTodos[i].members[k]);
-
-        //     }
-        // }
+        //한방에 다 디비에 넣어주면 끝
+        //하지만 이프문으로 매번 가져와서 보내주려면 계속 유저테이블 들락날락 해야한다.
 
         res.status(200).send({
             'ok': true,
@@ -383,17 +375,14 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
     try {
         const { todoId, todoTitle, isChecked, addMember, removeMember } = req.body;
 
-        const todo = await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true })
-
-        // if(addMember){
-
-        // }
-
+        const todo = await Todos.findOneAndUpdate({ todoId: todoId }, { todoTitle: todoTitle, isChecked: isChecked }, { omitUndefined: true });
 
         if (addMember != null && addMember.length !== 0) {
             const user = await Users.findOne({ _id: addMember });
             const nickname = user.nickname;
-            const add = { memberId: addMember, memberName: nickname }
+            const avatar = user.avatar;
+            const color = user.color;
+            const add = { memberId: addMember, memberName: nickname, avatar:avatar, color:color }
             await Todos.updateOne({ todoId: todoId }, { $push: { members: add } });
 
             //카드의 memberCount update
@@ -413,14 +402,13 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
                     finalArray.push(array[i]);
                 }
             }
-            // console.log('finalarray', finalArray);
+
             const memberCount = finalArray.length;
-            // console.log('membercount', memberCount);
 
             await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
 
-        
+
         if (removeMember != null && removeMember.length !== 0) {
             const user = await Users.findOne({ _id: removeMember });
             const nickname = user.nickname;
@@ -436,27 +424,17 @@ router.patch('/room/:roomId/todo', authMiddleware, isMember, async (req, res) =>
                     array.push(allTodos[i].members[k].memberId);
                 }
             }
-            console.log('ARRAYY', array);
+           
             let finalArray = [];
             for (let i = 0; i < array.length; i++) {
                 if (!finalArray.includes(array[i])) {
                     finalArray.push(array[i]);
                 }
             }
-            console.log('finalarray', finalArray);
+           
             const memberCount = finalArray.length;
-            console.log('membercount', memberCount);
-
             await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: memberCount });
         };
-
-
-
-
-
-
-        // const newCount =
-        // await Cards.findOneAndUpdate({ cardId: cardId }, { memberCount: newCount });
 
         res.status(200).send({
             'ok': true,

@@ -1,4 +1,4 @@
-  
+
 
 const mongoose = require("mongoose");
 
@@ -18,7 +18,7 @@ const todoSchema = new Schema({
     cardId: {
         type: String,
     },
-    members: [{memberId: String, memberName: String}],
+    members: [{ memberId: String, memberName: String, color: String, avatar: String }],
     isChecked: {
         type: Boolean,
 
