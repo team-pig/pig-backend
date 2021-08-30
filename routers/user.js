@@ -97,7 +97,7 @@ router.post('/resetPassword/:token', async (req, res) => {
 
 const registerValidator = Joi.object({
     email: Joi.string().email().required(),
-    nickname: Joi.string().min(3).max(20).required(),
+    nickname: Joi.string().min(2).max(20).required(),
     password: Joi.string()
         .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
         .required(), 
@@ -120,7 +120,7 @@ router.post('/register', async (req, res, next) => {
         
         // 닉네임 3글자 미만은 회원가입 불가.
         const nickName = await User.findOne({ nickname })
-        if (nickName != null && nickName.length < 3 ) {
+        if (nickName != null && nickName.length < 2 ) {
             res.status(400).send({
                 errorMessage: '닉네임에 적합하지 않습니다.'
             });
