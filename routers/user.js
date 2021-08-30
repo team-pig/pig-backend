@@ -6,16 +6,26 @@ const authMiddleware = require('../middlewares/auth-middleware');
 const dotenv = require('dotenv');
 dotenv.config();
 const Joi = require('joi');
-const {v4} = require('uuid');
+const { v4 } = require('uuid');
 const Auth = require('../schemas/auth');
 const transport = require('../services/mail.transport');
 const router = express.Router();
 
+
+const Room = require('../schemas/room.js')
+const BucketOrder = require('../schemas/bucketOrder')
+const Buckets = require('../schemas/bucket')
+const Documents = require('../schemas/document');
+const deleteAll = require('../middlewares/deleting')
+const MemberStatus = require('../schemas/memberStatus.js')
+const Cards = require('../schemas/card');
+const Todos = require('../schemas/todo');
 // let refreshTokens = []
 
 
 //인증코드 발급
 router.post('/resetPassword/sendEmail', async (req, res, next) => {
+
   try {
     const { email } = req.body
     const findEmail = await User.findOne({ email: email }, { email: true })
@@ -99,6 +109,7 @@ router.post('/resetPassword/:token', async (req, res) => {
   } catch (error) {
     res.status(400).json({ errorMessage: '이미 사용된 인증코드거나 잘못된 인증코드입니다.' })
   }
+
 })
 
 // function createJwtToken(id, color, avatar) {
@@ -112,11 +123,11 @@ const registerValidator = Joi.object({
     nickname: Joi.string().min(3).max(20).required(),
     password: Joi.string()
         .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9]).{5,30}$')) //5자 ~ 30자, 영어와 숫자만 허용
-        .required(), 
+        .required(),
     confirmPassword: Joi.ref('password'),
     color: Joi.string().allow(''),
     avatar: Joi.string().allow('')
-}).with('password','confirmPassword')
+}).with('password', 'confirmPassword')
 
 
 router.post('/register', async (req, res, next) => {
@@ -129,10 +140,10 @@ router.post('/register', async (req, res, next) => {
             });
             return;
         }
-        
+
         // 닉네임 3글자 미만은 회원가입 불가.
         const nickName = await User.findOne({ nickname })
-        if (nickName != null && nickName.length < 3 ) {
+        if (nickName != null && nickName.length < 3) {
             res.status(400).send({
                 errorMessage: '닉네임에 적합하지 않습니다.'
             });
@@ -165,12 +176,13 @@ router.post('/register', async (req, res, next) => {
             avatar
         });
         res.status(201).json({
-            ok:true, 
+            ok: true,
             message: '회원가입 성공',
             email: user.email,
             color: user.color,
             avatar: user.avatar
         });
+
 
     } catch (error) {
         next(error);
@@ -184,24 +196,26 @@ router.post('/login', async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
-        
+
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ errorMessage: '이메일 또는 패스워드가 틀렸습니다.' });
         }
         let accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
+
         let refreshToken = jwt.sign({ id: user.id } , process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
+
         // refreshTokens.push(refreshToken);
 
         res.status(200).json({
-            ok: true, 
-            message:'로그인 성공',
-            accessToken: accessToken, refreshToken: refreshToken, 
+            ok: true,
+            message: '로그인 성공',
+            accessToken: accessToken, refreshToken: refreshToken,
             email: email,
         });
     } catch (error) {
         res.status(400).send({
-            ok: false, 
+            ok: false,
             errorMessage: '서버 실패: 로그인 실패',
         })
         next(error);
@@ -212,12 +226,12 @@ router.get('/token', authMiddleware, async (req, res, next) => {
     try {
         res.status(200).send({
             ok: true,
-            message:'토큰 인증 성공',
+            message: '토큰 인증 성공',
             user: res.locals.user
         })
     } catch (err) {
         res.status(400).send({
-            ok: false, 
+            ok: false,
             errorMessage: '토큰 인증 실패'
         })
         next(err)
@@ -227,35 +241,36 @@ router.get('/token', authMiddleware, async (req, res, next) => {
 
 router.post('/token', (req, res) => {
     const refreshToken = req.body.refreshToken;
-    if (refreshToken == null ) {
-        return res.status(401).json({ errorMessage: '리프레쉬 토큰이 없습니다.'})
+    if (refreshToken == null) {
+        return res.status(401).json({ errorMessage: '리프레쉬 토큰이 없습니다.' })
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if(!err) {
+        if (!err) {
             const accessToken = jwt.sign({ id: user.id, color: user.color, avatar: user.avatar }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
             return res.status(201).json({
                 ok: true,
-                message: 'accessToken 재발급 성공', 
-                accessToken: accessToken });
+                message: 'accessToken 재발급 성공',
+                accessToken: accessToken
+            });
         } else {
-        return res.status(403).json({ errorMessage: '리프레시 토큰 유효하지 않습니다.'})
+            return res.status(403).json({ errorMessage: '리프레시 토큰 유효하지 않습니다.' })
         }
     })
 });
 // 회원 탈퇴 시 혼자 있던 room 찾아서 하위 항목들 다 삭제예정 현재는 임시 미완성 API
 router.delete('/userInfo', async (req, res) => {
-  try {
-    const email = req.body.email
-    // await findUser.delete({})
-    const remove = await User.findOneAndRemove({ email: email })
-    if(!remove) {
-        return res.status(400).json({ errorMessage: '이메일이 잘못되었습니다.'})
+    try {
+        const email = req.body.email
+        // await findUser.delete({})
+        const remove = await User.findOneAndRemove({ email: email })
+        if (!remove) {
+            return res.status(400).json({ errorMessage: '이메일이 잘못되었습니다.' })
+        }
+        res.json({ message: '회원탈퇴 성공' })
+    } catch (err) {
+        res.status(500).json({ errorMessage: '회원탈퇴 실패' })
     }
-    res.json({ message: '회원탈퇴 성공' })
-  } catch (err) {
-    res.status(500).json({ errorMessage: '회원탈퇴 실패' })
-  }
 })
 
 module.exports = router;
