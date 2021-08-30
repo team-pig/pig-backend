@@ -27,6 +27,7 @@ async function injection() {
                 }
             }
         }
+        console.log('injection complete');
     } catch (error) {
         console.log('injection CATCH', error);
     }
