@@ -11,7 +11,7 @@ const Auth = require('../schemas/auth');
 const transport = require('../services/mail.transport');
 const router = express.Router();
 
-
+const Tutorial = require('../schemas/tutorial.js');
 const Room = require('../schemas/room.js')
 const BucketOrder = require('../schemas/bucketOrder')
 const Buckets = require('../schemas/bucket')
@@ -175,6 +175,9 @@ router.post('/register', async (req, res, next) => {
             color,
             avatar
         });
+        await Tutorial.create({
+          userId: user._id
+        })
         res.status(201).json({
             ok: true,
             message: '회원가입 성공',
@@ -222,12 +225,27 @@ router.post('/login', async (req, res, next) => {
     }
 });
 
+router.patch('/tutorial', authMiddleware, async (req, res) => {
+  try {
+    const userId = res.locals.user._id
+    const {roomlist, main, document, bord, calender} = req.body.tutorial 
+    await Tutorial.findOneAndUpdate({userId}, {$set: { roomlist, main, document, bord, calender}}).lean()
+    const tutorial = await Tutorial.findOne({userId}).lean()
+    res.json({message: "성공", tutorial})
+  }catch(err) {
+      return res.status(400).json({errorMessage: "에러남"})
+    }
+})
+
 router.get('/token', authMiddleware, async (req, res, next) => {
     try {
+        const userId = res.locals.user._id
+        const tutorial = await Tutorial.findOne({userId})
         res.status(200).send({
             ok: true,
             message: '토큰 인증 성공',
-            user: res.locals.user
+            user: res.locals.user,
+            tutorial: tutorial
         })
     } catch (err) {
         res.status(400).send({
