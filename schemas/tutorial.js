@@ -14,7 +14,7 @@ const tutorialSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    bord: {
+    board: {
       type: Boolean,
       default: true,
     },

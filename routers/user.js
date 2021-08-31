@@ -225,11 +225,23 @@ router.post('/login', async (req, res, next) => {
     }
 });
 
+router.post('/push/tutorial', async (req, res) => {
+  try{
+   const findUsers = await User.find({})
+   for(let i = 0; i < findUsers.length; i)
+   console.log(findUsers)
+    res.send("hi")
+  } catch(err)
+  {
+    res.status(400).send("bye")
+  }
+})
+
 router.patch('/tutorial', authMiddleware, async (req, res) => {
   try {
     const userId = res.locals.user._id
-    const {roomlist, main, document, bord, calender} = req.body.tutorial 
-    await Tutorial.findOneAndUpdate({userId}, {$set: { roomlist, main, document, bord, calender}}).lean()
+    const {roomlist, main, document, board, calender} = req.body.tutorial 
+    await Tutorial.findOneAndUpdate({userId}, {$set: { roomlist, main, document, board, calender}}).lean()
     const tutorial = await Tutorial.findOne({userId}).lean()
     res.json({message: "성공", tutorial})
   }catch(err) {
