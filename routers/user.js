@@ -226,50 +226,49 @@ router.post('/login', async (req, res, next) => {
 });
 
 router.post('/push/tutorial', async (req, res) => {
-  try{
-   const findUsers = await User.find({})
-   for(let i = 0; i < findUsers.length; i++){
-     var userId = findUsers[i]._id
-     await Tutorial.create({userId})
-   }
-   console.log(findUsers)
-    res.send("hi")
-  } catch(err)
-  {
-    res.status(400).send("bye")
+  try {
+    const findUsers = await User.find({})
+    for (let i = 0; i < findUsers.length; i++) {
+      var userId = findUsers[i]._id
+      await Tutorial.create({ userId })
+    }
+    console.log(findUsers)
+    res.send('hi')
+  } catch (err) {
+    res.status(400).send('bye')
   }
 })
 
 router.patch('/tutorial', authMiddleware, async (req, res) => {
   try {
     const userId = res.locals.user._id
-    const {roomlist, main, document, board, calender} = req.body.tutorial 
-    await Tutorial.findOneAndUpdate({userId}, {$set: { roomlist, main, document, board, calender}}).lean()
-    const tutorial = await Tutorial.findOne({userId}).lean()
-    res.json({message: "성공", tutorial})
-  }catch(err) {
-      return res.status(400).json({errorMessage: "에러남"})
-    }
+    const { roomlist, main, document, board, calender } = req.body.tutorial
+    await Tutorial.findOneAndUpdate({ userId }, { $set: { roomlist, main, document, board, calender } }).lean()
+    const tutorial = await Tutorial.findOne({ userId }).lean()
+    res.json({ message: '성공', tutorial })
+  } catch (err) {
+    return res.status(400).json({ errorMessage: '에러남' })
+  }
 })
 
 router.get('/token', authMiddleware, async (req, res, next) => {
-    try {
-        const userId = res.locals.user._id
-        const tutorial = await Tutorial.findOne({userId})
-        res.status(200).send({
-            ok: true,
-            message: '토큰 인증 성공',
-            user: res.locals.user,
-            tutorial: tutorial
-        })
-    } catch (err) {
-        res.status(400).send({
-            ok: false,
-            errorMessage: '토큰 인증 실패'
-        })
-        next(err)
-    }
-});
+  try {
+    const userId = res.locals.user._id
+    const tutorial = await Tutorial.findOne({ userId })
+    res.status(200).send({
+      ok: true,
+      message: '토큰 인증 성공',
+      user: res.locals.user,
+      tutorial: tutorial,
+    })
+  } catch (err) {
+    res.status(400).send({
+      ok: false,
+      errorMessage: '토큰 인증 실패',
+    })
+    next(err)
+  }
+})
 
 
 router.post('/token', (req, res) => {
