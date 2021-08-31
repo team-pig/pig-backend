@@ -228,7 +228,10 @@ router.post('/login', async (req, res, next) => {
 router.post('/push/tutorial', async (req, res) => {
   try{
    const findUsers = await User.find({})
-   for(let i = 0; i < findUsers.length; i)
+   for(let i = 0; i < findUsers.length; i++){
+     var userId = findUsers[i]._id
+     await Tutorial.create({userId})
+   }
    console.log(findUsers)
     res.send("hi")
   } catch(err)
