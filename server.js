@@ -183,7 +183,7 @@ https.createServer(options, app).listen(443)
 */
 
 process.on('SIGINT', function() { // SIGINT 신호가 수신되었을 때
-  console.log('> received SIGNIT signal')
+  console.log('> received SIGINT signal')
 
   isAppGoingToBeClosed = true
 
