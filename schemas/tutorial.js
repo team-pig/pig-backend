@@ -22,6 +22,10 @@ const tutorialSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    modal: {
+      type: Boolean,
+      default: true,
+    }
   },
   {
     versionKey: false,
