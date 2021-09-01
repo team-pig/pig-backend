@@ -1,6 +1,6 @@
 <br>
 
-# **[향해99 2기 실전 프로젝트] 협업돼지**
+# **향해99 2기 | 실전 프로젝트 [협업돼지]**
 <div align="center">
   <a href="https://teampig.co.kr"><img src="https://i.ibb.co/gSrjxmS/image.jpg"/> 클릭 시 실제 서비스 페이지로 이동합니다.</a>
 </div>
@@ -16,6 +16,10 @@
 ## 목차 | Contents
 1. [협업돼지 서비스 소개](#협업돼지-서비스-소개)
 2. [프로젝트 공동 행동강령](#프로젝트-공동-행동강령)
+3. 팀원소개
+4. 아키텍처
+5. ERD
+6. 
 
 <br>
 
@@ -62,13 +66,12 @@ Room, User, Document...기타 등등 : develop에서 파생되어 각자 기능 
 <br>
 
 
-## 🎨주요 라이브러리 | Main Library
+## 주요 라이브러리 | Main Library
 
 - **Node.js**
 - **Express**
 - **redis**
 - **socket.io**
-- **redis**
 - **MongoDB**
 
 <details>
@@ -77,13 +80,14 @@ Room, User, Document...기타 등등 : develop에서 파생되어 각자 기능 
 </details>
 
 <details>
-<summary>  </summary>
+<summary> uuid {v4} </summary>
+방 초대코드 생성 및 비밀번호 재설정 이메일 인증을 위한 인스턴스 토큰 
 <br>
 </details>
 
 <details>
 <summary> nodemailer </summary>
-비밀번호 재설정 시 이메일 인증용
+비밀번호 재설정 시 유저 이메일 인증용
 <br>
 </details>
 
@@ -100,6 +104,11 @@ MongoDB Id, Password 정보, gmail 계정 정보, access token 및 refresh token
 <br>
 </details> 
 
+<details>
+<summary> lodash </summary>
+쉬운 deep copy를 위한 사용
+<br>
+</details> 
 
 <br>
 <br>
@@ -109,7 +118,8 @@ click! ▶️ []()
 
 
 ## 📊 **Architecture**
-![](이미지링크)
+
+![](https://i.ibb.co/72qGwDZ/Frame-761.png)
 
 
 <br>
