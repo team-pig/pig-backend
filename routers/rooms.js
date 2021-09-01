@@ -1,20 +1,17 @@
-// Room._id -> Room.roomId로 findById -> findOne 변경 예정
 const express = require('express')
-const Room = require('../schemas/room.js')
-const Bookmark = require('../schemas/bookmark.js')
-const auth = require('../middlewares/auth-middleware.js')
-const BucketOrder = require('../schemas/bucketOrder')
 const { v4 } = require('uuid')
 const lodash = require("lodash")
-const Buckets = require('../schemas/bucket')
+const auth = require('../middlewares/auth-middleware.js')
+const deleteAll = require('../middlewares/deleting.js')
+const Room = require('../schemas/room.js')
+const BucketOrder = require('../schemas/bucketOrder.js')
+const Buckets = require('../schemas/bucket.js')
 const User = require('../schemas/users.js')
-const deleteAll = require('../middlewares/deleting')
-const MemberStatus = require('../schemas/memberStatus.js')
 const Todo = require('../schemas/todo.js')
 
 const router = express.Router()
 
-// pagination 방 불러오기 8월 2일(월) 기존 router.ger('/rooms')에서 현재로 변경 예정
+// pagination 전체 방 불러오기 
 router.get('/rooms', auth, async (req, res) => {
   try {
     const userId = res.locals.user._id
@@ -23,22 +20,10 @@ router.get('/rooms', auth, async (req, res) => {
     if(!page | !size) {
       return res.status(400).send({errorMessage: '페이지 또는 사이즈를 입력하지 않았어요.'})
     }
-    // const startIndex = (page - 1) * size
-    // const endIndex = page * size
     const room = {}
-    // const bookmarkedRoom = await Room.find(
-    //   { 'bookmarkedMembers.userId': userId },
-    //   { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false }
-    // )
     const totalPages = Math.ceil((await Room.find({ members: userId })).length / size)
     room.totalPages = totalPages
     room.userId = userId
-    // if (endIndex < (await Room.countDocuments().exec())) {
-    //   room.next = { page: page + 1, size: size }
-    // }
-    // if (startIndex > 0) {
-    //   room.previous = { page: page - 1, size: size }
-    // }
     room.room = await Room.find(
       { members: userId },
       { _id: false, 'memberStatus.tags': false, 'memberStatus._id': false, 'memberStatus.roomId': false, 'bookmarkedMembers._id': false, 'bookmarkedMembers.roomId': false, 'bookmarkedMembers.bookmarkedAt': false}
@@ -67,11 +52,15 @@ router.get('/rooms', auth, async (req, res) => {
 })
 
 //방 불러오기 (inviteCode 입력 시)
-router.get('/rooms/room/:inviteCode', auth, async (req, res) => {
+router.get('/rooms/room/', auth, async (req, res) => {
   try {
-    const { inviteCode } = req.params
+    const { inviteCode } = req.query
+    console.log(inviteCode)
     const room = await Room.findOne({ inviteCode: inviteCode })
-    if (!room) {
+    if (!inviteCode) {
+      return res.json({})
+    }
+    else if (!room) {
       return res.status(400).json({ errorMessage: '방을 찾을 수 없어요! 초대코드를 확인하세요.' })
     }
     res.send(room)
