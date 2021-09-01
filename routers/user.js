@@ -114,7 +114,6 @@ router.post('/resetPassword/:token', async (req, res) => {
 
 // function createJwtToken(id, color, avatar) {
 //     return jwt.sign({ id, color, avatar}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
-
 // }
 
 
@@ -235,15 +234,15 @@ router.post('/push/tutorial', async (req, res) => {
     console.log(findUsers)
     res.send('hi')
   } catch (err) {
-    res.status(400).send('bye')
+    res.status(400).send({ errorMessage: 'bye' })
   }
 })
 
 router.patch('/tutorial', authMiddleware, async (req, res) => {
   try {
     const userId = res.locals.user._id
-    const { roomlist, main, document, board, calender } = req.body.tutorial
-    await Tutorial.findOneAndUpdate({ userId }, { $set: { roomlist, main, document, board, calender } }).lean()
+    const { roomlist, main, document, board, calender, modal } = req.body.tutorial
+    await Tutorial.findOneAndUpdate({ userId }, { $set: { roomlist, main, document, board, calender, modal } }).lean()
     const tutorial = await Tutorial.findOne({ userId }).lean()
     res.json({ message: '성공', tutorial })
   } catch (err) {
