@@ -5,23 +5,32 @@ const port = 3000;
 const dotenv = require('dotenv');
 dotenv.config();
 
-const fs = require('fs')
-const http = require('http')
-const https = require('https')
+
+// https할 때 필요
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const options = {
   ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
- }
+}
+
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { createClient } = require("redis");
+
 
 const socketio = require('socket.io');
 const server = https.createServer(options, app); 
 const io = socketio(server);
 
+const pubClient = createClient({ host: "localhost", port: 6379 });
+const subClient = pubClient.duplicate();
+
+io.adapter(createAdapter(pubClient, subClient));
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
 const Message = require('./schemas/message');
-const Room = require('./schemas/room');
 connect()
 
 io.on('connection', (socket) => {
@@ -34,7 +43,10 @@ io.on('connection', (socket) => {
     // 다른 사람들한테 내가 접속했다고 알림.
     socket.to(data.roomId).emit('info', { userName:'admin', text:`${data.userName}님이 접속했습니다.`})
 
-    const chatData = await Message.find({ roomId: data.roomId })
+    const findMessage = await Message.find({ roomId: data.roomId }).sort({ submitTime: -1 }).limit(100).lean()
+    const chatData = findMessage.sort(function (a, b) {
+      return a.submitTime - b.submitTime;
+    })
     socket.emit('messages', chatData)
 
     socket.emit('info', { userName:'admin', text:`${data.roomName}에 접속했습니다.`})
@@ -42,10 +54,24 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async (data) => {
      //DB에 메시지 저장
-     console.log(data);
-    await Message.create(data)
-    //같은 방에 있는 사람한테 
+    socket.join(data.roomId)
+
+    if(data.userName == null || data.roomId == null) {
+      return 
+    } else {
+      data.submitTime = Date(Date.now)
+    await Message.create({
+      roomId: data.roomId,
+      userId: data.userId,
+      userName: data.userName,
+      text: data.text,
+      submitTime: data.submitTime,
+    })
+      //같은 방에 있는 사람한테 
+      console.log(data);
+      
     io.to(data.roomId).emit('message',data )
+    }
   })
 
   socket.on('warning', () => {
@@ -60,8 +86,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('연결이 해제되었어요.')
   })
-});
 
+});
 
 /*이미지 업로드
 const path = require("path");
@@ -77,9 +103,11 @@ const fileStorageEngine = multer.diskStorage({
   const upload = multer({ storage: fileStorageEngine });
   app.use('/image', express.static('images'))
 */
-//CORS
+
+// CORS
 const cors = require('cors');
 var whitelist = ['https://www.teampig.co.kr', 'https://teampig.co.kr/', 'localhost:3000']
+var whitelist = ['*']
 
 var corsOptions = {
   origin: function (origin, callback) {
@@ -90,8 +118,13 @@ var corsOptions = {
     }
   },
 }
-
 app.use( cors(corsOptions) );
+
+// CORS 테스트용
+// const cors = require('cors');
+// app.use(
+//     cors({ origin: '*', credentials: true, }
+// ));
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));
@@ -142,13 +175,29 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
 })
 */
 
-// server.listen(port, () => {
-//     console.log(`listening at http://localhost:${port}`);
-// })
+let isAppGoingToBeClosed = false
 
-// /* https할 때 필요
-http.createServer(app).listen(3000)
-server.listen(443)
-// */
+http.createServer(app).listen(3000, () => {
+  console.log('listening 3000')
+})
+
+const listeningServer = server.listen(443, () => {
+    console.log('listening 443');
+    if(process.send) {
+      process.send('ready')}
+})
+
+process.on('SIGINT', function() { // SIGINT 신호가 수신되었을 때
+  console.log('> received SIGINT signal')
+
+  isAppGoingToBeClosed = true
+
+  // pm2 재시작 신호가 들어오면 서버를 종료시킨다.
+  // listeningServer: server.listen 메소드가 리턴하는 서버 인스턴스를 할당한 변수
+  listeningServer.close(function(err) {
+    console.log('server closed')
+    process.exit(err ? 1 : 0)
+  })
+})
 
 module.exports = app;

@@ -174,16 +174,15 @@ describe('Document 작성 성공', () => {
 describe('Documents 모두 불러오기 성공: 방 안에 문서가 하나라도 있을 때', () => {
   it('Get all documents in room success: There is one or more documents in the room', async() => {
     const res = await request.get(`/room/${createdRoomId}/documents`).auth(access, { type: 'bearer' })
-    createdDocumentId = res.body.documentId;
     expect(res.statusCode).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(res.body.message).toBe('도큐먼트 보여주기 성공')
-    expect(res.body.result.documentId).toBe(createdDocumentId)
+    expect(res.body.result[0].documentId).toBe(createdDocumentId)
   })
 })
 
 describe('Document 상세 불러오기 성공', () => {
-  it('Post document success', async() => {
+  it('Get document success', async() => {
     const res = await request.get(`/room/${createdRoomId}/document/${createdDocumentId}`).auth(access, { type: 'bearer' })
     createdDocumentNickname = res.body.result.nickname
     expect(res.statusCode).toBe(200)
@@ -467,6 +466,26 @@ describe('방 삭제 성공', () => {
     roomId: createdRoomId2 })
     expect(res.statusCode).toBe(200)
     expect(res.body.message).toBe('방 삭제 성공')
+  })
+})
+
+describe('비밀번호 변경페이지 링크가 담긴 이메일 보내기 성공', () => {
+  it('Send password change email success', async () => {
+    const res = await request.post('/resetPassword/sendEmail').send({
+      email: clearData.email
+    });
+    expect(res.body.accepted[0]).toEqual(clearData.email);
+    expect(res.statusCode).toBe(200);
+  })
+})
+
+describe('비밀번호 변경페이지 링크가 담긴 이메일 보내기 실패', () => {
+  it('Send password change email failed: 가입되지 않은 유저 정보일 때', async () => {
+    const res = await request.post('/resetPassword/sendEmail').send({
+      email: undefinedData.email
+    });
+    expect(res.body.errorMessage).toBe('협업돼지에 등록되지 않은 이메일입니다.');
+    expect(res.statusCode).toBe(400);
   })
 })
 

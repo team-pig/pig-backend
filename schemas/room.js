@@ -18,13 +18,7 @@ const roomSchema = new mongoose.Schema(
       default: Date.now,
     },
     endDate: String,
-    // likedAt:{
-    //   type: Date,
-    //   default: ''
-    // }
-    // bookmarkedMembers: [String],
     bookmarkedMembers: [Bookmark.schema],
-
     memberStatus: [MemberStatus.schema]
 
   },
@@ -32,8 +26,5 @@ const roomSchema = new mongoose.Schema(
     versionKey: false,
   }
 )
-// console.log(roomSchema.path('roomId'))
-// roomSchema.virtual('roomId').get(function(){
-//   return this._id;
-// });
+
 module.exports = mongoose.model('Room', roomSchema)
