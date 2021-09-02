@@ -1,3 +1,6 @@
+//Front End에서 Todo의 멤버리스트 객체에 유저 avatar와 color를 추가해달라는 요구에 만든 함수입니다.
+//이미 DB에 저장되어있는 모든 Todo에 배정된 각 유저의 avatar와 color를 객체에 주입해줍니다. 
+
 const Todos = require('./schemas/todo');
 const Users = require('./schemas/users');
 const mongoose = require('mongoose');
@@ -10,8 +13,8 @@ connect();
 async function injection() {
     try {
         const allTodos = await Todos.find({});
-
         for (let i = 0; i < allTodos.length; i++) {
+            //todo에 멤버가 배정되어있을때만 이중for문이 실행됩니다.
             if (allTodos[i].members.length > 0 && allTodos[i].members[0].color == null) {
                 const todoId = allTodos[i].todoId;
                 for (let k = 0; k < allTodos[i].members.length; k++) {

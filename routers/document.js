@@ -1,6 +1,5 @@
 const express = require('express');
 const Documents = require('../schemas/document');
-const Rooms = require('../schemas/room');
 const Users = require('../schemas/users');
 const authMiddleware = require('../middlewares/auth-middleware');
 const isMember = require('../middlewares/isMember');
@@ -8,10 +7,8 @@ const isMember = require('../middlewares/isMember');
 const router = express.Router();
 
 //DOCUMENT 작성
-
 router.post('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
-    //check if this user is a member of the room
     const userId = res.locals.user._id
     const { roomId } = req.params
     const { title, content } = req.body
@@ -55,8 +52,8 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
         message: '이 방에는 아직 도큐먼트가 없습니다.',
         result: [],
       })
-      return
-    }
+      return;
+    };
 
     res.status(200).send({
       ok: true,
@@ -75,17 +72,16 @@ router.get('/room/:roomId/documents', authMiddleware, isMember, async (req, res)
 //DOCUMENT 상세 보여주기
 router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async (req, res) => {
   try {
-    const { documentId } = req.params
-
-    const result = await Documents.findOne({ documentId: documentId })
+    const { documentId } = req.params;
+    const result = await Documents.findOne({ documentId: documentId });
 
     if (!result) {
       res.status(400).send({
         ok: false,
         errorMessage: '존재하지 않는 도큐먼트 입니다.',
       })
-      return
-    }
+      return;
+    };
 
     res.status(200).send({
       ok: true,
@@ -99,18 +95,18 @@ router.get('/room/:roomId/document/:documentId', authMiddleware, isMember, async
       errorMessage: '서버에러: 상세 도큐먼트 보여주기 실패',
     })
   }
-})
+});
+
 //DOCUMENT 수정 가능여부 확인
 router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
-    //현재 상황에서 내가 문서 수정중인데 다른창에서 수정 버튼 클릭하면 canEdit이 false라서 수정 불가한가?
-    //이걸 고쳐주는 메세지를 보여줘야할까?
-
     const { documentId } = req.body;
-    const userId = res.locals.user._id;
-    const targetUser = await Documents.findOne({documentId})
+    const targetUser = await Documents.findOne({ documentId })
     const nickname = targetUser.nickname;
     const document = await Documents.findOne({ documentId: documentId });
+
+    // 해당 도큐먼트가 이미 다른사람이 수정중이라서 canEdit이 false라면 수정이 불가하다
+    // 수정이 불가하다는 메세지와 함께 현재 수정중인 유저의 닉네임을 클라이언트에 보내준다.
     if (document.canEdit === false) {
       res.status(200).send({
         'ok': true,
@@ -121,7 +117,8 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
       return;
     }
 
-    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname:nickname });
+    // 도큐먼트가 수정 가능하다면 수정가능 메세지를 보내주고 DB의 canEdit을 false로 변경해준다
+    await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: false, nickname: nickname });
     res.status(200).send({
       'ok': true,
       message: '수정가능',
@@ -138,7 +135,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
 })
 
 //수정 하다가 취소 혹은 창 밖으로 나감
-router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req, res) => {
+router.post('/room/:roomId/document/exit', authMiddleware, async (req, res) => {
   try {
     const { documentId } = req.body;
     await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: true });
@@ -161,8 +158,8 @@ router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req,
 router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
     //check if this user is a member of the room
-    const userId = res.locals.user._id
-    const { documentId, title, content } = req.body
+    const userId = res.locals.user._id;
+    const { documentId, title, content } = req.body;
 
     const targetUser = await Users.findById(userId);
     const nickname = targetUser.nickname;
@@ -199,8 +196,7 @@ router.put('/room/:roomId/document', authMiddleware, isMember, async (req, res) 
 //DOCUMENT 삭제
 router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, res) => {
   try {
-    const { documentId } = req.body
-
+    const { documentId } = req.body;
     const deleteDocument = await Documents.findOneAndDelete({ documentId: documentId }, { useFindAndModify: false });
     if (!deleteDocument) {
       res.status(400).send({
@@ -209,7 +205,6 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
       })
       return;
     }
-
     res.status(200).send({
       ok: true,
       message: '도큐먼트 삭제 성공',
@@ -223,29 +218,22 @@ router.delete('/room/:roomId/document', authMiddleware, isMember, async (req, re
 })
 
 //문서 백업기능
-router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const { documentId } = req.body;
-    Documents.create({ roomId: roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
+// router.post('/room/:roomId/document/backup', authMiddleware, isMember, async (req, res) => {
+//   try {
+//     const { roomId } = req.params;
+//     const { documentId } = req.body;
+//     Documents.create({ roomId: roomId, originalDocumentId: documentId, isBackup: true, canEdit: true });
 
-    res.status(200).send({
-      'ok': true,
-      message: '문서 백업 성공'
-    })
-  } catch (error) {
-    console.log('문서 백업 에러', error);
-    res.status(400).send({
-      'ok': false,
-      errorMessage: '서버에러: 문서백업 실패'
-    })
-  }
-})
-
-
+//     res.status(200).send({
+//       'ok': true,
+//       message: '문서 백업 성공'
+//     })
+//   } catch (error) {
+//     console.log('문서 백업 에러', error);
+//     res.status(400).send({
+//       'ok': false,
+//       errorMessage: '서버에러: 문서백업 실패'
+//     })
+//   }
+// })
 module.exports = router
-
-
-//     const posts = await Posts.find().sort('-contentId');
-
-//     await Posts.updateOne({ 'contentId': contentId, 'password': password }, { $set: { 'title': title, 'name': name, 'content': content } });
