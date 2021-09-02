@@ -42,7 +42,7 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
 
         transport
           .sendMail({
-            from: `협업돼지 <${process.env.MAIL_IDD}>`,
+            from: `협업돼지 <${process.env.MAIL_ID}>`,
             to: email,
             subject: '[협업돼지] 인증번호가 도착했습니다.',
             text: '123456',
@@ -51,7 +51,7 @@ router.post('/resetPassword/sendEmail', async (req, res, next) => {
               <h3 style="color: #FA5882">협업돼지</h3>
               <br />
               <div>비밀번호 초기화를 위해
-              <A href="http://localhost:3000/resetPassword/${token}"> 여기를 클릭하세요! </A>
+              <A href="https://teampig.co.kr/resetPassword/${token}"> 여기를 클릭하세요! </A>
               </div>
             </div>
           `,

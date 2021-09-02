@@ -155,6 +155,10 @@ MongoDB Id, Password 정보, gmail 계정 정보, access token 및 refresh token
 ![](https://i.ibb.co/M1G0Q7R/Group-242.png)
 
 <br>
+“다양한 기능 구현”이라는 목표와  “한정된 자원과 시간”이라는 주어진 환경 속에서, 네트워크 구조를 최대한 단순화 하여 왕복시간(RTT:Round Trip Time)을 최소화 하는 방향으로 아키텍처를 구성하였습니다.<br>
+Node.js와 Express를 사용하여 서버를 구축하고 데이터베이스는 몽고디비를 사용하였습니다.<br> 
+amazon EC2서버를 통해 HTTPS 환경으로 배포하였으며 채팅은 Socket.io를 사용하였습니다.<br> 
+롤링 방식의 무중단 배포를 위해 Pm2는 Cluster 모드로 실행되고 있고, 다른 프로세스 간 공통된 메시지를 주고받기 위해 Redis의 Sub/Pub을 이용했습니다.
 <br>
 
 ## **🕸 ERD**

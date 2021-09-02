@@ -6,19 +6,28 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 
-/* https할 때 필요
-const fs = require('fs')
-// const http = require('http').createServer(app);
-// const https = require('https')
-// const { Server } = require('socket.io');
-// const io = new Server(http);
-*/
+// https할 때 필요
+const fs = require('fs');
 const http = require('http');
+const https = require('https');
+const options = {
+  ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
+}
+
+const { createAdapter } = require("@socket.io/redis-adapter");
+const { createClient } = require("redis");
+
+
 const socketio = require('socket.io');
-const server = http.createServer(app); 
+const server = https.createServer(options, app); 
 const io = socketio(server);
 
+const pubClient = createClient({ host: "localhost", port: 6379 });
+const subClient = pubClient.duplicate();
 
+io.adapter(createAdapter(pubClient, subClient));
 // 몽고db 붕어빵 틀
 const connect = require('./schemas/index');
 const Message = require('./schemas/message');
@@ -45,6 +54,8 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async (data) => {
      //DB에 메시지 저장
+    socket.join(data.roomId)
+
     if(data.userName == null || data.roomId == null) {
       return 
     } else {
@@ -78,12 +89,6 @@ io.on('connection', (socket) => {
 
 });
 
-// const options = {
-//   ca: fs.readFileSync('/etc/letsencrypt/live/itda.shop/fullchain.pem'),
-//   key: fs.readFileSync('/etc/letsencrypt/live/itda.shop/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/itda.shop/cert.pem')
-//  }
-
 /*이미지 업로드
 const path = require("path");
 const multer = require("multer");
@@ -98,17 +103,28 @@ const fileStorageEngine = multer.diskStorage({
   const upload = multer({ storage: fileStorageEngine });
   app.use('/image', express.static('images'))
 */
-//CORS
-const cors = require('cors');
-app.use(
-    cors({ origin: '*', credentials: true, }
-    ));
 
-//CORS 테스트용
+// CORS
+const cors = require('cors');
+var whitelist = ['https://www.teampig.co.kr', 'https://teampig.co.kr/', 'localhost:3000']
+var whitelist = ['*']
+
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+}
+app.use( cors(corsOptions) );
+
+// CORS 테스트용
 // const cors = require('cors');
 // app.use(
-//     cors({ origin: '*', credentials: true, })
-//   );
+//     cors({ origin: '*', credentials: true, }
+// ));
 
 // 바디,json,media 데이터
 app.use(express.urlencoded({ extended: false }));
@@ -161,26 +177,15 @@ app.post('/multiple', upload.array('images', 3), (req, res) => {
 
 let isAppGoingToBeClosed = false
 
-app.use(function(req, res, next) {
-  // 프로세스 종료 예정이라면 연결을 종료한다
-  if (isAppGoingToBeClosed) {
-    res.set('Connection', 'close')
-  }
-
-  next()
+http.createServer(app).listen(3000, () => {
+  console.log('listening 3000')
 })
 
-const listeningServer = server.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
+const listeningServer = server.listen(443, () => {
+    console.log('listening 443');
     if(process.send) {
-      process.send('ready')
-    }
+      process.send('ready')}
 })
-
-/* https할 때 필요
-http.createServer(app).listen(3000)
-https.createServer(options, app).listen(443)
-*/
 
 process.on('SIGINT', function() { // SIGINT 신호가 수신되었을 때
   console.log('> received SIGINT signal')
