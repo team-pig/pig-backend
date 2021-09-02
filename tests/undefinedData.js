@@ -7,7 +7,6 @@ const UNDEFINED_DATA = {
       "",
   SignAuthorization:
       "",
-  
 };
 
 module.exports = UNDEFINED_DATA;
