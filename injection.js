@@ -13,7 +13,6 @@ connect();
 async function injection() {
     try {
         const allTodos = await Todos.find({});
-
         for (let i = 0; i < allTodos.length; i++) {
             //todo에 멤버가 배정되어있을때만 이중for문이 실행됩니다.
             if (allTodos[i].members.length > 0 && allTodos[i].members[0].color == null) {

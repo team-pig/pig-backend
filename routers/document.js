@@ -135,7 +135,7 @@ router.patch('/room/:roomId/document', authMiddleware, isMember, async (req, res
 })
 
 //수정 하다가 취소 혹은 창 밖으로 나감
-router.post('/room/:roomId/document/exit', authMiddleware, isMember, async (req, res) => {
+router.post('/room/:roomId/document/exit', authMiddleware, async (req, res) => {
   try {
     const { documentId } = req.body;
     await Documents.findOneAndUpdate({ documentId: documentId }, { canEdit: true });

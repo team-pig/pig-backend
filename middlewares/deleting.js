@@ -48,7 +48,6 @@ const deleteAll = module.exports = {
                 for (k = 0; k < card.length; k++) {
                     cardIdsArray.push(card[k].cardId);
                 }
-
                 await Cards.deleteMany({ bucketId: bucketIdsArray[i] });
             }
             //카드안에 담겨있는 투두리스트를 삭제하기 위해 카드아이디가 담긴 array를 deleteTodos 함수로 넘겨줍니다.
