@@ -166,7 +166,6 @@ router.get('/room/:roomId/main/status', auth, async (req, res) => {
     }
     projectStatus = { endDate, checked, notChecked }
     //위에까지 projectStatus, 아래부터memberStatus 시작
-    // const findMemberStatus = await MemberStatus.find({ roomId }, { _id: false }).lean()  위에서 아래로 변화(memberstatus 따로 생성되는 부분 지워도 될듯)
     const findRoom = await Room.findOne({ roomId }, { _id: false })
     const findMemberStatus = findRoom.memberStatus
     for (let j = 0; j < findMemberStatus.length; j++) {
